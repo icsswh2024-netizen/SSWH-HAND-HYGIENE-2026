@@ -473,9 +473,12 @@
 
                 <div class="px-5">
                     <div class="mobile-landscape-frame">
-                        <video src="${video.url}" loop muted playsinline data-id="${video.id}"></video>
-                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 hover:opacity-100 transition-opacity bg-black/30">
-                            <i class="fa-solid fa-volume-xmark text-white text-4xl" id="mute-icon-${video.id}"></i>
+                        <video src="${video.url}" autoplay loop muted playsinline preload="metadata" data-id="${video.id}"></video>
+                        <div class="tap-hint absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 bg-black/25" id="hint-${video.id}">
+                            <span class="flex flex-col items-center text-white drop-shadow">
+                                <i class="fa-solid fa-volume-xmark text-3xl"></i>
+                                <span class="text-xs mt-1.5 font-medium">แตะเพื่อเปิดเสียง</span>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -515,37 +518,40 @@
         // Attach functionality to cards (Video play, Views, Rating, Comments)
         function attachCardEvents(card, video) {
             const vidElement = card.querySelector('video');
-            const muteIcon = card.querySelector(`#mute-icon-${video.id}`);
+            const tapHint = card.querySelector(`#hint-${video.id}`);
             const starsContainer = card.querySelector(`.stars-container`);
             const stars = starsContainer.querySelectorAll('.star-icon');
             const submitCommentBtn = card.querySelector('.submit-comment');
 
-            // Video Click: Toggle Mute and Play
-            vidElement.addEventListener('click', () => {
-                if (vidElement.muted) {
-                    vidElement.muted = false;
-                    vidElement.play();
-                    muteIcon.classList.remove('fa-volume-xmark');
-                    muteIcon.classList.add('fa-volume-high');
+            // ทุกคลิปเล่นพรีวิวอัตโนมัติแบบไม่มีเสียง (บางเบราว์เซอร์ต้องสั่ง play เอง)
+            const playPreview = () => { const p = vidElement.play(); if (p) p.catch(() => {}); };
+            playPreview();
 
-                    // Increment view only once per card initialization when first unmuted/played
-                    if(!vidElement.dataset.viewed) {
-                        video.views += 1;
-                        document.getElementById(`views-${video.id}`).innerText = formatViews(video.views);
-                        vidElement.dataset.viewed = "true";
-                        // ส่งข้อมูลเข้า Sheet
-                        sendDataToSheet('ADD_VIEW', { id: video.id });
-                    }
-                } else {
-                    vidElement.muted = true;
-                    muteIcon.classList.remove('fa-volume-high');
-                    muteIcon.classList.add('fa-volume-xmark');
+            // แตะ/คลิกที่คลิป -> เปิดเสียง + แสดงแถบควบคุม (ลำโพง เล่น/หยุด เลื่อนเวลา)
+            vidElement.addEventListener('click', () => {
+                // เปิดใช้งานแล้ว ปล่อยให้แถบควบคุมเนทีฟทำงานต่อ (เล่น/หยุด/เลื่อน)
+                if (vidElement.dataset.activated) return;
+                vidElement.dataset.activated = 'true';
+
+                // ปิดเสียงคลิปอื่น ไม่ให้เสียงซ้อนกัน
+                document.querySelectorAll('#gallery video').forEach(v => {
+                    if (v !== vidElement) v.muted = true;
+                });
+
+                vidElement.muted = false;
+                vidElement.controls = true;
+                vidElement.play();
+                if (tapHint) tapHint.style.display = 'none';
+
+                // นับยอดวิวครั้งแรกที่เปิดดูจริง
+                if(!vidElement.dataset.viewed) {
+                    video.views += 1;
+                    document.getElementById(`views-${video.id}`).innerText = formatViews(video.views);
+                    vidElement.dataset.viewed = "true";
+                    // ส่งข้อมูลเข้า Sheet
+                    sendDataToSheet('ADD_VIEW', { id: video.id });
                 }
             });
-
-            // Autoplay on hover (muted)
-            vidElement.addEventListener('mouseenter', () => { if(vidElement.muted) vidElement.play(); });
-            vidElement.addEventListener('mouseleave', () => { if(vidElement.muted) vidElement.pause(); });
 
             // Restore star visuals if already voted in this session
             if (video.hasVoted) {
