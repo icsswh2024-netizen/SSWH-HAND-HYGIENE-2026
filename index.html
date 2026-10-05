@@ -45,18 +45,18 @@
             color: transparent;
         }
 
-        /* Water Bubbles Animation */
+        /* Water Bubbles Animation (subtle) */
         .bubble {
             position: absolute;
             bottom: -100px;
-            background-color: rgba(255, 255, 255, 0.45);
+            background-color: rgba(255, 255, 255, 0.22);
             border-radius: 50%;
             animation: rise linear infinite;
             z-index: -1;
         }
 
         @keyframes rise {
-            0% { transform: translateY(0) scale(1); opacity: 0.6; }
+            0% { transform: translateY(0) scale(1); opacity: 0.28; }
             100% { transform: translateY(-1000px) scale(1.5); opacity: 0; }
         }
 
@@ -252,10 +252,10 @@
         // Create Bubbles Background
         function createBubbles() {
             const container = document.getElementById('bubbles-container');
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 14; i++) {
                 const bubble = document.createElement('div');
                 bubble.classList.add('bubble');
-                const size = Math.random() * 40 + 10 + 'px';
+                const size = Math.random() * 28 + 8 + 'px';
                 bubble.style.width = size;
                 bubble.style.height = size;
                 bubble.style.left = Math.random() * 100 + 'vw';
