@@ -185,12 +185,19 @@
             <div class="border-t border-slate-100 mb-6"></div>
 
             <form id="submissionForm">
-                <div class="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-5 items-end">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                     <div>
                         <label class="block text-slate-600 font-semibold text-sm mb-2">ชื่อผลงาน / ผู้เข้าแข่งขัน</label>
                         <div class="relative">
                             <i class="fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
                             <input type="text" id="teamName" required placeholder="เช่น ด.ญ. รักสะอาด" class="premium-input w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none text-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-slate-600 font-semibold text-sm mb-2">หน่วยงาน</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-building absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
+                            <input type="text" id="organization" required placeholder="เช่น โรงเรียนอนุบาลใจดี" class="premium-input w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none text-sm">
                         </div>
                     </div>
                     <div>
@@ -200,11 +207,13 @@
                             <input type="url" id="videoUrl" required placeholder="https://example.com/video.mp4" class="premium-input w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none text-sm">
                         </div>
                     </div>
-                    <button type="submit" class="btn-send text-white font-display font-semibold py-3 px-6 rounded-xl flex items-center justify-center gap-2 whitespace-nowrap">
+                </div>
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-5">
+                    <p class="text-xs text-slate-400"><i class="fa-regular fa-circle-info mr-1"></i>กรุณาแนบลิงก์ตรงของไฟล์วิดีโอ (.mp4)</p>
+                    <button type="submit" class="btn-send text-white font-display font-semibold py-3 px-8 rounded-xl flex items-center justify-center gap-2 whitespace-nowrap">
                         <i class="fa-solid fa-paper-plane"></i> ส่งวิดีโอ
                     </button>
                 </div>
-                <p class="text-xs text-slate-400 mt-3"><i class="fa-regular fa-circle-info mr-1"></i>กรุณาแนบลิงก์ตรงของไฟล์วิดีโอ (.mp4)</p>
             </form>
         </section>
 
@@ -283,6 +292,7 @@
                 id: 1,
                 title: "ล้างมือให้สะอาด ปราศจากโรคภัย",
                 author: "น้องฟ้าใส",
+                organization: "โรงพยาบาลส่งเสริมสุขภาพ",
                 url: "https://www.w3schools.com/html/mov_bbb.mp4",
                 views: 890,
                 totalScore: 45,
@@ -293,6 +303,7 @@
                 id: 2,
                 title: "ล้างมือ 7 ขั้นตอน ป้องกันเชื้อโรค",
                 author: "โรงเรียนอนุบาลใจดี",
+                organization: "โรงเรียนอนุบาลใจดี",
                 url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
                 views: 2450,
                 totalScore: 30,
@@ -303,6 +314,7 @@
                 id: 3,
                 title: "รณรงค์ล้างมือก่อนทานข้าว",
                 author: "ด.ช. ต้นน้ำ",
+                organization: "ชุมชนบ้านต้นน้ำ",
                 url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
                 views: 1205,
                 totalScore: 20,
@@ -324,6 +336,7 @@
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             const title = document.getElementById('teamName').value;
+            const organization = document.getElementById('organization').value;
             const url = document.getElementById('videoUrl').value;
 
             const newId = Date.now();
@@ -331,6 +344,7 @@
                 id: newId,
                 title: title,
                 author: title,
+                organization: organization,
                 url: url,
                 views: 0,
                 totalScore: 0,
@@ -399,6 +413,7 @@
                 <div class="px-5 pt-5 pb-3">
                     <h4 class="font-display text-lg font-semibold text-slate-800 leading-snug truncate" title="${video.title}">${video.title}</h4>
                     <p class="text-sm text-cyan-600 font-medium mt-1"><i class="fa-solid fa-pen-nib mr-1"></i>โดย ${video.author}</p>
+                    ${video.organization ? `<p class="text-xs text-slate-400 mt-0.5 truncate" title="${video.organization}"><i class="fa-solid fa-building mr-1"></i>${video.organization}</p>` : ''}
                 </div>
 
                 <div class="px-5">
