@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Handwashing Day - Video Contest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            background-color: #e0f2fe;
+            font-family: 'Sarabun', sans-serif;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Water Bubbles Animation */
+        .bubble {
+            position: absolute;
+            bottom: -100px;
+            background-color: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            animation: rise linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes rise {
+            0% { transform: translateY(0) scale(1); opacity: 0.6; }
+            100% { transform: translateY(-1000px) scale(1.5); opacity: 0; }
+        }
+
+        /* Landscape Mobile Mockup */
+        .mobile-landscape-frame {
+            position: relative;
+            width: 100%;
+            padding-bottom: 50%; /* 2:1 aspect ratio to simulate landscape mobile */
+            background-color: #1a1a1a;
+            border-radius: 24px;
+            border: 8px solid #333;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mobile-landscape-frame::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 15px;
+            height: 15px;
+            background-color: #222;
+            border-radius: 50%;
+            z-index: 10;
+        }
+
+        .mobile-landscape-frame video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        /* Custom Scrollbar for Comments */
+        .comments-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .comments-container::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="min-h-screen pb-10">
+
+    <!-- Bubble Background Elements -->
+    <div id="bubbles-container"></div>
+
+    <!-- Header Section -->
+    <header class="bg-blue-600 text-white py-8 shadow-lg relative">
+        <div class="container mx-auto px-4 text-center relative">
+            <h1 class="text-4xl font-bold mb-2"><i class="fa-solid fa-hands-bubbles mr-3"></i>โครงการประกวดคลิปวิดีโอ</h1>
+            <h2 class="text-2xl font-semibold">วันล้างมือโลก (Global Handwashing Day)</h2>
+            <p class="mt-2 text-blue-100">"มือสะอาด ปราศจากเชื้อโรค"</p>
+            
+            <!-- ปุ่มดูผลโหวต -->
+            <button id="viewResultsBtn" class="absolute top-0 right-4 bg-white text-blue-600 px-4 py-2 rounded-full shadow hover:bg-blue-50 transition font-bold flex items-center">
+                <i class="fa-solid fa-chart-pie mr-2"></i> ผล Vote
+            </button>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 mt-10">
+        
+        <!-- Submission Form Section -->
+        <section class="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-12 max-w-2xl mx-auto border-t-4 border-blue-400">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center"><i class="fa-solid fa-upload text-blue-500 mr-2"></i>ส่งผลงานเข้าร่วมประกวด</h3>
+            <form id="submissionForm" class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">ชื่อผลงาน / ทีม</label>
+                    <input type="text" id="teamName" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">ลิงก์วิดีโอ (MP4 URL)</label>
+                    <input type="url" id="videoUrl" required placeholder="https://example.com/video.mp4" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <p class="text-xs text-gray-500 mt-1">* กรุณาแนบลิงก์ตรงของไฟล์วิดีโอ (.mp4)</p>
+                </div>
+                <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300 shadow-md">
+                    ส่งผลงาน
+                </button>
+            </form>
+        </section>
+
+        <!-- Gallery Section -->
+        <section>
+            <h3 class="text-3xl font-bold text-gray-800 mb-8 text-center"><i class="fa-solid fa-film text-blue-500 mr-2"></i>แกลเลอรีผลงาน</h3>
+            
+            <!-- 3 Columns Grid -->
+            <div id="gallery" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Cards will be dynamically inserted here -->
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // ==========================================
+        // ส่วนตั้งค่าเชื่อมต่อ GOOGLE APPS SCRIPT
+        // ==========================================
+        // นำ URL Web App ที่ได้จาก Google Apps Script มาใส่ที่นี่
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_WEB_APP_ID/exec'; 
+
+        // ฟังก์ชันเบื้องหลังสำหรับส่งข้อมูลไปต่อท้ายแถว (Append Row) ใน Google Sheet
+        function sendDataToSheet(action, payload) {
+            // ทำการเข้ารหัสข้อมูลเพื่อส่งแบบ Form URL Encoded
+            const formData = new URLSearchParams();
+            formData.append('action', action);
+            formData.append('payload', JSON.stringify(payload));
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors', // ป้องกันปัญหา CORS
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData
+            }).catch(error => console.error('Error syncing to Google Sheet:', error));
+        }
+        // ==========================================
+
+
+        // Create Bubbles Background
+        function createBubbles() {
+            const container = document.getElementById('bubbles-container');
+            for (let i = 0; i < 20; i++) {
+                const bubble = document.createElement('div');
+                bubble.classList.add('bubble');
+                const size = Math.random() * 40 + 10 + 'px';
+                bubble.style.width = size;
+                bubble.style.height = size;
+                bubble.style.left = Math.random() * 100 + 'vw';
+                bubble.style.animationDuration = Math.random() * 5 + 5 + 's';
+                bubble.style.animationDelay = Math.random() * 5 + 's';
+                container.appendChild(bubble);
+            }
+        }
+        createBubbles();
+
+        // SweetAlert for View Results Button
+        document.getElementById('viewResultsBtn').addEventListener('click', () => {
+            Swal.fire({
+                icon: 'info',
+                title: 'ยังไม่สามารถดูได้',
+                text: 'ผลคะแนนโหวตจะสามารถดูได้เมื่อแอดมินทำการปิดระบบโหวตแล้วเท่านั้นครับ',
+                confirmButtonColor: '#3b82f6',
+                confirmButtonText: 'รับทราบ'
+            });
+        });
+
+        // Mock Data
+        let videoData = [
+            {
+                id: 1,
+                title: "ทีมล้างมือสะอาด ปราศจากโรค",
+                url: "https://www.w3schools.com/html/mov_bbb.mp4",
+                views: 120,
+                totalScore: 45, 
+                hasVoted: false,
+                comments: [
+                    { user: "พยาบาล A", text: "ทำคลิปได้น่ารักเข้าใจง่ายมากค่ะ" },
+                    { user: "ผู้ป่วย B", text: "ชอบไอเดียมากๆ" }
+                ]
+            },
+            {
+                id: 2,
+                title: "Ward 5 ร่วมใจ ล้างมือปลอดภัย",
+                url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+                views: 85,
+                totalScore: 30,
+                hasVoted: false,
+                comments: [
+                    { user: "หมอ C", text: "เป็นประโยชน์ต่อส่วนรวมครับ" }
+                ]
+            }
+        ];
+
+        const gallery = document.getElementById('gallery');
+        const form = document.getElementById('submissionForm');
+
+        // Form Submit Handler
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const title = document.getElementById('teamName').value;
+            const url = document.getElementById('videoUrl').value;
+            
+            const newId = Date.now();
+            const newVideo = {
+                id: newId,
+                title: title,
+                url: url,
+                views: 0,
+                totalScore: 0,
+                hasVoted: false,
+                comments: []
+            };
+            
+            videoData.push(newVideo);
+            renderGallery();
+            form.reset();
+
+            // ส่งข้อมูลไปบันทึกบน Google Sheet (เรียงแถว)
+            sendDataToSheet('ADD_VIDEO', newVideo);
+
+            Swal.fire({
+                icon: 'success',
+                title: 'ส่งผลงานสำเร็จ!',
+                text: 'วิดีโอของคุณถูกเพิ่มลงในแกลเลอรีแล้ว',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        });
+
+        // Render Cards
+        function renderGallery() {
+            gallery.innerHTML = '';
+            videoData.forEach(video => {
+                const card = createCardDOM(video);
+                gallery.appendChild(card);
+                attachCardEvents(card, video);
+            });
+        }
+
+        // Generate Card DOM Structure
+        function createCardDOM(video) {
+            const card = document.createElement('div');
+            card.classList.add('bg-white', 'rounded-2xl', 'shadow-lg', 'overflow-hidden', 'flex', 'flex-col', 'border', 'border-gray-100', 'hover:shadow-xl', 'transition');
+            
+            // Generate Stars HTML
+            let starsHtml = '';
+            for(let i=1; i<=5; i++) {
+                starsHtml += `<i class="fa-solid fa-star text-gray-300 cursor-pointer text-xl star-icon" data-value="${i}"></i>`;
+            }
+
+            // Determine if voted text should show
+            const voteStatusHtml = video.hasVoted 
+                ? `<span class="text-green-500 font-bold ml-2 text-sm">โหวตแล้ว <i class="fa-solid fa-check"></i></span>`
+                : `<span class="text-sm text-gray-500 ml-2 vote-prompt">ให้คะแนน</span>`;
+
+            card.innerHTML = `
+                <div class="p-4 bg-gray-50 border-b">
+                    <div class="mobile-landscape-frame">
+                        <video src="${video.url}" loop muted playsinline data-id="${video.id}"></video>
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 hover:opacity-100 transition-opacity bg-black bg-opacity-30">
+                            <i class="fa-solid fa-volume-xmark text-white text-4xl" id="mute-icon-${video.id}"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-5 flex-1 flex flex-col">
+                    <h4 class="text-xl font-bold text-gray-800 mb-3 truncate" title="${video.title}">${video.title}</h4>
+                    
+                    <div class="flex justify-between items-center mb-4 text-sm text-gray-600">
+                        <span class="flex items-center"><i class="fa-solid fa-eye text-blue-500 mr-2"></i><span id="views-${video.id}">${video.views}</span> ครั้ง</span>
+                    </div>
+
+                    <!-- Rating Section (Hidden Raw Score during voting) -->
+                    <div class="mb-4 bg-blue-50 p-3 rounded-lg flex items-center justify-between">
+                        <div class="stars-container flex items-center space-x-1" data-id="${video.id}">
+                            ${starsHtml}
+                        </div>
+                        <div class="score-display" id="score-display-${video.id}">
+                            ${voteStatusHtml}
+                        </div>
+                    </div>
+
+                    <!-- Comments Section -->
+                    <div class="mt-auto border-t pt-4">
+                        <h5 class="text-sm font-semibold text-gray-700 mb-2"><i class="fa-regular fa-comments mr-1"></i>ความคิดเห็น</h5>
+                        <div class="comments-container h-32 overflow-y-auto mb-3 space-y-2 pr-2" id="comments-${video.id}">
+                            ${video.comments.map(c => `
+                                <div class="bg-gray-100 p-2 rounded text-sm">
+                                    <span class="font-bold text-blue-600">${c.user}:</span> <span class="text-gray-700">${c.text}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" id="comment-input-${video.id}" placeholder="เพิ่มความคิดเห็น..." class="flex-1 px-3 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-400">
+                            <button class="submit-comment bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm" data-id="${video.id}"><i class="fa-solid fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        // Attach functionality to cards (Video play, Views, Rating, Comments)
+        function attachCardEvents(card, video) {
+            const vidElement = card.querySelector('video');
+            const muteIcon = card.querySelector(`#mute-icon-${video.id}`);
+            const starsContainer = card.querySelector(`.stars-container`);
+            const stars = starsContainer.querySelectorAll('.star-icon');
+            const submitCommentBtn = card.querySelector('.submit-comment');
+
+            // Video Click: Toggle Mute and Play
+            vidElement.addEventListener('click', () => {
+                if (vidElement.muted) {
+                    vidElement.muted = false;
+                    vidElement.play();
+                    muteIcon.classList.remove('fa-volume-xmark');
+                    muteIcon.classList.add('fa-volume-high');
+                    
+                    // Increment view only once per card initialization when first unmuted/played
+                    if(!vidElement.dataset.viewed) {
+                        video.views += 1;
+                        document.getElementById(`views-${video.id}`).innerText = video.views;
+                        vidElement.dataset.viewed = "true";
+                        // ส่งข้อมูลเข้า Sheet
+                        sendDataToSheet('ADD_VIEW', { id: video.id });
+                    }
+                } else {
+                    vidElement.muted = true;
+                    muteIcon.classList.remove('fa-volume-high');
+                    muteIcon.classList.add('fa-volume-xmark');
+                }
+            });
+
+            // Autoplay on hover (muted)
+            vidElement.addEventListener('mouseenter', () => { if(vidElement.muted) vidElement.play(); });
+            vidElement.addEventListener('mouseleave', () => { if(vidElement.muted) vidElement.pause(); });
+
+            // Restore star visuals if already voted in this session
+            if (video.hasVoted) {
+                // We don't know the exact star clicked in this session, so we can just highlight all or none. 
+                // Let's highlight 5 stars as an indicator, or just disable them.
+                stars.forEach(s => {
+                    s.classList.replace('text-gray-300', 'text-yellow-400');
+                    s.classList.remove('cursor-pointer');
+                });
+            }
+
+            // Star Rating Logic
+            stars.forEach((star, index) => {
+                star.addEventListener('mouseenter', () => {
+                    if(video.hasVoted) return;
+                    stars.forEach((s, i) => {
+                        if(i <= index) s.classList.replace('text-gray-300', 'text-yellow-400');
+                        else s.classList.replace('text-yellow-400', 'text-gray-300');
+                    });
+                });
+
+                star.addEventListener('mouseleave', () => {
+                    if(video.hasVoted) return;
+                    stars.forEach(s => s.classList.replace('text-yellow-400', 'text-gray-300'));
+                });
+
+                star.addEventListener('click', () => {
+                    if(video.hasVoted) {
+                        Swal.fire({ toast: true, position: 'top-end', icon: 'warning', title: 'คุณได้โหวตผลงานนี้ไปแล้ว!', showConfirmButton: false, timer: 2000 });
+                        return;
+                    }
+
+                    const score = index + 1;
+                    video.totalScore += score;
+                    video.hasVoted = true;
+
+                    // Lock visually
+                    stars.forEach((s, i) => {
+                        if(i <= index) s.classList.replace('text-gray-300', 'text-yellow-400');
+                        else s.classList.replace('text-yellow-400', 'text-gray-300');
+                        s.classList.remove('cursor-pointer');
+                    });
+
+                    // Hide raw score, Show "โหวตแล้ว"
+                    const display = document.getElementById(`score-display-${video.id}`);
+                    display.innerHTML = `<span class="text-green-500 font-bold ml-2 text-sm animate-pulse">โหวตแล้ว <i class="fa-solid fa-check"></i></span>`;
+
+                    // ส่งข้อมูลคะแนนไปเรียงเก็บเป็น Log ที่ Sheet หลังบ้าน
+                    sendDataToSheet('ADD_VOTE', { id: video.id, score: score });
+
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'บันทึกคะแนนโหวตสำเร็จ!', showConfirmButton: false, timer: 1500 });
+                });
+            });
+
+            // Comment Submit Logic
+            submitCommentBtn.addEventListener('click', () => {
+                const input = document.getElementById(`comment-input-${video.id}`);
+                const text = input.value.trim();
+                if(text) {
+                    const newComment = { user: "ผู้เยี่ยมชม", text: text };
+                    video.comments.push(newComment);
+                    
+                    const container = document.getElementById(`comments-${video.id}`);
+                    const commentEl = document.createElement('div');
+                    commentEl.classList.add('bg-gray-100', 'p-2', 'rounded', 'text-sm');
+                    commentEl.innerHTML = `<span class="font-bold text-blue-600">${newComment.user}:</span> <span class="text-gray-700">${text}</span>`;
+                    container.appendChild(commentEl);
+                    
+                    // Scroll to bottom
+                    container.scrollTop = container.scrollHeight;
+                    input.value = '';
+
+                    // ส่งข้อมูลคอมเมนต์ไป Sheet 
+                    sendDataToSheet('ADD_COMMENT', { id: video.id, text: text, user: "ผู้เยี่ยมชม" });
+                }
+            });
+        }
+
+        // Initialize App
+        renderGallery();
+
+    </script>
+</body>
+</html>
