@@ -461,7 +461,7 @@
                 : `<span class="text-sm text-slate-400 ml-2 vote-prompt">ให้คะแนน</span>`;
 
             const commentsInner = video.comments.length
-                ? video.comments.map(commentHtml).join('')
+                ? [...video.comments].reverse().map(commentHtml).join('')
                 : emptyCommentsHtml;
 
             card.innerHTML = `
@@ -501,8 +501,8 @@
 
                     <!-- Comments Section -->
                     <div class="mt-auto border-t border-slate-100 pt-4">
-                        <h5 class="text-sm font-semibold text-sky-700 mb-2 flex items-center gap-1"><i class="fa-regular fa-comments"></i>ความคิดเห็น</h5>
-                        <div class="comments-container max-h-32 overflow-y-auto mb-3 space-y-2 pr-1" id="comments-${video.id}">
+                        <h5 class="text-sm font-semibold text-sky-700 mb-2 flex items-center gap-1"><i class="fa-regular fa-comments"></i>ความคิดเห็น <span class="text-slate-400 font-medium" id="comment-count-${video.id}">(${video.comments.length})</span></h5>
+                        <div class="comments-container max-h-56 overflow-y-auto mb-3 space-y-2 pr-1" id="comments-${video.id}">
                             ${commentsInner}
                         </div>
                         <div class="flex gap-2 items-center">
@@ -615,10 +615,15 @@
 
                     const container = document.getElementById(`comments-${video.id}`);
                     if(isFirst) container.innerHTML = '';
-                    container.insertAdjacentHTML('beforeend', commentHtml(newComment));
+                    // คอมเมนต์ใหม่แสดงบนสุด
+                    container.insertAdjacentHTML('afterbegin', commentHtml(newComment));
 
-                    // Scroll to bottom
-                    container.scrollTop = container.scrollHeight;
+                    // อัปเดตตัวนับจำนวนความคิดเห็น
+                    const countEl = document.getElementById(`comment-count-${video.id}`);
+                    if (countEl) countEl.textContent = `(${video.comments.length})`;
+
+                    // เลื่อนขึ้นบนสุดเพื่อเห็นคอมเมนต์ล่าสุด
+                    container.scrollTop = 0;
                     input.value = '';
 
                     // ส่งข้อมูลคอมเมนต์ไป Sheet
