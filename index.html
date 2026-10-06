@@ -338,46 +338,29 @@
             });
         });
 
-        // Mock Data
-        let videoData = [
-            {
-                id: 1,
-                title: "ล้างมือให้สะอาด ปราศจากโรคภัย",
-                author: "น้องฟ้าใส",
-                organization: "โรงพยาบาลส่งเสริมสุขภาพ",
-                url: "https://www.w3schools.com/html/mov_bbb.mp4",
-                views: 890,
-                totalScore: 45,
-                hasVoted: false,
-                comments: []
-            },
-            {
-                id: 2,
-                title: "ล้างมือ 7 ขั้นตอน ป้องกันเชื้อโรค",
-                author: "โรงเรียนอนุบาลใจดี",
-                organization: "โรงเรียนอนุบาลใจดี",
-                url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-                views: 2450,
-                totalScore: 30,
-                hasVoted: false,
-                comments: []
-            },
-            {
-                id: 3,
-                title: "รณรงค์ล้างมือก่อนทานข้าว",
-                author: "ด.ช. ต้นน้ำ",
-                organization: "ชุมชนบ้านต้นน้ำ",
-                url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-                views: 1205,
-                totalScore: 20,
-                hasVoted: false,
-                comments: []
-            }
+        // ข้อมูลตัวอย่าง (ใช้เฉพาะโหมดสาธิต เมื่อยังไม่ได้ตั้งค่า URL ของ Google Apps Script)
+        const MOCK_DATA = [
+            { id: 1, title: "ล้างมือให้สะอาด ปราศจากโรคภัย", organization: "โรงพยาบาลส่งเสริมสุขภาพ", url: "https://www.w3schools.com/html/mov_bbb.mp4", views: 890, comments: [] },
+            { id: 2, title: "ล้างมือ 7 ขั้นตอน ป้องกันเชื้อโรค", organization: "โรงเรียนอนุบาลใจดี", url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", views: 2450, comments: [] },
+            { id: 3, title: "รณรงค์ล้างมือก่อนทานข้าว", organization: "ชุมชนบ้านต้นน้ำ", url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", views: 1205, comments: [] }
         ];
+
+        // โหมดสาธิต = ยังไม่ได้ใส่ URL จริงของ Apps Script
+        const DEMO_MODE = GOOGLE_SCRIPT_URL.includes('YOUR_WEB_APP_ID');
 
         const gallery = document.getElementById('gallery');
         const form = document.getElementById('submissionForm');
         const clipCount = document.getElementById('clipCount');
+
+        // เก็บสถานะเฉพาะเครื่องนี้ (โหวตแล้ว / นับวิวแล้ว) กันโหวตซ้ำและนับวิวซ้ำเมื่อรีเฟรช
+        function getSet(key) { try { return new Set(JSON.parse(localStorage.getItem(key) || '[]')); } catch (e) { return new Set(); } }
+        function addToSet(key, id) { const s = getSet(key); s.add(String(id)); try { localStorage.setItem(key, JSON.stringify([...s])); } catch (e) {} }
+        function hasInSet(key, id) { return getSet(key).has(String(id)); }
+        const VOTED_KEY = 'ghd_voted';
+        const VIEWED_KEY = 'ghd_viewed';
+
+        // เก็บออบเจกต์วิดีโอที่ผูกกับการ์ด (id -> video) เพื่ออัปเดตในที่โดยไม่สร้างการ์ดใหม่
+        const videoMap = new Map();
 
         // Format number with thousands separator
         function formatViews(n) {
@@ -391,21 +374,19 @@
             const organization = document.getElementById('organization').value;
             const url = document.getElementById('videoUrl').value;
 
-            const newId = Date.now();
             const newVideo = {
-                id: newId,
+                id: Date.now(),
                 title: title,
                 author: title,
                 organization: organization,
                 url: url,
                 views: 0,
-                totalScore: 0,
                 hasVoted: false,
                 comments: []
             };
 
-            videoData.push(newVideo);
-            renderGallery();
+            // แสดงการ์ดทันที (optimistic) แล้วรอบรีเฟรชถัดไปจะดึงของจริงจาก Sheet (id เดียวกัน ไม่ซ้ำ)
+            upsertVideos([newVideo]);
             form.reset();
 
             // ส่งข้อมูลไปบันทึกบน Google Sheet (เรียงแถว)
@@ -423,15 +404,84 @@
             });
         });
 
-        // Render Cards
-        function renderGallery() {
-            gallery.innerHTML = '';
-            videoData.forEach(video => {
-                const card = createCardDOM(video);
-                gallery.appendChild(card);
-                attachCardEvents(card, video);
+        // เพิ่มการ์ดใหม่ / อัปเดตการ์ดเดิมในที่ (ไม่ล้างทั้งแกลเลอรี จึงไม่กระชากวิดีโอที่กำลังเล่น)
+        function upsertVideos(list) {
+            list.forEach(v => {
+                const id = String(v.id);
+                v.hasVoted = hasInSet(VOTED_KEY, id);
+                v.comments = Array.isArray(v.comments) ? v.comments : [];
+                v.author = v.author || v.title;
+                const existing = videoMap.get(id);
+                if (!existing) {
+                    videoMap.set(id, v);
+                    const card = createCardDOM(v);
+                    gallery.appendChild(card);
+                    attachCardEvents(card, v);
+                } else {
+                    updateCardData(existing, v);
+                }
             });
-            clipCount.textContent = `${videoData.length} คลิป`;
+            clipCount.textContent = `${videoMap.size} คลิป`;
+        }
+
+        // อัปเดตข้อมูลบนการ์ดเดิม: ยอดวิว และความคิดเห็น (ข้ามถ้าผู้ใช้กำลังพิมพ์คอมเมนต์อยู่)
+        function updateCardData(video, incoming) {
+            const id = String(video.id);
+
+            // ยอดวิว (ให้ค่าจากเซิร์ฟเวอร์เป็นหลัก แต่ไม่ลดต่ำกว่าที่แสดงอยู่ เพื่อไม่ให้กระพริบหลังเพิ่งนับเอง)
+            if (typeof incoming.views === 'number') {
+                video.views = Math.max(video.views || 0, incoming.views);
+                const viewsEl = document.getElementById(`views-${id}`);
+                if (viewsEl) viewsEl.innerText = formatViews(video.views);
+            }
+
+            // ความคิดเห็น — อัปเดตเมื่อจำนวนเปลี่ยน และผู้ใช้ไม่ได้กำลังพิมพ์อยู่
+            const incomingComments = Array.isArray(incoming.comments) ? incoming.comments : video.comments;
+            const input = document.getElementById(`comment-input-${id}`);
+            const typing = input && document.activeElement === input;
+            if (!typing && incomingComments.length !== video.comments.length) {
+                video.comments = incomingComments;
+                const container = document.getElementById(`comments-${id}`);
+                if (container) {
+                    container.innerHTML = incomingComments.length
+                        ? [...incomingComments].reverse().map(commentHtml).join('')
+                        : emptyCommentsHtml;
+                }
+                const countEl = document.getElementById(`comment-count-${id}`);
+                if (countEl) countEl.textContent = `(${incomingComments.length})`;
+            }
+        }
+
+        // โหลดข้อมูลจาก Google Sheet แบบ JSONP (เลี่ยงปัญหา CORS ข้ามโดเมน)
+        function fetchFromSheet() {
+            if (DEMO_MODE) return;
+            const cb = 'ghdcb_' + Date.now();
+            const script = document.createElement('script');
+            window[cb] = function(data) {
+                try {
+                    const list = (data || []).map(d => ({
+                        id: d.id,
+                        title: d.title,
+                        author: d.title,
+                        organization: d.organization,
+                        url: d.url,
+                        views: Number(d.views) || 0,
+                        comments: Array.isArray(d.comments) ? d.comments : []
+                    }));
+                    upsertVideos(list);
+                } catch (err) {
+                    console.error('ประมวลผลข้อมูลจาก Sheet ไม่สำเร็จ:', err);
+                }
+                delete window[cb];
+                script.remove();
+            };
+            script.src = GOOGLE_SCRIPT_URL + '?callback=' + cb + '&t=' + Date.now();
+            script.onerror = function() {
+                console.error('โหลดข้อมูลจาก Sheet ไม่สำเร็จ');
+                delete window[cb];
+                script.remove();
+            };
+            document.body.appendChild(script);
         }
 
         // Comment markup helper
@@ -447,6 +497,7 @@
         // Generate Card DOM Structure
         function createCardDOM(video) {
             const card = document.createElement('div');
+            card.id = `card-${video.id}`;
             card.classList.add('work-card', 'bg-white', 'rounded-3xl', 'shadow-lg', 'shadow-sky-100', 'overflow-hidden', 'flex', 'flex-col', 'border', 'border-sky-50');
 
             // Generate Stars HTML
@@ -543,13 +594,14 @@
                 vidElement.play();
                 if (tapHint) tapHint.style.display = 'none';
 
-                // นับยอดวิวครั้งแรกที่เปิดดูจริง
-                if(!vidElement.dataset.viewed) {
-                    video.views += 1;
-                    document.getElementById(`views-${video.id}`).innerText = formatViews(video.views);
-                    vidElement.dataset.viewed = "true";
+                // นับยอดวิวครั้งแรกที่เปิดดูจริง (ครั้งเดียวต่อเครื่องนี้ แม้รีเฟรช)
+                if(!hasInSet(VIEWED_KEY, video.id)) {
+                    addToSet(VIEWED_KEY, video.id);
+                    video.views = (video.views || 0) + 1;
+                    const viewsEl = document.getElementById(`views-${video.id}`);
+                    if (viewsEl) viewsEl.innerText = formatViews(video.views);
                     // ส่งข้อมูลเข้า Sheet
-                    sendDataToSheet('ADD_VIEW', { id: video.id });
+                    sendDataToSheet('ADD_VIEW', { id: video.id, device: deviceId() });
                 }
             });
 
@@ -583,8 +635,8 @@
                     }
 
                     const score = index + 1;
-                    video.totalScore += score;
                     video.hasVoted = true;
+                    addToSet(VOTED_KEY, video.id); // จำว่าเครื่องนี้โหวตคลิปนี้แล้ว
 
                     // Lock visually
                     stars.forEach((s, i) => {
@@ -598,7 +650,7 @@
                     display.innerHTML = `<span class="text-green-500 font-semibold ml-2 text-sm animate-pulse">โหวตแล้ว <i class="fa-solid fa-check"></i></span>`;
 
                     // ส่งข้อมูลคะแนนไปเรียงเก็บเป็น Log ที่ Sheet หลังบ้าน
-                    sendDataToSheet('ADD_VOTE', { id: video.id, score: score });
+                    sendDataToSheet('ADD_VOTE', { id: video.id, score: score, device: deviceId() });
 
                     notify('success', 'บันทึกคะแนนโหวตสำเร็จ!');
                 });
@@ -627,7 +679,7 @@
                     input.value = '';
 
                     // ส่งข้อมูลคอมเมนต์ไป Sheet
-                    sendDataToSheet('ADD_COMMENT', { id: video.id, text: text, user: "ผู้เยี่ยมชม" });
+                    sendDataToSheet('ADD_COMMENT', { id: video.id, text: text, user: "ผู้เยี่ยมชม", device: deviceId() });
                 }
             });
 
@@ -637,8 +689,26 @@
             });
         }
 
-        // Initialize App
-        renderGallery();
+        // สร้าง/อ่านรหัสประจำเครื่อง (ไว้แนบกับ view/vote/comment เผื่อวิเคราะห์ภายหลัง)
+        function deviceId() {
+            let d = '';
+            try { d = localStorage.getItem('ghd_device') || ''; } catch (e) {}
+            if (!d) {
+                d = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+                try { localStorage.setItem('ghd_device', d); } catch (e) {}
+            }
+            return d;
+        }
+
+        // เริ่มทำงาน
+        if (DEMO_MODE) {
+            // ยังไม่ได้ตั้งค่า Apps Script -> แสดงข้อมูลตัวอย่าง
+            upsertVideos(MOCK_DATA);
+        } else {
+            // โหลดข้อมูลจริงจาก Google Sheet แล้วรีเฟรชอัตโนมัติทุก 10 วินาที
+            fetchFromSheet();
+            setInterval(fetchFromSheet, 10000);
+        }
 
     </script>
 </body>
