@@ -801,7 +801,7 @@
 
                 star.addEventListener('click', () => {
                     if(!isVotingEnabled()) {
-                        notify('info', 'ขณะนี้ปิดระบบโหวตชั่วคราว');
+                        notify('warning', 'ปิดระบบโหวตแล้ว ขณะนี้ไม่สามารถให้คะแนนได้');
                         return;
                     }
                     if(video.hasVoted) {
