@@ -114,6 +114,22 @@ function doPost(e) {
           }
         }
       }
+    } else if (action === 'DELETE_VIDEO') {
+      // แอดมินลบคลิป — ต้องมีรหัสแอดมินที่ถูกต้อง
+      if (!isAdmin(ss, payload.key)) {
+        return jsonOut({ ok: false, error: 'unauthorized' });
+      }
+      const sh = ss.getSheetByName(TAB_SUBMISSIONS);
+      const n = sh.getLastRow() - 1;
+      if (n > 0) {
+        const ids = sh.getRange(2, 2, n, 1).getValues(); // คอลัมน์ B = VideoID
+        for (let i = 0; i < ids.length; i++) {
+          if (String(ids[i][0]) === String(payload.id)) {
+            sh.deleteRow(i + 2);
+            break;
+          }
+        }
+      }
     } else if (action === 'SET_SETTING') {
       // แอดมินแก้ค่าใน Settings (เช่น เปิด/ปิดโหวต) — ต้องมีรหัสแอดมิน
       if (!isAdmin(ss, payload.key)) {

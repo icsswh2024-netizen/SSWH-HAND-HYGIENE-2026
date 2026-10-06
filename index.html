@@ -1175,11 +1175,40 @@
                         <div class="text-xs text-slate-400 truncate">${it.organization || ''} · <a href="${it.url}" target="_blank" rel="noopener" class="text-sky-600 hover:underline">ดูคลิป</a></div>
                         <div class="mt-1">${statusBadge(it)}</div>
                     </div>
-                    ${btn}
+                    <div class="flex items-center gap-2 shrink-0">
+                        ${btn}
+                        <button class="admin-delete text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-600 px-3 py-1.5 rounded-lg transition whitespace-nowrap" data-id="${it.id}" data-title="${(it.title || '').replace(/"/g, '&quot;')}"><i class="fa-solid fa-trash-can mr-1"></i>ลบ</button>
+                    </div>
                 </div>`;
             }).join('');
             list.querySelectorAll('.admin-publish').forEach(b => b.addEventListener('click', () => setStatus(b.dataset.id, 'approved')));
             list.querySelectorAll('.admin-unpublish').forEach(b => b.addEventListener('click', () => setStatus(b.dataset.id, 'hidden')));
+            list.querySelectorAll('.admin-delete').forEach(b => b.addEventListener('click', () => confirmDelete(b.dataset.id, b.dataset.title)));
+        }
+
+        // ยืนยันก่อนลบ แล้วลบคลิปออกจาก Sheet
+        function confirmDelete(id, title) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'ยืนยันการลบ?',
+                html: `ต้องการลบผลงาน<br><b>"${title || '(ไม่มีชื่อ)'}"</b><br>การลบไม่สามารถกู้คืนได้`,
+                showCancelButton: true,
+                confirmButtonText: 'ลบเลย',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#e11d48',
+                cancelButtonColor: '#94a3b8',
+                customClass: { popup: 'swal-warning', confirmButton: 'swal-confirm-btn' }
+            }).then(r => {
+                if (!r.isConfirmed) return;
+                sendDataToSheet('DELETE_VIDEO', { id: id, key: getAdminKey() });
+                // เอาการ์ดในแกลเลอรีออกทันที (ถ้ามี)
+                const card = document.getElementById(`card-${id}`);
+                if (card) card.remove();
+                videoMap.delete(String(id));
+                notify('success', 'ลบผลงานแล้ว');
+                setTimeout(fetchFromSheet, 1500);
+                setTimeout(loadPending, 1600);
+            });
         }
 
         function setStatus(id, status) {
