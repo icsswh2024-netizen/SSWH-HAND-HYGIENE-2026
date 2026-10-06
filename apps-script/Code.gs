@@ -35,7 +35,8 @@ function setup() {
   // แท็บตั้งค่าหน้าเว็บ (แก้ข้อความได้โดยไม่ต้องแตะโค้ด)
   const settings = ensureSheet(ss, TAB_SETTINGS, ['Key', 'Value']);
   if (settings.getLastRow() < 2) {
-    settings.getRange(2, 1, 6, 2).setValues([
+    settings.getRange(2, 1, 7, 2).setValues([
+      ['adminKey', 'sswh2026'],
       ['requireApproval', 'TRUE'],
       ['title', 'วันล้างมือโลก'],
       ['subtitle', 'Global Handwashing Day Video Contest'],
@@ -91,6 +92,22 @@ function doPost(e) {
       ss.getSheetByName(TAB_VOTES).appendRow([now, payload.id, payload.score, payload.device || '']);
     } else if (action === 'ADD_COMMENT') {
       ss.getSheetByName(TAB_COMMENTS).appendRow([now, payload.id, payload.user || 'ผู้เยี่ยมชม', payload.text || '', payload.device || '']);
+    } else if (action === 'SET_STATUS') {
+      // แอดมินอนุมัติ/ปฏิเสธคลิป — ต้องมีรหัสแอดมินที่ถูกต้อง
+      if (String(payload.key || '') !== String(getSettings(ss).adminKey || '')) {
+        return jsonOut({ ok: false, error: 'unauthorized' });
+      }
+      const sh = ss.getSheetByName(TAB_SUBMISSIONS);
+      const n = sh.getLastRow() - 1;
+      if (n > 0) {
+        const ids = sh.getRange(2, 2, n, 1).getValues(); // คอลัมน์ B = VideoID
+        for (let i = 0; i < ids.length; i++) {
+          if (String(ids[i][0]) === String(payload.id)) {
+            sh.getRange(i + 2, 6).setValue(payload.status); // คอลัมน์ F = Status
+            break;
+          }
+        }
+      }
     } else {
       return jsonOut({ ok: false, error: 'unknown action: ' + action });
     }
@@ -136,7 +153,25 @@ function doGet(e) {
       };
     });
 
-  const payload = { settings: getSettings(ss), videos: videos };
+  const settings = getSettings(ss);
+  const publicSettings = Object.assign({}, settings);
+  delete publicSettings.adminKey; // ไม่ส่งรหัสแอดมินออกไปให้ทุกคน
+
+  const payload = { settings: publicSettings, videos: videos };
+
+  // ถ้าใส่ ?admin=<รหัส> ถูกต้อง -> แนบรายการคลิปที่ยังไม่อนุมัติมาด้วย (สำหรับเมนูแอดมิน)
+  const adminKey = e && e.parameter && e.parameter.admin;
+  if (adminKey && String(adminKey) === String(settings.adminKey || '')) {
+    payload.pending = subs
+      .filter(r => VISIBLE_STATUS.indexOf(String(r[5] || '').toLowerCase()) === -1)
+      .map(r => ({
+        id: r[1],
+        title: String(r[2]),
+        organization: String(r[3]),
+        url: String(r[4]),
+        status: String(r[5] || '')
+      }));
+  }
 
   // JSONP (เลี่ยง CORS) ถ้ามี callback, ไม่งั้นส่ง JSON ปกติ
   const callback = e && e.parameter && e.parameter.callback;
