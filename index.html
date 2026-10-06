@@ -646,8 +646,8 @@
                 <div style="display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid #f1f5f9;text-align:left">
                     <div style="width:30px;text-align:center;font-size:18px">${rankCell}</div>
                     <div style="flex:1;min-width:0">
-                        <div style="font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.title || '(ไม่มีชื่อ)'}</div>
-                        <div style="font-size:12px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.organization || ''}</div>
+                        <div style="font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(v.title || '(ไม่มีชื่อ)')}</div>
+                        <div style="font-size:12px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(v.organization || '')}</div>
                     </div>
                     <div style="text-align:right;white-space:nowrap">
                         <div style="color:#f59e0b;font-weight:700">⭐ ${avg}</div>
@@ -823,11 +823,18 @@
             document.body.appendChild(script);
         }
 
+        // ป้องกัน XSS / การ์ดเพี้ยน: แปลงอักขระพิเศษก่อนใส่ลง HTML
+        function escapeHtml(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
         // Comment markup helper
         function commentHtml(c) {
             return `
                 <div class="bg-sky-50 border border-sky-100 px-3 py-2 rounded-xl text-sm">
-                    <span class="font-semibold text-blue-600">${c.user}:</span> <span class="text-slate-600">${c.text}</span>
+                    <span class="font-semibold text-blue-600">${escapeHtml(c.user)}:</span> <span class="text-slate-600">${escapeHtml(c.text)}</span>
                 </div>`;
         }
 
@@ -869,7 +876,7 @@
             }
             // ไฟล์วิดีโอตรง: พรีวิวเงียบอัตโนมัติ + แตะเพื่อเปิดเสียง/แถบควบคุม
             return `
-                <video src="${v.url}" autoplay loop muted playsinline preload="metadata" data-id="${video.id}"></video>
+                <video src="${escapeHtml(v.url)}" autoplay loop muted playsinline preload="metadata" data-id="${video.id}"></video>
                 <div class="tap-hint absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 bg-black/25" id="hint-${video.id}">
                     <span class="flex flex-col items-center text-white drop-shadow">
                         <i class="fa-solid fa-volume-xmark text-3xl"></i>
@@ -913,9 +920,9 @@
 
             card.innerHTML = `
                 <div class="px-5 pt-5 pb-3">
-                    <h4 class="font-display text-lg font-semibold text-slate-800 leading-snug truncate" title="${video.title}">${video.title}</h4>
-                    <p class="text-sm text-cyan-600 font-medium mt-1"><i class="fa-solid fa-pen-nib mr-1"></i>โดย ${video.author}</p>
-                    ${video.organization ? `<p class="text-xs text-slate-400 mt-0.5 truncate" title="${video.organization}"><i class="fa-solid fa-building mr-1"></i>${video.organization}</p>` : ''}
+                    <h4 class="font-display text-lg font-semibold text-slate-800 leading-snug truncate" title="${escapeHtml(video.title)}">${escapeHtml(video.title)}</h4>
+                    <p class="text-sm text-cyan-600 font-medium mt-1"><i class="fa-solid fa-pen-nib mr-1"></i>โดย ${escapeHtml(video.author)}</p>
+                    ${video.organization ? `<p class="text-xs text-slate-400 mt-0.5 truncate" title="${escapeHtml(video.organization)}"><i class="fa-solid fa-building mr-1"></i>${escapeHtml(video.organization)}</p>` : ''}
                 </div>
 
                 <div class="px-5">
@@ -1204,13 +1211,13 @@
                 return `
                 <div class="flex items-center gap-3 border border-slate-200 rounded-xl px-3 py-2" data-pid="${it.id}">
                     <div class="min-w-0 flex-1">
-                        <div class="font-semibold text-slate-800 text-sm truncate">${it.title || '(ไม่มีชื่อ)'}</div>
-                        <div class="text-xs text-slate-400 truncate">${it.organization || ''} · <a href="${it.url}" target="_blank" rel="noopener" class="text-sky-600 hover:underline">ดูคลิป</a></div>
+                        <div class="font-semibold text-slate-800 text-sm truncate">${escapeHtml(it.title || '(ไม่มีชื่อ)')}</div>
+                        <div class="text-xs text-slate-400 truncate">${escapeHtml(it.organization || '')} · <a href="${escapeHtml(it.url)}" target="_blank" rel="noopener" class="text-sky-600 hover:underline">ดูคลิป</a></div>
                         <div class="mt-1">${statusBadge(it)}</div>
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
                         ${btn}
-                        <button class="admin-delete text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-600 px-3 py-1.5 rounded-lg transition whitespace-nowrap" data-id="${it.id}" data-title="${(it.title || '').replace(/"/g, '&quot;')}"><i class="fa-solid fa-trash-can mr-1"></i>ลบ</button>
+                        <button class="admin-delete text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-600 px-3 py-1.5 rounded-lg transition whitespace-nowrap" data-id="${it.id}" data-title="${escapeHtml(it.title || '')}"><i class="fa-solid fa-trash-can mr-1"></i>ลบ</button>
                     </div>
                 </div>`;
             }).join('');
