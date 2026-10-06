@@ -588,25 +588,26 @@
         }
         createBubbles();
 
-        // ฟองเด้งในแถบหัวเว็บ 10 ฟอง คละขนาด
-        function createHeaderBubbles() {
+        // ฟองเด้งในแถบหัวเว็บ — คละขนาด (minSize–maxSize)
+        function addHeaderBubbles(count, minSize, maxSize) {
             const container = document.getElementById('headerBubbles');
             if (!container) return;
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < count; i++) {
                 const bubble = document.createElement('div');
                 bubble.classList.add('hbubble');
-                const size = Math.round(Math.random() * 52 + 14); // 14–66px คละขนาด
+                const size = Math.round(Math.random() * (maxSize - minSize) + minSize);
                 bubble.style.width = size + 'px';
                 bubble.style.height = size + 'px';
-                bubble.style.left = Math.random() * 92 + '%';
-                bubble.style.top = Math.random() * 70 + '%';
-                bubble.style.opacity = (Math.random() * 0.35 + 0.2).toFixed(2);
-                bubble.style.animationDuration = (Math.random() * 2.5 + 2).toFixed(2) + 's';
+                bubble.style.left = Math.random() * 94 + '%';
+                bubble.style.top = Math.random() * 75 + '%';
+                bubble.style.opacity = (Math.random() * 0.3 + 0.15).toFixed(2);
+                bubble.style.animationDuration = (Math.random() * 2.8 + 2).toFixed(2) + 's';
                 bubble.style.animationDelay = (Math.random() * 2).toFixed(2) + 's';
                 container.appendChild(bubble);
             }
         }
-        createHeaderBubbles();
+        addHeaderBubbles(10, 14, 66);    // ชุดแรก คละขนาดเล็ก-กลาง
+        addHeaderBubbles(10, 70, 140);   // ชุดใหญ่ คละไซซ์ใหญ่
 
         // การตั้งค่าหน้าเว็บ (อ่านจากแท็บ Settings ใน Google Sheet)
         let siteSettings = {};
