@@ -98,7 +98,8 @@ const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_WEB_APP_ID/ex
 | `requireApproval` | `TRUE` = ต้องอนุมัติก่อนแสดง, `FALSE` = แสดงทันที |
 | `title` | ชื่อหัวเว็บใหญ่ (เช่น วันล้างมือโลก) |
 | `subtitle` | ข้อความบรรทัดรอง (ภาษาอังกฤษ) |
-| `rules` | กล่องกติกา (ใส่ HTML ได้ เช่น `<br>`, `<b>`) |
+| `rules` | กล่องกติกาในหัวเว็บ (ใส่ HTML ได้ เช่น `<br>`, `<b>`) |
+| `rulesFull` | เนื้อหากติกาแบบเต็มในป๊อปอัปปุ่ม "กติกา" (ใส่ HTML ได้ · เว้นว่าง = ใช้ค่าตั้งต้น) |
 | `resultTitle` / `resultMessage` | หัวข้อ/ข้อความของป๊อปอัปปุ่ม "ผล Vote" |
 
 ---

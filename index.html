@@ -208,9 +208,14 @@
         <div class="w-full max-w-none px-6 md:px-12 relative">
 
             <!-- ปุ่มดูผลโหวต -->
-            <button id="viewResultsBtn" class="absolute top-0 right-0 bg-white/95 text-blue-700 px-5 py-2 rounded-full shadow-lg hover:bg-white transition font-display font-semibold text-sm flex items-center backdrop-blur">
-                <i class="fa-solid fa-chart-column mr-2"></i> ผล Vote
-            </button>
+            <div class="absolute top-0 right-0 flex gap-2">
+                <button id="rulesBtn" class="bg-white/20 text-white border border-white/40 px-5 py-2 rounded-full shadow-lg hover:bg-white/30 transition font-display font-semibold text-sm flex items-center backdrop-blur">
+                    <i class="fa-solid fa-circle-info mr-2"></i> กติกา
+                </button>
+                <button id="viewResultsBtn" class="bg-white/95 text-blue-700 px-5 py-2 rounded-full shadow-lg hover:bg-white transition font-display font-semibold text-sm flex items-center backdrop-blur">
+                    <i class="fa-solid fa-chart-column mr-2"></i> ผล Vote
+                </button>
+            </div>
 
             <div class="text-center pt-6">
                 <h1 class="font-display text-4xl md:text-6xl font-bold mb-2 flex items-center justify-center gap-3 drop-shadow-sm">
@@ -476,6 +481,37 @@
                 if (box) box.innerHTML = siteSettings.rules; // แอดมินใส่ข้อความ/HTML ได้ (เช่น <br>, <b>)
             }
         }
+
+        // ข้อความกติกาเริ่มต้น (แอดมินแก้ได้ที่แท็บ Settings คีย์ rulesFull — ใส่ HTML ได้)
+        const DEFAULT_RULES = `
+            <div style="text-align:left;font-family:Kanit,sans-serif;color:#334155;line-height:1.7">
+                <p style="margin:0 0 10px"><b>หัวข้อ:</b> คลิปวิดีโอสร้างสรรค์รณรงค์การล้างมือ 7 ขั้นตอนอย่างถูกวิธี</p>
+                <p style="margin:0 0 6px"><b>กติกาการส่งผลงาน</b></p>
+                <ol style="margin:0 0 10px;padding-left:20px">
+                    <li>อัปโหลดคลิปเป็นไฟล์ MP4 หรือลิงก์ Google Drive / YouTube</li>
+                    <li>ความยาวคลิปไม่เกิน 3 นาที</li>
+                    <li>เนื้อหาสื่อถึงการล้างมือ 7 ขั้นตอนอย่างถูกต้อง</li>
+                    <li>กรอกชื่อผลงาน/ผู้เข้าแข่งขัน และหน่วยงานให้ครบถ้วน</li>
+                    <li>ผลงานต้องผ่านการอนุมัติจากแอดมินก่อนแสดงบนเว็บ</li>
+                </ol>
+                <p style="margin:0 0 6px"><b>การตัดสิน</b></p>
+                <ul style="margin:0;padding-left:20px">
+                    <li>ให้คะแนนด้วยดาว 1–5 ดาว (1 เครื่อง/1 โหวตต่อคลิป)</li>
+                    <li>ตัดสินจากคะแนนเฉลี่ยสูงสุด เมื่อแอดมินปิดระบบโหวต</li>
+                </ul>
+            </div>`;
+
+        // ปุ่ม "กติกา"
+        document.getElementById('rulesBtn').addEventListener('click', () => {
+            Swal.fire({
+                title: '<span style="font-family:Kanit,sans-serif">📋 กติกาการประกวด</span>',
+                html: `<div style="max-height:62vh;overflow:auto">${siteSettings.rulesFull || DEFAULT_RULES}</div>`,
+                width: 560,
+                confirmButtonText: 'รับทราบ',
+                confirmButtonColor: '#2563eb',
+                customClass: { popup: 'swal-info', confirmButton: 'swal-confirm-btn' }
+            });
+        });
 
         // ปุ่ม "ผล Vote"
         document.getElementById('viewResultsBtn').addEventListener('click', () => {
