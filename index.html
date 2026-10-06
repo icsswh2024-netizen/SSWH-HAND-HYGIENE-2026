@@ -280,6 +280,13 @@
                     ส่งผลงานวิดีโอสร้างสรรค์รณรงค์การล้างมือให้ถูกวิธี 7 ขั้นตอน<br>
                     <span class="font-semibold text-white">กติกา:</span> แนบลิงก์ผลงาน (MP4) อัปโหลดเพื่อร่วมสนุก ให้คะแนน และคอมเมนต์เป็นกำลังใจ!
                 </div>
+
+                <!-- ยอดเยี่ยมชมเว็บไซต์ -->
+                <div class="mt-5 flex justify-center">
+                    <span class="inline-flex items-center gap-2 bg-white/20 border border-white/30 text-white text-sm font-display font-semibold px-4 py-1.5 rounded-full backdrop-blur">
+                        <i class="fa-solid fa-eye"></i>เยี่ยมชมเว็บไซต์ <span id="siteVisits">—</span> ครั้ง
+                    </span>
+                </div>
             </div>
         </div>
     </header>
@@ -879,6 +886,10 @@
                     // รองรับทั้งรูปแบบใหม่ { settings, videos } และแบบเก่า (อาร์เรย์)
                     const videos = Array.isArray(data) ? data : (data && data.videos) || [];
                     if (data && data.settings) applySettings(data.settings);
+                    if (data && typeof data.siteVisits === 'number') {
+                        const el = document.getElementById('siteVisits');
+                        if (el) el.textContent = Number(data.siteVisits).toLocaleString('en-US');
+                    }
                     const list = videos.map(d => ({
                         id: d.id,
                         title: d.title,
@@ -1402,6 +1413,15 @@
             // ยังไม่ได้ตั้งค่า Apps Script -> แสดงข้อมูลตัวอย่าง
             upsertVideos(MOCK_DATA);
         } else {
+            // นับยอดเยี่ยมชมเว็บไซต์ 1 ครั้งต่อการเข้าชม 1 เซสชัน (รีเฟรชในเซสชันเดิมไม่นับซ้ำ)
+            try {
+                if (!sessionStorage.getItem('ghd_visited')) {
+                    sessionStorage.setItem('ghd_visited', '1');
+                    sendDataToSheet('ADD_VISIT', { device: deviceId() });
+                }
+            } catch (e) {
+                sendDataToSheet('ADD_VISIT', { device: deviceId() });
+            }
             // โหลดข้อมูลจริงจาก Google Sheet แล้วรีเฟรชอัตโนมัติทุก 10 วินาที
             fetchFromSheet();
             setInterval(fetchFromSheet, 10000);

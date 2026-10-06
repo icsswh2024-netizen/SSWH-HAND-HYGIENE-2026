@@ -20,6 +20,7 @@ const TAB_VIEWS       = 'Views';
 const TAB_VOTES       = 'Votes';
 const TAB_COMMENTS    = 'Comments';
 const TAB_SETTINGS    = 'Settings';
+const TAB_VISITS      = 'Visits';
 
 // สถานะที่จะ "แสดงบนเว็บ" (คลิปที่แอดมินอนุมัติแล้ว)
 const VISIBLE_STATUS = ['approved', 'active'];
@@ -31,6 +32,7 @@ function setup() {
   ensureSheet(ss, TAB_VIEWS,    ['Timestamp', 'VideoID', 'DeviceID']);
   ensureSheet(ss, TAB_VOTES,    ['Timestamp', 'VideoID', 'Score', 'DeviceID']);
   ensureSheet(ss, TAB_COMMENTS, ['Timestamp', 'VideoID', 'ผู้แสดงความเห็น', 'ข้อความ', 'DeviceID']);
+  ensureSheet(ss, TAB_VISITS,   ['Timestamp', 'DeviceID']);
 
   // แท็บตั้งค่าหน้าเว็บ (แก้ข้อความได้โดยไม่ต้องแตะโค้ด)
   const settings = ensureSheet(ss, TAB_SETTINGS, ['Key', 'Value']);
@@ -98,6 +100,8 @@ function doPost(e) {
       ss.getSheetByName(TAB_VOTES).appendRow([now, payload.id, payload.score, payload.device || '']);
     } else if (action === 'ADD_COMMENT') {
       ss.getSheetByName(TAB_COMMENTS).appendRow([now, payload.id, payload.user || 'ผู้เยี่ยมชม', payload.text || '', payload.device || '']);
+    } else if (action === 'ADD_VISIT') {
+      ss.getSheetByName(TAB_VISITS).appendRow([now, payload.device || '']);
     } else if (action === 'SET_STATUS') {
       // แอดมินเผยแพร่/หยุดเผยแพร่คลิป — ต้องมีรหัสแอดมินที่ถูกต้อง
       if (!isAdmin(ss, payload.key)) {
@@ -233,7 +237,11 @@ function doGet(e) {
   const publicSettings = Object.assign({}, settings);
   delete publicSettings.adminKey; // ไม่ส่งรหัสแอดมินออกไปให้ทุกคน
 
-  const payload = { settings: publicSettings, videos: videos, resultsReleased: votingOff };
+  // ยอดเยี่ยมชมเว็บไซต์รวม
+  const visitSheet = ss.getSheetByName(TAB_VISITS);
+  const siteVisits = (visitSheet && visitSheet.getLastRow() > 1) ? visitSheet.getLastRow() - 1 : 0;
+
+  const payload = { settings: publicSettings, videos: videos, resultsReleased: votingOff, siteVisits: siteVisits };
 
   // ถ้าใส่ ?admin=<รหัส> ถูกต้อง -> แนบรายการคลิป "ทั้งหมด" + สถิติ (สำหรับตารางจัดการ + แดชบอร์ด)
   const adminKey = e && e.parameter && e.parameter.admin;

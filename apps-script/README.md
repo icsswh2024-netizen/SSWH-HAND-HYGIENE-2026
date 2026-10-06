@@ -61,6 +61,7 @@ const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_WEB_APP_ID/ex
 | `ADD_VOTE` | `{ id, score, device }` |
 | `ADD_COMMENT` | `{ id, user, text, device }` |
 | `DELETE_COMMENT` | `{ id, user, text, key }` (แอดมินลบคอมเมนต์) |
+| `ADD_VISIT` | `{ device }` (นับยอดเยี่ยมชมเว็บไซต์ 1 ครั้ง/เซสชัน) |
 
 ---
 
