@@ -284,15 +284,25 @@
                 <button id="adminClose" class="text-white/90 hover:text-white text-2xl leading-none">&times;</button>
             </div>
             <div class="p-5 overflow-y-auto">
-                <div class="flex flex-wrap gap-2 mb-5">
+                <div class="flex flex-wrap gap-2 mb-4">
                     <a id="adminSheetLink" target="_blank" rel="noopener" class="text-sm bg-sky-50 text-sky-700 px-3 py-2 rounded-lg font-medium hover:bg-sky-100 transition"><i class="fa-solid fa-table-cells mr-1"></i>เปิด Google Sheet</a>
                     <button id="adminRefresh" class="text-sm bg-slate-100 text-slate-600 px-3 py-2 rounded-lg font-medium hover:bg-slate-200 transition"><i class="fa-solid fa-rotate mr-1"></i>รีเฟรช</button>
                     <button id="adminLogout" class="text-sm bg-rose-50 text-rose-600 px-3 py-2 rounded-lg font-medium hover:bg-rose-100 transition"><i class="fa-solid fa-right-from-bracket mr-1"></i>ออกจากระบบ</button>
                 </div>
+
+                <!-- ควบคุมระบบโหวต -->
+                <div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-5">
+                    <div>
+                        <div class="font-semibold text-slate-700 text-sm"><i class="fa-solid fa-star text-amber-400 mr-1"></i>ระบบโหวต</div>
+                        <div class="text-xs text-slate-400">ปิดโหวตได้ โดยที่ผู้ชมยังดูคลิป/คอมเมนต์ได้ปกติ</div>
+                    </div>
+                    <button id="adminVotingToggle" class="text-sm font-semibold px-4 py-2 rounded-lg transition"></button>
+                </div>
+
                 <h4 class="font-display font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-clipboard-check text-amber-500"></i>คลิปรออนุมัติ <span id="adminPendingCount" class="text-slate-400 font-normal"></span>
+                    <i class="fa-solid fa-list-check text-sky-500"></i>จัดการการเผยแพร่ <span id="adminPendingCount" class="text-slate-400 font-normal"></span>
                 </h4>
-                <div id="adminPendingList" class="space-y-2.5"></div>
+                <div id="adminPendingList" class="space-y-2"></div>
             </div>
         </div>
     </div>
@@ -676,6 +686,10 @@
                 });
 
                 star.addEventListener('click', () => {
+                    if(!isVotingEnabled()) {
+                        notify('info', 'ขณะนี้ปิดระบบโหวตชั่วคราว');
+                        return;
+                    }
                     if(video.hasVoted) {
                         notify('warning', 'คุณได้โหวตผลงานนี้ไปแล้ว!');
                         return;
@@ -764,20 +778,22 @@
             loadPending();
         }
 
-        // โหลดคลิปที่รออนุมัติ (ต้องมีรหัสแอดมินถูกต้อง)
+        // โหลดคลิปทั้งหมดมาจัดการ (ต้องมีรหัสแอดมินถูกต้อง)
         function loadPending() {
             const list = document.getElementById('adminPendingList');
             list.innerHTML = '<p class="text-slate-400 text-sm">กำลังโหลด...</p>';
             const cb = 'ghdadmin_' + Date.now();
             const script = document.createElement('script');
             window[cb] = function(data) {
-                if (!data || !('pending' in data)) {
+                if (!data || !('manage' in data)) {
                     // รหัสไม่ถูกต้อง
                     clearAdminKey();
                     closeAdminPanel();
                     notify('warning', 'รหัสแอดมินไม่ถูกต้อง');
                 } else {
-                    renderPending(data.pending);
+                    if (data.settings) applySettings(data.settings);
+                    renderManage(data.manage);
+                    updateVotingToggle();
                 }
                 delete window[cb]; script.remove();
             };
@@ -786,35 +802,68 @@
             document.body.appendChild(script);
         }
 
-        function renderPending(items) {
+        // ป้ายสถานะ
+        function statusBadge(it) {
+            if (it.published) return '<span class="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">เผยแพร่อยู่</span>';
+            const s = String(it.status || '').toLowerCase();
+            if (s === 'pending' || s === '') return '<span class="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">รออนุมัติ</span>';
+            return '<span class="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">หยุดเผยแพร่</span>';
+        }
+
+        // ตารางจัดการเผยแพร่
+        function renderManage(items) {
             const list = document.getElementById('adminPendingList');
             document.getElementById('adminPendingCount').textContent = '(' + items.length + ')';
-            if (!items.length) { list.innerHTML = '<p class="text-slate-400 text-sm italic py-2">ไม่มีคลิปรออนุมัติ</p>'; return; }
-            list.innerHTML = items.map(it => `
-                <div class="border border-slate-200 rounded-xl p-3" data-pid="${it.id}">
-                    <div class="font-semibold text-slate-800 text-sm truncate">${it.title || '(ไม่มีชื่อ)'}</div>
-                    <div class="text-xs text-slate-400 truncate">${it.organization || ''}</div>
-                    <a href="${it.url}" target="_blank" rel="noopener" class="text-xs text-sky-600 break-all hover:underline">${it.url || ''}</a>
-                    <div class="flex gap-2 mt-2">
-                        <button class="admin-approve flex-1 bg-green-500 hover:bg-green-600 text-white text-sm py-1.5 rounded-lg transition" data-id="${it.id}"><i class="fa-solid fa-check mr-1"></i>อนุมัติ</button>
-                        <button class="admin-reject flex-1 bg-rose-500 hover:bg-rose-600 text-white text-sm py-1.5 rounded-lg transition" data-id="${it.id}"><i class="fa-solid fa-xmark mr-1"></i>ปฏิเสธ</button>
+            if (!items.length) { list.innerHTML = '<p class="text-slate-400 text-sm italic py-2">ยังไม่มีคลิปส่งเข้ามา</p>'; return; }
+            list.innerHTML = items.map(it => {
+                const btn = it.published
+                    ? `<button class="admin-unpublish text-xs font-semibold bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-lg transition whitespace-nowrap" data-id="${it.id}"><i class="fa-solid fa-eye-slash mr-1"></i>หยุดเผยแพร่</button>`
+                    : `<button class="admin-publish text-xs font-semibold bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg transition whitespace-nowrap" data-id="${it.id}"><i class="fa-solid fa-upload mr-1"></i>เผยแพร่</button>`;
+                return `
+                <div class="flex items-center gap-3 border border-slate-200 rounded-xl px-3 py-2" data-pid="${it.id}">
+                    <div class="min-w-0 flex-1">
+                        <div class="font-semibold text-slate-800 text-sm truncate">${it.title || '(ไม่มีชื่อ)'}</div>
+                        <div class="text-xs text-slate-400 truncate">${it.organization || ''} · <a href="${it.url}" target="_blank" rel="noopener" class="text-sky-600 hover:underline">ดูคลิป</a></div>
+                        <div class="mt-1">${statusBadge(it)}</div>
                     </div>
-                </div>`).join('');
-            list.querySelectorAll('.admin-approve').forEach(b => b.addEventListener('click', () => setStatus(b.dataset.id, 'approved')));
-            list.querySelectorAll('.admin-reject').forEach(b => b.addEventListener('click', () => setStatus(b.dataset.id, 'rejected')));
+                    ${btn}
+                </div>`;
+            }).join('');
+            list.querySelectorAll('.admin-publish').forEach(b => b.addEventListener('click', () => setStatus(b.dataset.id, 'approved')));
+            list.querySelectorAll('.admin-unpublish').forEach(b => b.addEventListener('click', () => setStatus(b.dataset.id, 'hidden')));
         }
 
         function setStatus(id, status) {
             sendDataToSheet('SET_STATUS', { id: id, status: status, key: getAdminKey() });
-            const el = document.querySelector(`#adminPendingList [data-pid="${id}"]`);
-            if (el) el.remove();
-            const cntEl = document.getElementById('adminPendingCount');
-            const remaining = document.querySelectorAll('#adminPendingList [data-pid]').length;
-            cntEl.textContent = '(' + remaining + ')';
-            if (!remaining) document.getElementById('adminPendingList').innerHTML = '<p class="text-slate-400 text-sm italic py-2">ไม่มีคลิปรออนุมัติ</p>';
-            notify('success', status === 'approved' ? 'อนุมัติแล้ว' : 'ปฏิเสธแล้ว');
+            notify('success', status === 'approved' ? 'เผยแพร่แล้ว' : 'หยุดเผยแพร่แล้ว');
             setTimeout(fetchFromSheet, 1500); // รีเฟรชแกลเลอรีหน้าเว็บ
+            setTimeout(loadPending, 1600);     // รีเฟรชตารางจัดการ
         }
+
+        // ===== ปิด/เปิดระบบโหวต =====
+        function isVotingEnabled() {
+            const v = siteSettings.votingEnabled;
+            return String(v == null ? 'TRUE' : v).toUpperCase() !== 'FALSE';
+        }
+        function updateVotingToggle() {
+            const btn = document.getElementById('adminVotingToggle');
+            if (!btn) return;
+            if (isVotingEnabled()) {
+                btn.innerHTML = '<i class="fa-solid fa-toggle-on mr-1"></i>กำลังเปิด — กดเพื่อปิดโหวต';
+                btn.className = 'text-sm font-semibold px-4 py-2 rounded-lg transition bg-green-500 hover:bg-green-600 text-white';
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-toggle-off mr-1"></i>ปิดอยู่ — กดเพื่อเปิดโหวต';
+                btn.className = 'text-sm font-semibold px-4 py-2 rounded-lg transition bg-slate-300 hover:bg-slate-400 text-slate-700';
+            }
+        }
+        document.getElementById('adminVotingToggle').addEventListener('click', () => {
+            const next = isVotingEnabled() ? 'FALSE' : 'TRUE';
+            siteSettings.votingEnabled = next; // อัปเดตทันทีในหน้า
+            updateVotingToggle();
+            sendDataToSheet('SET_SETTING', { setting: 'votingEnabled', value: next, key: getAdminKey() });
+            notify('success', next === 'TRUE' ? 'เปิดระบบโหวตแล้ว' : 'ปิดระบบโหวตแล้ว (ผู้ชมยังดูได้ปกติ)');
+            setTimeout(fetchFromSheet, 1500);
+        });
 
         adminLogoBtn.addEventListener('click', async () => {
             if (DEMO_MODE) { notify('info', 'โหมดสาธิต: ยังไม่ได้เชื่อมต่อ Google Sheet'); return; }

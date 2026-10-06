@@ -35,13 +35,13 @@ function setup() {
   // แท็บตั้งค่าหน้าเว็บ (แก้ข้อความได้โดยไม่ต้องแตะโค้ด)
   const settings = ensureSheet(ss, TAB_SETTINGS, ['Key', 'Value']);
   if (settings.getLastRow() < 2) {
-    settings.getRange(2, 1, 7, 2).setValues([
-      ['adminKey', 'sswh2026'],
+    settings.getRange(2, 1, 8, 2).setValues([
+      ['adminKey', 'icn10725'],
       ['requireApproval', 'TRUE'],
+      ['votingEnabled', 'TRUE'],
       ['title', 'วันล้างมือโลก'],
       ['subtitle', 'Global Handwashing Day Video Contest'],
       ['rules', 'ส่งผลงานวิดีโอสร้างสรรค์รณรงค์การล้างมือให้ถูกวิธี 7 ขั้นตอน<br><b>กติกา:</b> แนบลิงก์ผลงาน (MP4) อัปโหลดเพื่อร่วมสนุก ให้คะแนน และคอมเมนต์เป็นกำลังใจ!'],
-      ['resultTitle', 'ยังไม่สามารถดูได้'],
       ['resultMessage', 'ผลคะแนนโหวตจะสามารถดูได้เมื่อแอดมินทำการปิดระบบโหวตแล้วเท่านั้นครับ']
     ]);
   }
@@ -55,6 +55,12 @@ function ensureSheet(ss, name, headers) {
     sh.setFrozenRows(1);
   }
   return sh;
+}
+
+// ตรวจรหัสแอดมิน (ไม่สนตัวพิมพ์เล็ก/ใหญ่)
+function isAdmin(ss, key) {
+  const adminKey = String(getSettings(ss).adminKey || '');
+  return adminKey !== '' && String(key || '').toLowerCase() === adminKey.toLowerCase();
 }
 
 // อ่านแท็บ Settings เป็นออบเจกต์ { key: value }
@@ -93,8 +99,8 @@ function doPost(e) {
     } else if (action === 'ADD_COMMENT') {
       ss.getSheetByName(TAB_COMMENTS).appendRow([now, payload.id, payload.user || 'ผู้เยี่ยมชม', payload.text || '', payload.device || '']);
     } else if (action === 'SET_STATUS') {
-      // แอดมินอนุมัติ/ปฏิเสธคลิป — ต้องมีรหัสแอดมินที่ถูกต้อง
-      if (String(payload.key || '') !== String(getSettings(ss).adminKey || '')) {
+      // แอดมินเผยแพร่/หยุดเผยแพร่คลิป — ต้องมีรหัสแอดมินที่ถูกต้อง
+      if (!isAdmin(ss, payload.key)) {
         return jsonOut({ ok: false, error: 'unauthorized' });
       }
       const sh = ss.getSheetByName(TAB_SUBMISSIONS);
@@ -107,6 +113,27 @@ function doPost(e) {
             break;
           }
         }
+      }
+    } else if (action === 'SET_SETTING') {
+      // แอดมินแก้ค่าใน Settings (เช่น เปิด/ปิดโหวต) — ต้องมีรหัสแอดมิน
+      if (!isAdmin(ss, payload.key)) {
+        return jsonOut({ ok: false, error: 'unauthorized' });
+      }
+      if (payload.setting && payload.setting !== 'adminKey') {
+        const sh = ss.getSheetByName(TAB_SETTINGS);
+        const n = sh.getLastRow() - 1;
+        let found = false;
+        if (n > 0) {
+          const keys = sh.getRange(2, 1, n, 1).getValues();
+          for (let i = 0; i < keys.length; i++) {
+            if (String(keys[i][0]).trim() === String(payload.setting)) {
+              sh.getRange(i + 2, 2).setValue(payload.value);
+              found = true;
+              break;
+            }
+          }
+        }
+        if (!found) sh.appendRow([payload.setting, payload.value]);
       }
     } else {
       return jsonOut({ ok: false, error: 'unknown action: ' + action });
@@ -159,18 +186,17 @@ function doGet(e) {
 
   const payload = { settings: publicSettings, videos: videos };
 
-  // ถ้าใส่ ?admin=<รหัส> ถูกต้อง -> แนบรายการคลิปที่ยังไม่อนุมัติมาด้วย (สำหรับเมนูแอดมิน)
+  // ถ้าใส่ ?admin=<รหัส> ถูกต้อง -> แนบรายการคลิป "ทั้งหมด" มาด้วย (สำหรับตารางจัดการเผยแพร่)
   const adminKey = e && e.parameter && e.parameter.admin;
-  if (adminKey && String(adminKey) === String(settings.adminKey || '')) {
-    payload.pending = subs
-      .filter(r => VISIBLE_STATUS.indexOf(String(r[5] || '').toLowerCase()) === -1)
-      .map(r => ({
-        id: r[1],
-        title: String(r[2]),
-        organization: String(r[3]),
-        url: String(r[4]),
-        status: String(r[5] || '')
-      }));
+  if (isAdmin(ss, adminKey)) {
+    payload.manage = subs.map(r => ({
+      id: r[1],
+      title: String(r[2]),
+      organization: String(r[3]),
+      url: String(r[4]),
+      status: String(r[5] || ''),
+      published: VISIBLE_STATUS.indexOf(String(r[5] || '').toLowerCase()) !== -1
+    }));
   }
 
   // JSONP (เลี่ยง CORS) ถ้ามี callback, ไม่งั้นส่ง JSON ปกติ
