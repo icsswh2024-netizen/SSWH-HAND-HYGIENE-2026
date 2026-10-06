@@ -186,17 +186,34 @@ function doGet(e) {
 
   const payload = { settings: publicSettings, videos: videos };
 
-  // ถ้าใส่ ?admin=<รหัส> ถูกต้อง -> แนบรายการคลิป "ทั้งหมด" มาด้วย (สำหรับตารางจัดการเผยแพร่)
+  // ถ้าใส่ ?admin=<รหัส> ถูกต้อง -> แนบรายการคลิป "ทั้งหมด" + สถิติ (สำหรับตารางจัดการ + แดชบอร์ด)
   const adminKey = e && e.parameter && e.parameter.admin;
   if (isAdmin(ss, adminKey)) {
-    payload.manage = subs.map(r => ({
-      id: r[1],
-      title: String(r[2]),
-      organization: String(r[3]),
-      url: String(r[4]),
-      status: String(r[5] || ''),
-      published: VISIBLE_STATUS.indexOf(String(r[5] || '').toLowerCase()) !== -1
-    }));
+    // สถิติโหวตต่อคลิป
+    const votes = rowsAfterHeader(ss, TAB_VOTES); // [Timestamp, VideoID, Score, Device]
+    const voteCount = {}, scoreSum = {};
+    votes.forEach(r => {
+      const id = String(r[1]);
+      voteCount[id] = (voteCount[id] || 0) + 1;
+      scoreSum[id] = (scoreSum[id] || 0) + (Number(r[2]) || 0);
+    });
+
+    payload.manage = subs.map(r => {
+      const id = String(r[1]);
+      const vc = voteCount[id] || 0;
+      return {
+        id: r[1],
+        title: String(r[2]),
+        organization: String(r[3]),
+        url: String(r[4]),
+        status: String(r[5] || ''),
+        published: VISIBLE_STATUS.indexOf(String(r[5] || '').toLowerCase()) !== -1,
+        views: viewCount[id] || 0,
+        votes: vc,
+        avgScore: vc ? (scoreSum[id] / vc) : 0,
+        comments: (commentMap[id] || []).length
+      };
+    });
   }
 
   // JSONP (เลี่ยง CORS) ถ้ามี callback, ไม่งั้นส่ง JSON ปกติ
