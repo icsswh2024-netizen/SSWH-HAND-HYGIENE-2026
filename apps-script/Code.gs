@@ -130,6 +130,24 @@ function doPost(e) {
           }
         }
       }
+    } else if (action === 'DELETE_COMMENT') {
+      // แอดมินลบคอมเมนต์ — ต้องมีรหัสแอดมินที่ถูกต้อง
+      if (!isAdmin(ss, payload.key)) {
+        return jsonOut({ ok: false, error: 'unauthorized' });
+      }
+      const sh = ss.getSheetByName(TAB_COMMENTS);
+      const n = sh.getLastRow() - 1;
+      if (n > 0) {
+        const rows = sh.getRange(2, 1, n, 4).getValues(); // Timestamp, VideoID, User, Text
+        for (let i = 0; i < rows.length; i++) {
+          if (String(rows[i][1]) === String(payload.id) &&
+              String(rows[i][2]) === String(payload.user) &&
+              String(rows[i][3]) === String(payload.text)) {
+            sh.deleteRow(i + 2);
+            break;
+          }
+        }
+      }
     } else if (action === 'SET_SETTING') {
       // แอดมินแก้ค่าใน Settings (เช่น เปิด/ปิดโหวต) — ต้องมีรหัสแอดมิน
       if (!isAdmin(ss, payload.key)) {

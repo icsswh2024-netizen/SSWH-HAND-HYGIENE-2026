@@ -60,6 +60,7 @@ const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_WEB_APP_ID/ex
 | `ADD_VIEW` | `{ id, device }` |
 | `ADD_VOTE` | `{ id, score, device }` |
 | `ADD_COMMENT` | `{ id, user, text, device }` |
+| `DELETE_COMMENT` | `{ id, user, text, key }` (แอดมินลบคอมเมนต์) |
 
 ---
 
