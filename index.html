@@ -246,7 +246,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen pb-16">
+<body class="min-h-screen">
 
     <!-- Bubble Background Elements -->
     <div id="bubbles-container"></div>
@@ -408,6 +408,16 @@
 
     </main>
 
+    <!-- Footer -->
+    <footer class="brand-gradient text-white mt-14 rounded-t-[40px] shadow-xl">
+        <div class="max-w-3xl mx-auto px-6 py-10 text-center">
+            <img id="siteFooterLogo" src="" alt="โลโก้" class="hidden mx-auto mb-4 h-16 w-auto">
+            <p class="font-display font-semibold text-base md:text-lg leading-relaxed">กลุ่มงานการพยาบาลด้านการควบคุมและป้องกันการติดเชื้อ กลุ่มการพยาบาล</p>
+            <p class="text-sm md:text-base text-cyan-50/95 mt-1">คณะกรรมการควบคุมและป้องกันการติดเชื้อในโรงพยาบาล</p>
+            <p class="font-display font-semibold text-base md:text-lg mt-1">โรงพยาบาลศรีสังวรสุโขทัย</p>
+        </div>
+    </footer>
+
     <!-- ปุ่มโลโก้ลอยมุมล่างขวา -> เมนูแอดมิน -->
     <button id="adminLogoBtn" title="เมนูแอดมิน" class="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-full brand-gradient text-white shadow-xl flex items-center justify-center hover:scale-110 transition-transform">
         <i class="fa-solid fa-hands-bubbles text-xl"></i>
@@ -564,6 +574,16 @@
                     banner.classList.remove('hidden');
                 } else {
                     banner.classList.add('hidden');
+                }
+            }
+            // โลโก้ในฟุตเตอร์ (ถ้าตั้งค่า footerLogo ไว้)
+            const fLogo = document.getElementById('siteFooterLogo');
+            if (fLogo) {
+                if (siteSettings.footerLogo) {
+                    fLogo.src = toDisplayImage(siteSettings.footerLogo);
+                    fLogo.classList.remove('hidden');
+                } else {
+                    fLogo.classList.add('hidden');
                 }
             }
         }

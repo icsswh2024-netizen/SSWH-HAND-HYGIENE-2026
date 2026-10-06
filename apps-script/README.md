@@ -104,6 +104,7 @@ const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_WEB_APP_ID/ex
 | `rules` | กล่องกติกาในหัวเว็บ (ใส่ HTML ได้ เช่น `<br>`, `<b>`) |
 | `rulesFull` | เนื้อหากติกาแบบเต็มในป๊อปอัปปุ่ม "กติกา" (ใส่ HTML ได้ · เว้นว่าง = ใช้ค่าตั้งต้น) |
 | `rulesImage` | ลิงก์รูปกติกา (จะแสดงเป็นรูปในป๊อปอัปปุ่ม "กติกา") · รองรับลิงก์รูปตรง และ Google Drive (ตั้งไฟล์เป็น Anyone with the link) |
+| `footerLogo` | ลิงก์โลโก้ในฟุตเตอร์ (แสดงเหนือข้อความหน่วยงาน) · รองรับลิงก์รูปตรง และ Google Drive · เว้นว่าง = ไม่แสดงโลโก้ |
 | `resultTitle` / `resultMessage` | หัวข้อ/ข้อความของป๊อปอัปปุ่ม "ผล Vote" |
 
 ---
