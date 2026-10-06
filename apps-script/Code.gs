@@ -13,7 +13,7 @@
 
 // ====== ตั้งค่า ======
 // ใส่ ID ของ Google Sheet (ดูได้จาก URL: https://docs.google.com/spreadsheets/d/<SHEET_ID>/edit )
-const SHEET_ID = 'ใส่_SHEET_ID_ของคุณที่นี่';
+const SHEET_ID = '1YEKxrbbCBGAtG3Cyq3tg-ekt3hiBeAiwHP4i9nZ_N2k';
 
 const TAB_SUBMISSIONS = 'Submissions';
 const TAB_VIEWS       = 'Views';
