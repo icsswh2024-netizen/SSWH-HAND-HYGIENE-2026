@@ -260,21 +260,21 @@
     <header class="brand-gradient header-halo text-white pt-10 pb-12 px-4 shadow-xl relative overflow-hidden rounded-b-[40px]">
         <div class="w-full max-w-none px-6 md:px-12 relative">
 
-            <!-- ปุ่มดูผลโหวต -->
-            <div class="absolute top-0 right-0 flex gap-2">
-                <button id="rulesBtn" class="bg-white/20 text-white border border-white/40 px-5 py-2 rounded-full shadow-lg hover:bg-white/30 transition font-display font-semibold text-sm flex items-center backdrop-blur">
+            <!-- ปุ่มกติกา / ผลโหวต (อยู่แถวบน ไม่ทับหัวข้อบนมือถือ) -->
+            <div class="flex justify-center md:justify-end gap-2 mb-4 md:mb-0 md:absolute md:top-0 md:right-0">
+                <button id="rulesBtn" class="bg-white/20 text-white border border-white/40 px-4 md:px-5 py-2 rounded-full shadow-lg hover:bg-white/30 transition font-display font-semibold text-sm flex items-center backdrop-blur">
                     <i class="fa-solid fa-circle-info mr-2"></i> กติกา
                 </button>
-                <button id="viewResultsBtn" class="bg-white/95 text-blue-700 px-5 py-2 rounded-full shadow-lg hover:bg-white transition font-display font-semibold text-sm flex items-center backdrop-blur">
+                <button id="viewResultsBtn" class="bg-white/95 text-blue-700 px-4 md:px-5 py-2 rounded-full shadow-lg hover:bg-white transition font-display font-semibold text-sm flex items-center backdrop-blur">
                     <i class="fa-solid fa-chart-column mr-2"></i> ผล Vote
                 </button>
             </div>
 
-            <div class="text-center pt-6">
-                <h1 class="font-display text-4xl md:text-6xl font-bold mb-2 flex items-center justify-center gap-3 drop-shadow-sm">
+            <div class="text-center md:pt-6">
+                <h1 class="font-display text-3xl sm:text-4xl md:text-6xl font-bold mb-2 leading-tight flex flex-wrap items-center justify-center gap-x-3 gap-y-1 drop-shadow-sm">
                     <i class="fa-solid fa-hands-bubbles"></i><span id="siteTitle">วันล้างมือโลก</span>
                 </h1>
-                <p id="siteSubtitle" class="font-display text-xl md:text-2xl font-light tracking-wide text-cyan-50/95">Global Handwashing Day Video Contest</p>
+                <p id="siteSubtitle" class="font-display text-lg sm:text-xl md:text-2xl font-light tracking-wide text-cyan-50/95">Global Handwashing Day Video Contest</p>
 
                 <div id="rulesBox" class="mt-6 max-w-2xl mx-auto bg-white/15 border border-white/25 rounded-2xl px-6 py-4 backdrop-blur-sm text-sm md:text-base leading-relaxed text-cyan-50">
                     ส่งผลงานวิดีโอสร้างสรรค์รณรงค์การล้างมือให้ถูกวิธี 7 ขั้นตอน<br>
