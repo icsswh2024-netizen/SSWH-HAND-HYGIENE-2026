@@ -77,6 +77,19 @@
             100% { transform: translateY(-1000px) scale(1.5); opacity: 1; }
         }
 
+        /* ฟองเด้งในแถบหัวเว็บ */
+        .hbubble {
+            position: absolute;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.28);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            animation: hbounce ease-in-out infinite alternate;
+        }
+        @keyframes hbounce {
+            0%   { transform: translateY(0) translateX(0) scale(1); }
+            100% { transform: translateY(-26px) translateX(10px) scale(1.08); }
+        }
+
         /* Premium header halo */
         .header-halo::before,
         .header-halo::after {
@@ -258,7 +271,8 @@
 
     <!-- Header Section -->
     <header class="brand-gradient header-halo text-white pt-10 pb-12 px-4 shadow-xl relative overflow-hidden rounded-b-[40px]">
-        <div class="w-full max-w-none px-6 md:px-12 relative">
+        <div id="headerBubbles" class="absolute inset-0 overflow-hidden pointer-events-none"></div>
+        <div class="w-full max-w-none px-6 md:px-12 relative z-10">
 
             <!-- ปุ่มกติกา / ผลโหวต (อยู่แถวบน ไม่ทับหัวข้อบนมือถือ) -->
             <div class="flex justify-center md:justify-end gap-2 mb-4 md:mb-0 md:absolute md:top-0 md:right-0">
@@ -555,6 +569,26 @@
             }
         }
         createBubbles();
+
+        // ฟองเด้งในแถบหัวเว็บ 10 ฟอง คละขนาด
+        function createHeaderBubbles() {
+            const container = document.getElementById('headerBubbles');
+            if (!container) return;
+            for (let i = 0; i < 10; i++) {
+                const bubble = document.createElement('div');
+                bubble.classList.add('hbubble');
+                const size = Math.round(Math.random() * 52 + 14); // 14–66px คละขนาด
+                bubble.style.width = size + 'px';
+                bubble.style.height = size + 'px';
+                bubble.style.left = Math.random() * 92 + '%';
+                bubble.style.top = Math.random() * 70 + '%';
+                bubble.style.opacity = (Math.random() * 0.35 + 0.2).toFixed(2);
+                bubble.style.animationDuration = (Math.random() * 2.5 + 2).toFixed(2) + 's';
+                bubble.style.animationDelay = (Math.random() * 2).toFixed(2) + 's';
+                container.appendChild(bubble);
+            }
+        }
+        createHeaderBubbles();
 
         // การตั้งค่าหน้าเว็บ (อ่านจากแท็บ Settings ใน Google Sheet)
         let siteSettings = {};
