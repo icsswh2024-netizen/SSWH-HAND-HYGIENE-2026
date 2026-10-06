@@ -118,6 +118,16 @@
             cursor: pointer;
         }
 
+        /* ตัวเล่นแบบฝัง (Google Drive / YouTube) */
+        .mobile-landscape-frame .player-embed {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
         /* Premium input styling */
         .premium-input {
             transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
@@ -551,6 +561,40 @@
 
         const emptyCommentsHtml = `<p class="text-center text-slate-400 text-sm italic py-2">ยังไม่มีความคิดเห็น</p>`;
 
+        // ตรวจชนิดลิงก์วิดีโอ แล้วสร้างตัวเล่นให้เหมาะ
+        function detectVideo(url) {
+            url = String(url || '').trim();
+            // ไฟล์วิดีโอตรง ๆ
+            if (/\.(mp4|webm|ogg|ogv|mov|m4v)(\?.*)?$/i.test(url)) return { type: 'file', url: url };
+            // Google Drive
+            let m = url.match(/drive\.google\.com\/file\/d\/([^/]+)/) || url.match(/[?&]id=([^&]+)/);
+            if (m) return { type: 'drive', id: m[1] };
+            // YouTube
+            m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+            if (m) return { type: 'youtube', id: m[1] };
+            // ไม่รู้จัก -> ลองเล่นเป็นไฟล์
+            return { type: 'file', url: url };
+        }
+
+        function playerHtml(video) {
+            const v = detectVideo(video.url);
+            if (v.type === 'drive') {
+                return `<iframe src="https://drive.google.com/file/d/${v.id}/preview" class="player-embed" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+            }
+            if (v.type === 'youtube') {
+                return `<iframe src="https://www.youtube.com/embed/${v.id}?rel=0&playsinline=1" class="player-embed" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>`;
+            }
+            // ไฟล์วิดีโอตรง: พรีวิวเงียบอัตโนมัติ + แตะเพื่อเปิดเสียง/แถบควบคุม
+            return `
+                <video src="${v.url}" autoplay loop muted playsinline preload="metadata" data-id="${video.id}"></video>
+                <div class="tap-hint absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 bg-black/25" id="hint-${video.id}">
+                    <span class="flex flex-col items-center text-white drop-shadow">
+                        <i class="fa-solid fa-volume-xmark text-3xl"></i>
+                        <span class="text-xs mt-1.5 font-medium">แตะเพื่อเปิดเสียง</span>
+                    </span>
+                </div>`;
+        }
+
         // Generate Card DOM Structure
         function createCardDOM(video) {
             const card = document.createElement('div');
@@ -581,13 +625,7 @@
 
                 <div class="px-5">
                     <div class="mobile-landscape-frame">
-                        <video src="${video.url}" autoplay loop muted playsinline preload="metadata" data-id="${video.id}"></video>
-                        <div class="tap-hint absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 bg-black/25" id="hint-${video.id}">
-                            <span class="flex flex-col items-center text-white drop-shadow">
-                                <i class="fa-solid fa-volume-xmark text-3xl"></i>
-                                <span class="text-xs mt-1.5 font-medium">แตะเพื่อเปิดเสียง</span>
-                            </span>
-                        </div>
+                        ${playerHtml(video)}
                     </div>
                 </div>
 
@@ -631,36 +669,39 @@
             const stars = starsContainer.querySelectorAll('.star-icon');
             const submitCommentBtn = card.querySelector('.submit-comment');
 
-            // ทุกคลิปเล่นพรีวิวอัตโนมัติแบบไม่มีเสียง (บางเบราว์เซอร์ต้องสั่ง play เอง)
-            const playPreview = () => { const p = vidElement.play(); if (p) p.catch(() => {}); };
-            playPreview();
+            // ส่วนนี้ทำงานเฉพาะคลิปที่เป็นไฟล์วิดีโอตรง (<video>) — Drive/YouTube ใช้ตัวเล่นฝัง (iframe)
+            if (vidElement) {
+                // ทุกคลิปเล่นพรีวิวอัตโนมัติแบบไม่มีเสียง (บางเบราว์เซอร์ต้องสั่ง play เอง)
+                const playPreview = () => { const p = vidElement.play(); if (p) p.catch(() => {}); };
+                playPreview();
 
-            // แตะ/คลิกที่คลิป -> เปิดเสียง + แสดงแถบควบคุม (ลำโพง เล่น/หยุด เลื่อนเวลา)
-            vidElement.addEventListener('click', () => {
-                // เปิดใช้งานแล้ว ปล่อยให้แถบควบคุมเนทีฟทำงานต่อ (เล่น/หยุด/เลื่อน)
-                if (vidElement.dataset.activated) return;
-                vidElement.dataset.activated = 'true';
+                // แตะ/คลิกที่คลิป -> เปิดเสียง + แสดงแถบควบคุม (ลำโพง เล่น/หยุด เลื่อนเวลา)
+                vidElement.addEventListener('click', () => {
+                    // เปิดใช้งานแล้ว ปล่อยให้แถบควบคุมเนทีฟทำงานต่อ (เล่น/หยุด/เลื่อน)
+                    if (vidElement.dataset.activated) return;
+                    vidElement.dataset.activated = 'true';
 
-                // ปิดเสียงคลิปอื่น ไม่ให้เสียงซ้อนกัน
-                document.querySelectorAll('#gallery video').forEach(v => {
-                    if (v !== vidElement) v.muted = true;
+                    // ปิดเสียงคลิปอื่น ไม่ให้เสียงซ้อนกัน
+                    document.querySelectorAll('#gallery video').forEach(v => {
+                        if (v !== vidElement) v.muted = true;
+                    });
+
+                    vidElement.muted = false;
+                    vidElement.controls = true;
+                    vidElement.play();
+                    if (tapHint) tapHint.style.display = 'none';
+
+                    // นับยอดวิวครั้งแรกที่เปิดดูจริง (ครั้งเดียวต่อเครื่องนี้ แม้รีเฟรช)
+                    if(!hasInSet(VIEWED_KEY, video.id)) {
+                        addToSet(VIEWED_KEY, video.id);
+                        video.views = (video.views || 0) + 1;
+                        const viewsEl = document.getElementById(`views-${video.id}`);
+                        if (viewsEl) viewsEl.innerText = formatViews(video.views);
+                        // ส่งข้อมูลเข้า Sheet
+                        sendDataToSheet('ADD_VIEW', { id: video.id, device: deviceId() });
+                    }
                 });
-
-                vidElement.muted = false;
-                vidElement.controls = true;
-                vidElement.play();
-                if (tapHint) tapHint.style.display = 'none';
-
-                // นับยอดวิวครั้งแรกที่เปิดดูจริง (ครั้งเดียวต่อเครื่องนี้ แม้รีเฟรช)
-                if(!hasInSet(VIEWED_KEY, video.id)) {
-                    addToSet(VIEWED_KEY, video.id);
-                    video.views = (video.views || 0) + 1;
-                    const viewsEl = document.getElementById(`views-${video.id}`);
-                    if (viewsEl) viewsEl.innerText = formatViews(video.views);
-                    // ส่งข้อมูลเข้า Sheet
-                    sendDataToSheet('ADD_VIEW', { id: video.id, device: deviceId() });
-                }
-            });
+            }
 
             // Restore star visuals if already voted in this session
             if (video.hasVoted) {
