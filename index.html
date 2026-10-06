@@ -164,12 +164,6 @@
         .star-icon { transition: transform .12s ease, color .12s ease; }
         .star-icon:hover { transform: scale(1.15); }
 
-        /* ===== โทนเข้ม (Dark cards) ===== */
-        .dark-card { background: linear-gradient(160deg, #1e293b 0%, #0f172a 100%) !important; border-color: #334155 !important; }
-        .dark-input { background: #0f172a !important; border-color: #475569 !important; color: #e2e8f0 !important; }
-        .dark-input::placeholder { color: #64748b !important; }
-        .dark-input:focus { border-color: #38bdf8 !important; box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.22) !important; background: #0f172a !important; }
-
         /* การ์ดรางวัลพรีเมียม */
         .prize-card { transition: transform .28s ease, box-shadow .28s ease; }
         .prize-card:hover { transform: translateY(-8px) scale(1.02); }
@@ -193,22 +187,6 @@
             width: 130px; height: 130px; border-radius: 9999px;
             background: rgba(255, 255, 255, 0.45);
             filter: blur(2px);
-            pointer-events: none;
-        }
-        /* การ์ดรางวัลโทนเข้ม */
-        .prize-medal-dark {
-            width: 76px; height: 76px; margin: 0 auto 10px;
-            border-radius: 9999px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 2.3rem;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            backdrop-filter: blur(4px);
-        }
-        .prize-glow {
-            position: absolute; top: -50px; right: -40px;
-            width: 160px; height: 160px; border-radius: 9999px;
-            filter: blur(6px);
             pointer-events: none;
         }
 
@@ -292,33 +270,33 @@
     <main class="w-full max-w-none px-6 md:px-12 mt-10">
 
         <!-- Submission Form Section -->
-        <section class="dark-card rounded-3xl shadow-2xl p-6 md:p-8 mb-14 border">
-            <h3 class="font-display text-2xl font-semibold text-cyan-300 mb-5 flex items-center gap-3">
-                <i class="fa-solid fa-cloud-arrow-up text-sky-400"></i>ส่งผลงานเข้าประกวด
+        <section class="bg-white rounded-3xl shadow-xl shadow-sky-100 p-6 md:p-8 mb-14 border border-sky-50">
+            <h3 class="font-display text-2xl font-semibold text-gradient mb-5 flex items-center gap-3">
+                <i class="fa-solid fa-cloud-arrow-up text-sky-500"></i>ส่งผลงานเข้าประกวด
             </h3>
-            <div class="border-t border-slate-700 mb-6"></div>
+            <div class="border-t border-slate-100 mb-6"></div>
 
             <form id="submissionForm">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                     <div>
-                        <label class="block text-slate-300 font-semibold text-sm mb-2">ชื่อผลงาน / ผู้เข้าแข่งขัน</label>
+                        <label class="block text-slate-600 font-semibold text-sm mb-2">ชื่อผลงาน / ผู้เข้าแข่งขัน</label>
                         <div class="relative">
-                            <i class="fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                            <input type="text" id="teamName" required placeholder="เช่น ด.ญ. รักสะอาด" class="premium-input dark-input w-full pl-11 pr-4 py-3 border rounded-xl focus:outline-none text-sm">
+                            <i class="fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
+                            <input type="text" id="teamName" required placeholder="เช่น ด.ญ. รักสะอาด" class="premium-input w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none text-sm">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-slate-300 font-semibold text-sm mb-2">หน่วยงาน</label>
+                        <label class="block text-slate-600 font-semibold text-sm mb-2">หน่วยงาน</label>
                         <div class="relative">
-                            <i class="fa-solid fa-building absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                            <input type="text" id="organization" required placeholder="เช่น โรงเรียนอนุบาลใจดี" class="premium-input dark-input w-full pl-11 pr-4 py-3 border rounded-xl focus:outline-none text-sm">
+                            <i class="fa-solid fa-building absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
+                            <input type="text" id="organization" required placeholder="เช่น โรงเรียนอนุบาลใจดี" class="premium-input w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none text-sm">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-slate-300 font-semibold text-sm mb-2">ลิงก์วิดีโอ (URL MP4)</label>
+                        <label class="block text-slate-600 font-semibold text-sm mb-2">ลิงก์วิดีโอ (URL MP4)</label>
                         <div class="relative">
-                            <i class="fa-solid fa-link absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                            <input type="url" id="videoUrl" required placeholder="https://example.com/video.mp4" class="premium-input dark-input w-full pl-11 pr-4 py-3 border rounded-xl focus:outline-none text-sm">
+                            <i class="fa-solid fa-link absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
+                            <input type="url" id="videoUrl" required placeholder="https://example.com/video.mp4" class="premium-input w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none text-sm">
                         </div>
                     </div>
                 </div>
@@ -339,50 +317,50 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
                 <!-- ชนะเลิศ -->
-                <div class="prize-card relative rounded-3xl p-6 pt-7 text-center overflow-hidden" style="background:linear-gradient(160deg,#2a2112 0%,#1a1203 100%);border:1px solid rgba(251,191,36,.35);box-shadow:0 18px 40px rgba(217,119,6,.28)">
-                    <div class="prize-glow" style="background:radial-gradient(circle,rgba(251,191,36,.45),transparent 70%)"></div>
-                    <i class="fa-solid fa-trophy absolute -bottom-4 -left-3 text-8xl" style="color:rgba(251,191,36,.10)"></i>
+                <div class="prize-card relative rounded-3xl p-6 pt-7 text-center overflow-hidden" style="background:linear-gradient(150deg,#fffdf5 0%,#fef3c7 55%,#fcd34d 100%);box-shadow:0 18px 38px rgba(217,119,6,.22)">
+                    <div class="prize-shine"></div>
+                    <i class="fa-solid fa-trophy absolute -bottom-4 -left-3 text-8xl" style="color:rgba(180,83,9,.10)"></i>
                     <div class="relative">
-                        <div class="prize-medal-dark" style="box-shadow:0 10px 22px rgba(251,191,36,.4)">🥇</div>
-                        <span class="prize-tag" style="background:rgba(251,191,36,.18);color:#fcd34d">ชนะเลิศ</span>
-                        <h4 class="font-display font-semibold text-slate-100 text-lg mt-2">รางวัลชนะเลิศ</h4>
-                        <p class="font-display font-extrabold text-4xl mt-1" style="color:#fbbf24">700<span class="text-base font-semibold ml-1 text-amber-200/70">บาท</span></p>
+                        <div class="prize-medal" style="box-shadow:0 10px 22px rgba(217,119,6,.28)">🥇</div>
+                        <span class="prize-tag" style="background:rgba(180,83,9,.14);color:#b45309">ชนะเลิศ</span>
+                        <h4 class="font-display font-semibold text-slate-800 text-lg mt-2">รางวัลชนะเลิศ</h4>
+                        <p class="font-display font-extrabold text-4xl mt-1" style="color:#b45309">700<span class="text-base font-semibold ml-1" style="color:#92400e">บาท</span></p>
                     </div>
                 </div>
 
                 <!-- รองชนะเลิศอันดับ 1 -->
-                <div class="prize-card relative rounded-3xl p-6 pt-7 text-center overflow-hidden" style="background:linear-gradient(160deg,#20262e 0%,#121820 100%);border:1px solid rgba(203,213,225,.3);box-shadow:0 18px 40px rgba(100,116,139,.26)">
-                    <div class="prize-glow" style="background:radial-gradient(circle,rgba(203,213,225,.38),transparent 70%)"></div>
-                    <i class="fa-solid fa-trophy absolute -bottom-4 -left-3 text-8xl" style="color:rgba(203,213,225,.10)"></i>
+                <div class="prize-card relative rounded-3xl p-6 pt-7 text-center overflow-hidden" style="background:linear-gradient(150deg,#ffffff 0%,#f1f5f9 55%,#cbd5e1 100%);box-shadow:0 18px 38px rgba(100,116,139,.20)">
+                    <div class="prize-shine"></div>
+                    <i class="fa-solid fa-trophy absolute -bottom-4 -left-3 text-8xl" style="color:rgba(71,85,105,.10)"></i>
                     <div class="relative">
-                        <div class="prize-medal-dark" style="box-shadow:0 10px 22px rgba(148,163,184,.4)">🥈</div>
-                        <span class="prize-tag" style="background:rgba(203,213,225,.15);color:#cbd5e1">อันดับ 2</span>
-                        <h4 class="font-display font-semibold text-slate-100 text-lg mt-2">รองชนะเลิศอันดับที่ 1</h4>
-                        <p class="font-display font-extrabold text-4xl mt-1" style="color:#e2e8f0">500<span class="text-base font-semibold ml-1 text-slate-400">บาท</span></p>
+                        <div class="prize-medal" style="box-shadow:0 10px 22px rgba(100,116,139,.26)">🥈</div>
+                        <span class="prize-tag" style="background:rgba(71,85,105,.12);color:#475569">อันดับ 2</span>
+                        <h4 class="font-display font-semibold text-slate-800 text-lg mt-2">รองชนะเลิศอันดับที่ 1</h4>
+                        <p class="font-display font-extrabold text-4xl mt-1" style="color:#475569">500<span class="text-base font-semibold ml-1" style="color:#334155">บาท</span></p>
                     </div>
                 </div>
 
                 <!-- รองชนะเลิศอันดับ 2 -->
-                <div class="prize-card relative rounded-3xl p-6 pt-7 text-center overflow-hidden" style="background:linear-gradient(160deg,#2a1b10 0%,#1a0f04 100%);border:1px solid rgba(251,146,60,.32);box-shadow:0 18px 40px rgba(194,65,12,.26)">
-                    <div class="prize-glow" style="background:radial-gradient(circle,rgba(251,146,60,.4),transparent 70%)"></div>
-                    <i class="fa-solid fa-trophy absolute -bottom-4 -left-3 text-8xl" style="color:rgba(251,146,60,.10)"></i>
+                <div class="prize-card relative rounded-3xl p-6 pt-7 text-center overflow-hidden" style="background:linear-gradient(150deg,#fff7ed 0%,#ffedd5 55%,#fdba74 100%);box-shadow:0 18px 38px rgba(194,65,12,.20)">
+                    <div class="prize-shine"></div>
+                    <i class="fa-solid fa-trophy absolute -bottom-4 -left-3 text-8xl" style="color:rgba(154,52,18,.10)"></i>
                     <div class="relative">
-                        <div class="prize-medal-dark" style="box-shadow:0 10px 22px rgba(234,88,12,.4)">🥉</div>
-                        <span class="prize-tag" style="background:rgba(251,146,60,.16);color:#fdba74">อันดับ 3</span>
-                        <h4 class="font-display font-semibold text-slate-100 text-lg mt-2">รองชนะเลิศอันดับที่ 2</h4>
-                        <p class="font-display font-extrabold text-4xl mt-1" style="color:#fb923c">300<span class="text-base font-semibold ml-1 text-orange-200/70">บาท</span></p>
+                        <div class="prize-medal" style="box-shadow:0 10px 22px rgba(194,65,12,.26)">🥉</div>
+                        <span class="prize-tag" style="background:rgba(154,52,18,.12);color:#9a3412">อันดับ 3</span>
+                        <h4 class="font-display font-semibold text-slate-800 text-lg mt-2">รองชนะเลิศอันดับที่ 2</h4>
+                        <p class="font-display font-extrabold text-4xl mt-1" style="color:#9a3412">300<span class="text-base font-semibold ml-1" style="color:#7c2d12">บาท</span></p>
                     </div>
                 </div>
 
                 <!-- ชมเชย -->
-                <div class="prize-card relative rounded-3xl p-6 pt-7 text-center overflow-hidden" style="background:linear-gradient(160deg,#102730 0%,#04151c 100%);border:1px solid rgba(34,211,238,.32);box-shadow:0 18px 40px rgba(8,145,178,.26)">
-                    <div class="prize-glow" style="background:radial-gradient(circle,rgba(34,211,238,.4),transparent 70%)"></div>
-                    <i class="fa-solid fa-award absolute -bottom-4 -left-3 text-8xl" style="color:rgba(34,211,238,.10)"></i>
+                <div class="prize-card relative rounded-3xl p-6 pt-7 text-center overflow-hidden" style="background:linear-gradient(150deg,#f0fdff 0%,#cffafe 55%,#67e8f9 100%);box-shadow:0 18px 38px rgba(8,145,178,.20)">
+                    <div class="prize-shine"></div>
+                    <i class="fa-solid fa-award absolute -bottom-4 -left-3 text-8xl" style="color:rgba(14,116,144,.10)"></i>
                     <div class="relative">
-                        <div class="prize-medal-dark" style="box-shadow:0 10px 22px rgba(6,182,212,.4)">⭐</div>
-                        <span class="prize-tag" style="background:rgba(34,211,238,.15);color:#67e8f9">ชมเชย</span>
-                        <h4 class="font-display font-semibold text-slate-100 text-lg mt-2">รางวัลชมเชย</h4>
-                        <p class="font-display font-extrabold text-4xl mt-1" style="color:#22d3ee">200<span class="text-base font-semibold ml-1 text-cyan-200/70">บาท</span></p>
+                        <div class="prize-medal" style="box-shadow:0 10px 22px rgba(8,145,178,.24)">⭐</div>
+                        <span class="prize-tag" style="background:rgba(14,116,144,.12);color:#0e7490">ชมเชย</span>
+                        <h4 class="font-display font-semibold text-slate-800 text-lg mt-2">รางวัลชมเชย</h4>
+                        <p class="font-display font-extrabold text-4xl mt-1" style="color:#0e7490">200<span class="text-base font-semibold ml-1" style="color:#155e75">บาท</span></p>
                     </div>
                 </div>
 
@@ -831,12 +809,12 @@
         // Comment markup helper
         function commentHtml(c) {
             return `
-                <div class="bg-slate-800 border border-slate-700 px-3 py-2 rounded-xl text-sm">
-                    <span class="font-semibold text-cyan-400">${c.user}:</span> <span class="text-slate-300">${c.text}</span>
+                <div class="bg-sky-50 border border-sky-100 px-3 py-2 rounded-xl text-sm">
+                    <span class="font-semibold text-blue-600">${c.user}:</span> <span class="text-slate-600">${c.text}</span>
                 </div>`;
         }
 
-        const emptyCommentsHtml = `<p class="text-center text-slate-500 text-sm italic py-2">ยังไม่มีความคิดเห็น</p>`;
+        const emptyCommentsHtml = `<p class="text-center text-slate-400 text-sm italic py-2">ยังไม่มีความคิดเห็น</p>`;
 
         // ตรวจชนิดลิงก์วิดีโอ แล้วสร้างตัวเล่นให้เหมาะ
         function detectVideo(url) {
@@ -899,17 +877,17 @@
         function createCardDOM(video) {
             const card = document.createElement('div');
             card.id = `card-${video.id}`;
-            card.classList.add('work-card', 'dark-card', 'rounded-3xl', 'shadow-2xl', 'overflow-hidden', 'flex', 'flex-col', 'border');
+            card.classList.add('work-card', 'bg-white', 'rounded-3xl', 'shadow-lg', 'shadow-sky-100', 'overflow-hidden', 'flex', 'flex-col', 'border', 'border-sky-50');
 
             // Generate Stars HTML
             let starsHtml = '';
             for(let i=1; i<=5; i++) {
-                starsHtml += `<i class="fa-solid fa-star text-slate-600 cursor-pointer text-xl star-icon" data-value="${i}"></i>`;
+                starsHtml += `<i class="fa-solid fa-star text-slate-200 cursor-pointer text-xl star-icon" data-value="${i}"></i>`;
             }
 
             // Determine if voted text should show
             const voteStatusHtml = video.hasVoted
-                ? `<span class="text-green-400 font-semibold ml-2 text-sm">โหวตแล้ว <i class="fa-solid fa-check"></i></span>`
+                ? `<span class="text-green-500 font-semibold ml-2 text-sm">โหวตแล้ว <i class="fa-solid fa-check"></i></span>`
                 : `<span class="text-sm text-slate-400 ml-2 vote-prompt">ให้คะแนน</span>`;
 
             const commentsInner = video.comments.length
@@ -918,8 +896,8 @@
 
             card.innerHTML = `
                 <div class="px-5 pt-5 pb-3">
-                    <h4 class="font-display text-lg font-semibold text-slate-100 leading-snug truncate" title="${video.title}">${video.title}</h4>
-                    <p class="text-sm text-cyan-400 font-medium mt-1"><i class="fa-solid fa-pen-nib mr-1"></i>โดย ${video.author}</p>
+                    <h4 class="font-display text-lg font-semibold text-slate-800 leading-snug truncate" title="${video.title}">${video.title}</h4>
+                    <p class="text-sm text-cyan-600 font-medium mt-1"><i class="fa-solid fa-pen-nib mr-1"></i>โดย ${video.author}</p>
                     ${video.organization ? `<p class="text-xs text-slate-400 mt-0.5 truncate" title="${video.organization}"><i class="fa-solid fa-building mr-1"></i>${video.organization}</p>` : ''}
                 </div>
 
@@ -932,7 +910,7 @@
                 <div class="p-5 flex-1 flex flex-col">
                     <!-- Views + Rating -->
                     <div class="flex justify-between items-center mb-4">
-                        <span class="inline-flex items-center gap-2 bg-sky-500/15 text-sky-300 font-semibold text-sm px-3 py-1.5 rounded-full">
+                        <span class="inline-flex items-center gap-2 bg-sky-50 text-sky-700 font-semibold text-sm px-3 py-1.5 rounded-full">
                             <i class="fa-solid fa-eye"></i><span id="views-${video.id}">${formatViews(video.views)}</span>
                         </span>
                         <div class="flex items-center">
@@ -946,13 +924,13 @@
                     </div>
 
                     <!-- Comments Section -->
-                    <div class="mt-auto border-t border-slate-700 pt-4">
-                        <h5 class="text-sm font-semibold text-sky-300 mb-2 flex items-center gap-1"><i class="fa-regular fa-comments"></i>ความคิดเห็น <span class="text-slate-500 font-medium" id="comment-count-${video.id}">(${video.comments.length})</span></h5>
+                    <div class="mt-auto border-t border-slate-100 pt-4">
+                        <h5 class="text-sm font-semibold text-sky-700 mb-2 flex items-center gap-1"><i class="fa-regular fa-comments"></i>ความคิดเห็น <span class="text-slate-400 font-medium" id="comment-count-${video.id}">(${video.comments.length})</span></h5>
                         <div class="comments-container max-h-56 overflow-y-auto mb-3 space-y-2 pr-1" id="comments-${video.id}">
                             ${commentsInner}
                         </div>
                         <div class="flex gap-2 items-center">
-                            <input type="text" id="comment-input-${video.id}" placeholder="พิมพ์ความคิดเห็น..." class="premium-input dark-input flex-1 px-4 py-2 text-sm border rounded-full focus:outline-none">
+                            <input type="text" id="comment-input-${video.id}" placeholder="พิมพ์ความคิดเห็น..." class="premium-input flex-1 px-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-full focus:outline-none">
                             <button class="submit-comment bg-cyan-500 hover:bg-cyan-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition shrink-0" data-id="${video.id}"><i class="fa-solid fa-paper-plane text-sm"></i></button>
                         </div>
                     </div>
@@ -1015,7 +993,7 @@
             // Restore star visuals if already voted in this session
             if (video.hasVoted) {
                 stars.forEach(s => {
-                    s.classList.replace('text-slate-600', 'text-yellow-400');
+                    s.classList.replace('text-slate-200', 'text-yellow-400');
                     s.classList.remove('cursor-pointer');
                 });
             }
@@ -1025,14 +1003,14 @@
                 star.addEventListener('mouseenter', () => {
                     if(video.hasVoted) return;
                     stars.forEach((s, i) => {
-                        if(i <= index) s.classList.replace('text-slate-600', 'text-yellow-400');
-                        else s.classList.replace('text-yellow-400', 'text-slate-600');
+                        if(i <= index) s.classList.replace('text-slate-200', 'text-yellow-400');
+                        else s.classList.replace('text-yellow-400', 'text-slate-200');
                     });
                 });
 
                 star.addEventListener('mouseleave', () => {
                     if(video.hasVoted) return;
-                    stars.forEach(s => s.classList.replace('text-yellow-400', 'text-slate-600'));
+                    stars.forEach(s => s.classList.replace('text-yellow-400', 'text-slate-200'));
                 });
 
                 star.addEventListener('click', () => {
@@ -1051,8 +1029,8 @@
 
                     // Lock visually
                     stars.forEach((s, i) => {
-                        if(i <= index) s.classList.replace('text-slate-600', 'text-yellow-400');
-                        else s.classList.replace('text-yellow-400', 'text-slate-600');
+                        if(i <= index) s.classList.replace('text-slate-200', 'text-yellow-400');
+                        else s.classList.replace('text-yellow-400', 'text-slate-200');
                         s.classList.remove('cursor-pointer');
                     });
 
