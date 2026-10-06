@@ -576,13 +576,24 @@
             return { type: 'file', url: url };
         }
 
+        // ตัวเล่นฝัง (Drive/YouTube): เริ่มเป็นปุ่ม "แตะเพื่อเล่น" แล้วค่อยโหลด iframe ตอนแตะ
+        // (ทำแบบนี้เพื่อหยุดคลิปอื่นก่อน จะได้ไม่มีเสียงซ้อนกัน)
+        function embedPlayerHtml(video, embedUrl) {
+            return `
+                <div class="embed-holder absolute inset-0" data-embed="${embedUrl}"></div>
+                <button class="embed-play absolute inset-0 flex flex-col items-center justify-center bg-black/35 text-white hover:bg-black/45 transition" data-id="${video.id}">
+                    <i class="fa-solid fa-circle-play text-5xl drop-shadow"></i>
+                    <span class="text-xs mt-2 font-medium">แตะเพื่อเล่น</span>
+                </button>`;
+        }
+
         function playerHtml(video) {
             const v = detectVideo(video.url);
             if (v.type === 'drive') {
-                return `<iframe src="https://drive.google.com/file/d/${v.id}/preview" class="player-embed" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+                return embedPlayerHtml(video, `https://drive.google.com/file/d/${v.id}/preview`);
             }
             if (v.type === 'youtube') {
-                return `<iframe src="https://www.youtube.com/embed/${v.id}?rel=0&playsinline=1" class="player-embed" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>`;
+                return embedPlayerHtml(video, `https://www.youtube.com/embed/${v.id}?rel=0&playsinline=1&autoplay=1`);
             }
             // ไฟล์วิดีโอตรง: พรีวิวเงียบอัตโนมัติ + แตะเพื่อเปิดเสียง/แถบควบคุม
             return `
@@ -593,6 +604,18 @@
                         <span class="text-xs mt-1.5 font-medium">แตะเพื่อเปิดเสียง</span>
                     </span>
                 </div>`;
+        }
+
+        // หยุดคลิปทุกตัวในแกลเลอรี (กันเสียงซ้อน) — ปิดเสียงไฟล์วิดีโอ + ล้าง iframe ที่เล่นอยู่
+        function stopAllPlayers() {
+            document.querySelectorAll('#gallery video').forEach(v => { v.muted = true; });
+            document.querySelectorAll('#gallery .embed-holder').forEach(h => {
+                if (h.querySelector('iframe')) {
+                    h.innerHTML = '';
+                    const btn = h.parentElement.querySelector('.embed-play');
+                    if (btn) btn.style.display = '';
+                }
+            });
         }
 
         // Generate Card DOM Structure
@@ -669,37 +692,46 @@
             const stars = starsContainer.querySelectorAll('.star-icon');
             const submitCommentBtn = card.querySelector('.submit-comment');
 
-            // ส่วนนี้ทำงานเฉพาะคลิปที่เป็นไฟล์วิดีโอตรง (<video>) — Drive/YouTube ใช้ตัวเล่นฝัง (iframe)
+            // นับยอดวิวครั้งแรกที่เปิดดูจริง (ครั้งเดียวต่อเครื่องนี้ แม้รีเฟรช)
+            const countViewOnce = () => {
+                if (hasInSet(VIEWED_KEY, video.id)) return;
+                addToSet(VIEWED_KEY, video.id);
+                video.views = (video.views || 0) + 1;
+                const viewsEl = document.getElementById(`views-${video.id}`);
+                if (viewsEl) viewsEl.innerText = formatViews(video.views);
+                sendDataToSheet('ADD_VIEW', { id: video.id, device: deviceId() });
+            };
+
+            // ---- ไฟล์วิดีโอตรง (<video>) ----
             if (vidElement) {
-                // ทุกคลิปเล่นพรีวิวอัตโนมัติแบบไม่มีเสียง (บางเบราว์เซอร์ต้องสั่ง play เอง)
                 const playPreview = () => { const p = vidElement.play(); if (p) p.catch(() => {}); };
                 playPreview();
 
-                // แตะ/คลิกที่คลิป -> เปิดเสียง + แสดงแถบควบคุม (ลำโพง เล่น/หยุด เลื่อนเวลา)
+                // แตะ -> หยุดคลิปอื่นทั้งหมด แล้วเปิดเสียง + แถบควบคุม
                 vidElement.addEventListener('click', () => {
-                    // เปิดใช้งานแล้ว ปล่อยให้แถบควบคุมเนทีฟทำงานต่อ (เล่น/หยุด/เลื่อน)
                     if (vidElement.dataset.activated) return;
                     vidElement.dataset.activated = 'true';
 
-                    // ปิดเสียงคลิปอื่น ไม่ให้เสียงซ้อนกัน
-                    document.querySelectorAll('#gallery video').forEach(v => {
-                        if (v !== vidElement) v.muted = true;
-                    });
-
+                    stopAllPlayers();          // กันเสียงซ้อน: ปิดทุกตัวก่อน
                     vidElement.muted = false;
                     vidElement.controls = true;
                     vidElement.play();
                     if (tapHint) tapHint.style.display = 'none';
+                    countViewOnce();
+                });
+            }
 
-                    // นับยอดวิวครั้งแรกที่เปิดดูจริง (ครั้งเดียวต่อเครื่องนี้ แม้รีเฟรช)
-                    if(!hasInSet(VIEWED_KEY, video.id)) {
-                        addToSet(VIEWED_KEY, video.id);
-                        video.views = (video.views || 0) + 1;
-                        const viewsEl = document.getElementById(`views-${video.id}`);
-                        if (viewsEl) viewsEl.innerText = formatViews(video.views);
-                        // ส่งข้อมูลเข้า Sheet
-                        sendDataToSheet('ADD_VIEW', { id: video.id, device: deviceId() });
+            // ---- ตัวเล่นฝัง Drive/YouTube (iframe) ----
+            const embedPlay = card.querySelector('.embed-play');
+            if (embedPlay) {
+                embedPlay.addEventListener('click', () => {
+                    stopAllPlayers();          // หยุดคลิปอื่นก่อน (กันเสียงซ้อน)
+                    const holder = card.querySelector('.embed-holder');
+                    if (holder) {
+                        holder.innerHTML = `<iframe src="${holder.dataset.embed}" class="player-embed" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>`;
                     }
+                    embedPlay.style.display = 'none';
+                    countViewOnce();
                 });
             }
 
