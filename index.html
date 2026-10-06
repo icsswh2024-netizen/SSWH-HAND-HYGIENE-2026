@@ -501,12 +501,28 @@
                 </ul>
             </div>`;
 
-        // ปุ่ม "กติกา"
+        // แปลงลิงก์รูป (รองรับ Google Drive) ให้แสดงเป็นรูปได้
+        function toDisplayImage(url) {
+            url = String(url || '').trim();
+            const m = url.match(/drive\.google\.com\/file\/d\/([^/]+)/) || url.match(/[?&]id=([^&]+)/);
+            if (m) return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w1600';
+            return url;
+        }
+        function isImageUrl(url) {
+            url = String(url || '').trim();
+            return /^https?:\/\//i.test(url) && (/\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(url) || /drive\.google\.com/.test(url));
+        }
+
+        // ปุ่ม "กติกา" — ถ้ามีลิงก์รูป (rulesImage หรือ rulesFull เป็นลิงก์รูป) แสดงเป็นรูป
         document.getElementById('rulesBtn').addEventListener('click', () => {
+            const imgLink = siteSettings.rulesImage || (isImageUrl(siteSettings.rulesFull) ? siteSettings.rulesFull : '');
+            const content = imgLink
+                ? `<img src="${toDisplayImage(imgLink)}" alt="กติกาการประกวด" style="max-width:100%;border-radius:12px;display:block;margin:0 auto" referrerpolicy="no-referrer">`
+                : (siteSettings.rulesFull || DEFAULT_RULES);
             Swal.fire({
                 title: '<span style="font-family:Kanit,sans-serif">📋 กติกาการประกวด</span>',
-                html: `<div style="max-height:62vh;overflow:auto">${siteSettings.rulesFull || DEFAULT_RULES}</div>`,
-                width: 560,
+                html: `<div style="max-height:72vh;overflow:auto">${content}</div>`,
+                width: 600,
                 confirmButtonText: 'รับทราบ',
                 confirmButtonColor: '#2563eb',
                 customClass: { popup: 'swal-info', confirmButton: 'swal-confirm-btn' }
