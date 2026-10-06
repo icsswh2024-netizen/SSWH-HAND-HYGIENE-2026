@@ -411,10 +411,13 @@
     <!-- Footer -->
     <footer class="brand-gradient text-white mt-14 rounded-t-[40px] shadow-xl">
         <div class="max-w-3xl mx-auto px-6 py-10 text-center">
-            <img id="siteFooterLogo" src="" alt="โลโก้" class="hidden mx-auto mb-4 h-16 w-auto">
+            <div class="flex items-center justify-center gap-6 mb-4">
+                <img id="siteFooterLogo" src="" alt="โลโก้" class="hidden h-16 md:h-20 w-auto">
+                <img id="siteFooterLogo2" src="" alt="โลโก้" class="hidden h-16 md:h-20 w-auto">
+            </div>
             <p class="font-display font-semibold text-base md:text-lg leading-relaxed">กลุ่มงานการพยาบาลด้านการควบคุมและป้องกันการติดเชื้อ กลุ่มการพยาบาล</p>
-            <p class="text-sm md:text-base text-cyan-50/95 mt-1">คณะกรรมการควบคุมและป้องกันการติดเชื้อในโรงพยาบาล</p>
-            <p class="font-display font-semibold text-base md:text-lg mt-1">โรงพยาบาลศรีสังวรสุโขทัย</p>
+            <p class="font-display font-semibold text-base md:text-lg leading-relaxed mt-1">คณะกรรมการควบคุมและป้องกันการติดเชื้อในโรงพยาบาล</p>
+            <p class="font-display font-semibold text-base md:text-lg leading-relaxed mt-1">โรงพยาบาลศรีสังวรสุโขทัย</p>
         </div>
     </footer>
 
@@ -576,16 +579,15 @@
                     banner.classList.add('hidden');
                 }
             }
-            // โลโก้ในฟุตเตอร์ (ถ้าตั้งค่า footerLogo ไว้)
-            const fLogo = document.getElementById('siteFooterLogo');
-            if (fLogo) {
-                if (siteSettings.footerLogo) {
-                    fLogo.src = toDisplayImage(siteSettings.footerLogo);
-                    fLogo.classList.remove('hidden');
-                } else {
-                    fLogo.classList.add('hidden');
-                }
-            }
+            // โลโก้ในฟุตเตอร์ (รองรับ 2 อัน: footerLogo และ footerLogo2)
+            const setLogo = (id, val) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (val) { el.src = toDisplayImage(val); el.classList.remove('hidden'); }
+                else { el.classList.add('hidden'); }
+            };
+            setLogo('siteFooterLogo', siteSettings.footerLogo);
+            setLogo('siteFooterLogo2', siteSettings.footerLogo2);
         }
 
         // ข้อความกติกาเริ่มต้น (แอดมินแก้ได้ที่แท็บ Settings คีย์ rulesFull — ใส่ HTML ได้)
