@@ -96,6 +96,7 @@ const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_WEB_APP_ID/ex
 | Key | ความหมาย |
 |---|---|
 | `requireApproval` | `TRUE` = ต้องอนุมัติก่อนแสดง, `FALSE` = แสดงทันที |
+| `banner` | ลิงก์รูปแบนเนอร์บนสุดของเว็บ (เต็มความกว้าง) · รองรับลิงก์รูปตรง และ Google Drive (Anyone with the link) · เว้นว่าง = ไม่แสดง |
 | `title` | ชื่อหัวเว็บใหญ่ (เช่น วันล้างมือโลก) |
 | `subtitle` | ข้อความบรรทัดรอง (ภาษาอังกฤษ) |
 | `rules` | กล่องกติกาในหัวเว็บ (ใส่ HTML ได้ เช่น `<br>`, `<b>`) |
