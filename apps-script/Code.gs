@@ -19,14 +19,31 @@ const TAB_SUBMISSIONS = 'Submissions';
 const TAB_VIEWS       = 'Views';
 const TAB_VOTES       = 'Votes';
 const TAB_COMMENTS    = 'Comments';
+const TAB_SETTINGS    = 'Settings';
 
-// ====== รันครั้งเดียวเพื่อสร้างแท็บ + หัวตาราง ======
+// สถานะที่จะ "แสดงบนเว็บ" (คลิปที่แอดมินอนุมัติแล้ว)
+const VISIBLE_STATUS = ['approved', 'active'];
+
+// ====== รันครั้งเดียวเพื่อสร้างแท็บ + หัวตาราง + ค่าตั้งต้น ======
 function setup() {
   const ss = SpreadsheetApp.openById(SHEET_ID);
   ensureSheet(ss, TAB_SUBMISSIONS, ['Timestamp', 'VideoID', 'ชื่อผลงาน/ผู้เข้าแข่งขัน', 'หน่วยงาน', 'ลิงก์วิดีโอ (URL MP4)', 'Status']);
   ensureSheet(ss, TAB_VIEWS,    ['Timestamp', 'VideoID', 'DeviceID']);
   ensureSheet(ss, TAB_VOTES,    ['Timestamp', 'VideoID', 'Score', 'DeviceID']);
   ensureSheet(ss, TAB_COMMENTS, ['Timestamp', 'VideoID', 'ผู้แสดงความเห็น', 'ข้อความ', 'DeviceID']);
+
+  // แท็บตั้งค่าหน้าเว็บ (แก้ข้อความได้โดยไม่ต้องแตะโค้ด)
+  const settings = ensureSheet(ss, TAB_SETTINGS, ['Key', 'Value']);
+  if (settings.getLastRow() < 2) {
+    settings.getRange(2, 1, 6, 2).setValues([
+      ['requireApproval', 'TRUE'],
+      ['title', 'วันล้างมือโลก'],
+      ['subtitle', 'Global Handwashing Day Video Contest'],
+      ['rules', 'ส่งผลงานวิดีโอสร้างสรรค์รณรงค์การล้างมือให้ถูกวิธี 7 ขั้นตอน<br><b>กติกา:</b> แนบลิงก์ผลงาน (MP4) อัปโหลดเพื่อร่วมสนุก ให้คะแนน และคอมเมนต์เป็นกำลังใจ!'],
+      ['resultTitle', 'ยังไม่สามารถดูได้'],
+      ['resultMessage', 'ผลคะแนนโหวตจะสามารถดูได้เมื่อแอดมินทำการปิดระบบโหวตแล้วเท่านั้นครับ']
+    ]);
+  }
 }
 
 function ensureSheet(ss, name, headers) {
@@ -36,6 +53,19 @@ function ensureSheet(ss, name, headers) {
     sh.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
     sh.setFrozenRows(1);
   }
+  return sh;
+}
+
+// อ่านแท็บ Settings เป็นออบเจกต์ { key: value }
+function getSettings(ss) {
+  const sh = ss.getSheetByName(TAB_SETTINGS);
+  const out = {};
+  if (!sh || sh.getLastRow() < 2) return out;
+  sh.getRange(2, 1, sh.getLastRow() - 1, 2).getValues().forEach(r => {
+    const k = String(r[0]).trim();
+    if (k) out[k] = r[1];
+  });
+  return out;
 }
 
 // ====== รับข้อมูลเข้า (เขียน) ======
@@ -49,8 +79,11 @@ function doPost(e) {
     const now = new Date();
 
     if (action === 'ADD_VIDEO') {
+      // ต้องอนุมัติก่อนไหม? (Settings.requireApproval) -> pending / approved
+      const requireApproval = String(getSettings(ss).requireApproval || 'TRUE').toUpperCase() !== 'FALSE';
+      const status = requireApproval ? 'pending' : 'approved';
       ss.getSheetByName(TAB_SUBMISSIONS).appendRow([
-        now, payload.id, payload.title || '', payload.organization || '', payload.url || '', 'active'
+        now, payload.id, payload.title || '', payload.organization || '', payload.url || '', status
       ]);
     } else if (action === 'ADD_VIEW') {
       ss.getSheetByName(TAB_VIEWS).appendRow([now, payload.id, payload.device || '']);
@@ -88,8 +121,9 @@ function doGet(e) {
     (commentMap[id] = commentMap[id] || []).push({ user: String(r[2]), text: String(r[3]) });
   });
 
-  const data = subs
-    .filter(r => String(r[5] || 'active') !== 'hidden') // ซ่อนผลงานที่ตั้ง Status=hidden ได้
+  // แสดงเฉพาะคลิปที่แอดมินอนุมัติแล้ว (Status = approved/active)
+  const videos = subs
+    .filter(r => VISIBLE_STATUS.indexOf(String(r[5] || '').toLowerCase()) !== -1)
     .map(r => {
       const id = String(r[1]);
       return {
@@ -102,14 +136,16 @@ function doGet(e) {
       };
     });
 
+  const payload = { settings: getSettings(ss), videos: videos };
+
   // JSONP (เลี่ยง CORS) ถ้ามี callback, ไม่งั้นส่ง JSON ปกติ
   const callback = e && e.parameter && e.parameter.callback;
   if (callback) {
     return ContentService
-      .createTextOutput(callback + '(' + JSON.stringify(data) + ')')
+      .createTextOutput(callback + '(' + JSON.stringify(payload) + ')')
       .setMimeType(ContentService.MimeType.JAVASCRIPT);
   }
-  return jsonOut(data);
+  return jsonOut(payload);
 }
 
 // ====== helpers ======

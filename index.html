@@ -200,11 +200,11 @@
 
             <div class="text-center pt-6">
                 <h1 class="font-display text-4xl md:text-6xl font-bold mb-2 flex items-center justify-center gap-3 drop-shadow-sm">
-                    <i class="fa-solid fa-hands-bubbles"></i>วันล้างมือโลก
+                    <i class="fa-solid fa-hands-bubbles"></i><span id="siteTitle">วันล้างมือโลก</span>
                 </h1>
-                <p class="font-display text-xl md:text-2xl font-light tracking-wide text-cyan-50/95">Global Handwashing Day Video Contest</p>
+                <p id="siteSubtitle" class="font-display text-xl md:text-2xl font-light tracking-wide text-cyan-50/95">Global Handwashing Day Video Contest</p>
 
-                <div class="mt-6 max-w-2xl mx-auto bg-white/15 border border-white/25 rounded-2xl px-6 py-4 backdrop-blur-sm text-sm md:text-base leading-relaxed text-cyan-50">
+                <div id="rulesBox" class="mt-6 max-w-2xl mx-auto bg-white/15 border border-white/25 rounded-2xl px-6 py-4 backdrop-blur-sm text-sm md:text-base leading-relaxed text-cyan-50">
                     ส่งผลงานวิดีโอสร้างสรรค์รณรงค์การล้างมือให้ถูกวิธี 7 ขั้นตอน<br>
                     <span class="font-semibold text-white">กติกา:</span> แนบลิงก์ผลงาน (MP4) อัปโหลดเพื่อร่วมสนุก ให้คะแนน และคอมเมนต์เป็นกำลังใจ!
                 </div>
@@ -326,12 +326,26 @@
         }
         createBubbles();
 
+        // การตั้งค่าหน้าเว็บ (อ่านจากแท็บ Settings ใน Google Sheet)
+        let siteSettings = {};
+
+        function applySettings(s) {
+            siteSettings = s || {};
+            const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
+            set('siteTitle', siteSettings.title);
+            set('siteSubtitle', siteSettings.subtitle);
+            if (siteSettings.rules) {
+                const box = document.getElementById('rulesBox');
+                if (box) box.innerHTML = siteSettings.rules; // แอดมินใส่ข้อความ/HTML ได้ (เช่น <br>, <b>)
+            }
+        }
+
         // SweetAlert for View Results Button
         document.getElementById('viewResultsBtn').addEventListener('click', () => {
             Swal.fire({
                 icon: 'info',
-                title: 'ยังไม่สามารถดูได้',
-                text: 'ผลคะแนนโหวตจะสามารถดูได้เมื่อแอดมินทำการปิดระบบโหวตแล้วเท่านั้นครับ',
+                title: siteSettings.resultTitle || 'ยังไม่สามารถดูได้',
+                text: siteSettings.resultMessage || 'ผลคะแนนโหวตจะสามารถดูได้เมื่อแอดมินทำการปิดระบบโหวตแล้วเท่านั้นครับ',
                 confirmButtonColor: '#2563eb',
                 confirmButtonText: 'รับทราบ',
                 customClass: { popup: 'swal-info', confirmButton: 'swal-confirm-btn' }
@@ -385,19 +399,23 @@
                 comments: []
             };
 
-            // แสดงการ์ดทันที (optimistic) แล้วรอบรีเฟรชถัดไปจะดึงของจริงจาก Sheet (id เดียวกัน ไม่ซ้ำ)
-            upsertVideos([newVideo]);
+            // โหมดสาธิต: แสดงการ์ดทันที / โหมดจริง: รอแอดมินอนุมัติก่อนจึงแสดง
+            if (DEMO_MODE) {
+                upsertVideos([newVideo]);
+            }
             form.reset();
 
-            // ส่งข้อมูลไปบันทึกบน Google Sheet (เรียงแถว)
+            // ส่งข้อมูลไปบันทึกบน Google Sheet (สถานะเริ่มต้น = รออนุมัติ)
             sendDataToSheet('ADD_VIDEO', newVideo);
 
             Swal.fire({
                 icon: 'success',
                 title: 'ส่งผลงานสำเร็จ!',
-                text: 'วิดีโอของคุณถูกเพิ่มลงในแกลเลอรีแล้ว',
+                text: DEMO_MODE
+                    ? 'วิดีโอของคุณถูกเพิ่มลงในแกลเลอรีแล้ว'
+                    : 'ผลงานถูกส่งแล้ว รอแอดมินตรวจและอนุมัติก่อนจึงจะแสดงบนเว็บครับ',
                 position: 'center',
-                timer: 2000,
+                timer: 2600,
                 timerProgressBar: true,
                 showConfirmButton: false,
                 customClass: { popup: 'swal-success' }
@@ -459,7 +477,10 @@
             const script = document.createElement('script');
             window[cb] = function(data) {
                 try {
-                    const list = (data || []).map(d => ({
+                    // รองรับทั้งรูปแบบใหม่ { settings, videos } และแบบเก่า (อาร์เรย์)
+                    const videos = Array.isArray(data) ? data : (data && data.videos) || [];
+                    if (data && data.settings) applySettings(data.settings);
+                    const list = videos.map(d => ({
                         id: d.id,
                         title: d.title,
                         author: d.title,
