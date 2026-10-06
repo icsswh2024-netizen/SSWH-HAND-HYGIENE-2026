@@ -196,6 +196,15 @@
             font-weight: 600 !important;
             box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35) !important;
         }
+        /* รูปกติกาแบบเต็มจอ */
+        .swal-rules-img .swal2-image {
+            width: 100% !important;
+            max-width: 1400px !important;
+            max-height: 82vh !important;
+            object-fit: contain !important;
+            margin: 0.5rem auto !important;
+            border-radius: 12px !important;
+        }
     </style>
 </head>
 <body class="min-h-screen pb-16">
@@ -513,15 +522,25 @@
             return /^https?:\/\//i.test(url) && (/\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(url) || /drive\.google\.com/.test(url));
         }
 
-        // ปุ่ม "กติกา" — ถ้ามีลิงก์รูป (rulesImage หรือ rulesFull เป็นลิงก์รูป) แสดงเป็นรูป
+        // ปุ่ม "กติกา" — ถ้ามีลิงก์รูป (rulesImage หรือ rulesFull เป็นลิงก์รูป) แสดงเป็นรูปเต็มจอ
         document.getElementById('rulesBtn').addEventListener('click', () => {
             const imgLink = siteSettings.rulesImage || (isImageUrl(siteSettings.rulesFull) ? siteSettings.rulesFull : '');
-            const content = imgLink
-                ? `<img src="${toDisplayImage(imgLink)}" alt="กติกาการประกวด" style="max-width:100%;border-radius:12px;display:block;margin:0 auto" referrerpolicy="no-referrer">`
-                : (siteSettings.rulesFull || DEFAULT_RULES);
+            if (imgLink) {
+                Swal.fire({
+                    imageUrl: toDisplayImage(imgLink),
+                    imageAlt: 'กติกาการประกวด',
+                    width: '96vw',
+                    padding: '0.75rem',
+                    showConfirmButton: true,
+                    confirmButtonText: 'ปิด',
+                    confirmButtonColor: '#2563eb',
+                    customClass: { popup: 'swal-info swal-rules-img', confirmButton: 'swal-confirm-btn' }
+                });
+                return;
+            }
             Swal.fire({
                 title: '<span style="font-family:Kanit,sans-serif">📋 กติกาการประกวด</span>',
-                html: `<div style="max-height:72vh;overflow:auto">${content}</div>`,
+                html: `<div style="max-height:72vh;overflow:auto">${siteSettings.rulesFull || DEFAULT_RULES}</div>`,
                 width: 600,
                 confirmButtonText: 'รับทราบ',
                 confirmButtonColor: '#2563eb',
