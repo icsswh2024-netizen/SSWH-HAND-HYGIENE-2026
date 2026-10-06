@@ -153,6 +153,7 @@ function doGet(e) {
   const subs     = rowsAfterHeader(ss, TAB_SUBMISSIONS); // [Timestamp, VideoID, Title, Org, URL, Status]
   const views    = rowsAfterHeader(ss, TAB_VIEWS);       // [Timestamp, VideoID, Device]
   const comments = rowsAfterHeader(ss, TAB_COMMENTS);    // [Timestamp, VideoID, User, Text, Device]
+  const votes    = rowsAfterHeader(ss, TAB_VOTES);       // [Timestamp, VideoID, Score, Device]
 
   // นับยอดวิวต่อคลิป
   const viewCount = {};
@@ -165,39 +166,44 @@ function doGet(e) {
     (commentMap[id] = commentMap[id] || []).push({ user: String(r[2]), text: String(r[3]) });
   });
 
+  // นับคะแนนโหวตต่อคลิป
+  const voteCount = {}, scoreSum = {};
+  votes.forEach(r => {
+    const id = String(r[1]);
+    voteCount[id] = (voteCount[id] || 0) + 1;
+    scoreSum[id] = (scoreSum[id] || 0) + (Number(r[2]) || 0);
+  });
+
+  const settings = getSettings(ss);
+  const votingOff = String(settings.votingEnabled || 'TRUE').toUpperCase() === 'FALSE';
+
   // แสดงเฉพาะคลิปที่แอดมินอนุมัติแล้ว (Status = approved/active)
+  // เปิดเผย "ผลโหวต" ให้ผู้ชมเฉพาะเมื่อปิดโหวตแล้วเท่านั้น (ระหว่างโหวตยังซ่อนไว้)
   const videos = subs
     .filter(r => VISIBLE_STATUS.indexOf(String(r[5] || '').toLowerCase()) !== -1)
     .map(r => {
       const id = String(r[1]);
+      const vc = voteCount[id] || 0;
       return {
         id: r[1],
         title: String(r[2]),
         organization: String(r[3]),
         url: String(r[4]),
         views: viewCount[id] || 0,
-        comments: commentMap[id] || []
+        comments: commentMap[id] || [],
+        votes: votingOff ? vc : null,
+        avgScore: votingOff ? (vc ? scoreSum[id] / vc : 0) : null
       };
     });
 
-  const settings = getSettings(ss);
   const publicSettings = Object.assign({}, settings);
   delete publicSettings.adminKey; // ไม่ส่งรหัสแอดมินออกไปให้ทุกคน
 
-  const payload = { settings: publicSettings, videos: videos };
+  const payload = { settings: publicSettings, videos: videos, resultsReleased: votingOff };
 
   // ถ้าใส่ ?admin=<รหัส> ถูกต้อง -> แนบรายการคลิป "ทั้งหมด" + สถิติ (สำหรับตารางจัดการ + แดชบอร์ด)
   const adminKey = e && e.parameter && e.parameter.admin;
   if (isAdmin(ss, adminKey)) {
-    // สถิติโหวตต่อคลิป
-    const votes = rowsAfterHeader(ss, TAB_VOTES); // [Timestamp, VideoID, Score, Device]
-    const voteCount = {}, scoreSum = {};
-    votes.forEach(r => {
-      const id = String(r[1]);
-      voteCount[id] = (voteCount[id] || 0) + 1;
-      scoreSum[id] = (scoreSum[id] || 0) + (Number(r[2]) || 0);
-    });
-
     payload.manage = subs.map(r => {
       const id = String(r[1]);
       const vc = voteCount[id] || 0;

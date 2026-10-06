@@ -427,17 +427,55 @@
             }
         }
 
-        // SweetAlert for View Results Button
+        // ปุ่ม "ผล Vote"
         document.getElementById('viewResultsBtn').addEventListener('click', () => {
-            Swal.fire({
-                icon: 'info',
-                title: siteSettings.resultTitle || 'ยังไม่สามารถดูได้',
-                text: siteSettings.resultMessage || 'ผลคะแนนโหวตจะสามารถดูได้เมื่อแอดมินทำการปิดระบบโหวตแล้วเท่านั้นครับ',
-                confirmButtonColor: '#2563eb',
-                confirmButtonText: 'รับทราบ',
-                customClass: { popup: 'swal-info', confirmButton: 'swal-confirm-btn' }
-            });
+            // ปิดโหวตแล้ว -> แสดงผลอันดับ / ยังเปิดอยู่ -> แจ้งยังดูไม่ได้
+            if (!isVotingEnabled()) {
+                showResults();
+            } else {
+                Swal.fire({
+                    icon: 'info',
+                    title: siteSettings.resultTitle || 'ยังไม่สามารถดูได้',
+                    text: siteSettings.resultMessage || 'ผลคะแนนโหวตจะสามารถดูได้เมื่อแอดมินทำการปิดระบบโหวตแล้วเท่านั้นครับ',
+                    confirmButtonColor: '#2563eb',
+                    confirmButtonText: 'รับทราบ',
+                    customClass: { popup: 'swal-info', confirmButton: 'swal-confirm-btn' }
+                });
+            }
         });
+
+        // แสดงผลการโหวตเป็นตารางอันดับ (เรียงตามคะแนนเฉลี่ย -> จำนวนโหวต)
+        function showResults() {
+            const vids = [...videoMap.values()].slice().sort((a, b) =>
+                (Number(b.avgScore) || 0) - (Number(a.avgScore) || 0) ||
+                (Number(b.votes) || 0) - (Number(a.votes) || 0)
+            );
+            const medals = ['🥇', '🥈', '🥉'];
+            const rows = vids.map((v, i) => {
+                const avg = v.avgScore ? (Math.round(v.avgScore * 10) / 10) : 0;
+                const rankCell = medals[i] || `<span style="color:#94a3b8;font-weight:700">${i + 1}</span>`;
+                return `
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid #f1f5f9;text-align:left">
+                    <div style="width:30px;text-align:center;font-size:18px">${rankCell}</div>
+                    <div style="flex:1;min-width:0">
+                        <div style="font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.title || '(ไม่มีชื่อ)'}</div>
+                        <div style="font-size:12px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.organization || ''}</div>
+                    </div>
+                    <div style="text-align:right;white-space:nowrap">
+                        <div style="color:#f59e0b;font-weight:700">⭐ ${avg}</div>
+                        <div style="font-size:11px;color:#94a3b8">${Number(v.votes) || 0} โหวต</div>
+                    </div>
+                </div>`;
+            }).join('');
+            Swal.fire({
+                title: '<span style="font-family:Kanit,sans-serif">🏆 ผลการโหวต</span>',
+                html: `<div style="max-height:60vh;overflow:auto;margin-top:4px">${rows || '<p style="color:#94a3b8">ยังไม่มีข้อมูล</p>'}</div>`,
+                width: 480,
+                confirmButtonText: 'ปิด',
+                confirmButtonColor: '#2563eb',
+                customClass: { popup: 'swal-success', confirmButton: 'swal-confirm-btn' }
+            });
+        }
 
         // ข้อมูลตัวอย่าง (ใช้เฉพาะโหมดสาธิต เมื่อยังไม่ได้ตั้งค่า URL ของ Google Apps Script)
         const MOCK_DATA = [
@@ -532,6 +570,9 @@
         // อัปเดตข้อมูลบนการ์ดเดิม: ยอดวิว และความคิดเห็น (ข้ามถ้าผู้ใช้กำลังพิมพ์คอมเมนต์อยู่)
         function updateCardData(video, incoming) {
             const id = String(video.id);
+            // อัปเดตผลโหวต (เผยเมื่อปิดโหวตแล้ว)
+            video.votes = incoming.votes;
+            video.avgScore = incoming.avgScore;
 
             // ยอดวิว (ให้ค่าจากเซิร์ฟเวอร์เป็นหลัก แต่ไม่ลดต่ำกว่าที่แสดงอยู่ เพื่อไม่ให้กระพริบหลังเพิ่งนับเอง)
             if (typeof incoming.views === 'number') {
@@ -574,7 +615,9 @@
                         organization: d.organization,
                         url: d.url,
                         views: Number(d.views) || 0,
-                        comments: Array.isArray(d.comments) ? d.comments : []
+                        comments: Array.isArray(d.comments) ? d.comments : [],
+                        votes: d.votes,
+                        avgScore: d.avgScore
                     }));
                     upsertVideos(list);
                 } catch (err) {
