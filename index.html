@@ -23,7 +23,7 @@
     <meta name="twitter:image" content="https://icsswh2024-netizen.github.io/SSWH-HAND-HYGIENE-2026/og-image.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -266,7 +266,7 @@
 
     <!-- Banner ด้านบน (ดึงรูปจาก Settings คีย์ banner) -->
     <div id="siteBanner" class="w-full hidden">
-        <img id="siteBannerImg" src="" alt="แบนเนอร์" class="w-full h-auto block">
+        <img id="siteBannerImg" src="" alt="แบนเนอร์" loading="lazy" decoding="async" class="w-full h-auto block">
     </div>
 
     <!-- Header Section -->
@@ -444,8 +444,8 @@
     <footer class="brand-gradient text-white mt-14 rounded-t-[40px] shadow-xl">
         <div class="max-w-3xl mx-auto px-6 py-10 text-center">
             <div class="flex items-center justify-center gap-6 mb-4">
-                <img id="siteFooterLogo" src="" alt="โลโก้" class="hidden h-16 md:h-20 w-auto">
-                <img id="siteFooterLogo2" src="" alt="โลโก้" class="hidden h-16 md:h-20 w-auto">
+                <img id="siteFooterLogo" src="" alt="โลโก้" loading="lazy" decoding="async" class="hidden h-16 md:h-20 w-auto">
+                <img id="siteFooterLogo2" src="" alt="โลโก้" loading="lazy" decoding="async" class="hidden h-16 md:h-20 w-auto">
             </div>
             <p class="font-display font-semibold text-base md:text-lg leading-relaxed">กลุ่มงานการพยาบาลด้านการควบคุมและป้องกันการติดเชื้อ กลุ่มการพยาบาล</p>
             <p class="font-display font-semibold text-base md:text-lg leading-relaxed mt-1">คณะกรรมการควบคุมและป้องกันการติดเชื้อในโรงพยาบาล</p>
@@ -770,6 +770,16 @@
         const form = document.getElementById('submissionForm');
         const clipCount = document.getElementById('clipCount');
 
+        // เล่น/หยุดคลิปเฉพาะตัวที่เลื่อนมาเห็น (ช่วยให้โหลดหน้าเร็วขึ้นมากเมื่อมีหลายคลิป)
+        const videoObserver = ('IntersectionObserver' in window) ? new IntersectionObserver((entries) => {
+            entries.forEach(en => {
+                const v = en.target;
+                if (v.dataset.activated) return; // ผู้ใช้เปิดเสียงเองแล้ว ไม่ต้องหยุดอัตโนมัติ
+                if (en.isIntersecting) { const p = v.play(); if (p) p.catch(() => {}); }
+                else { v.pause(); }
+            });
+        }, { threshold: 0.25 }) : null;
+
         // ===== ปุ่มเลือกอิโมจิ =====
         const EMOJIS = ['😀','😁','😂','🤣','😊','😍','🥰','😎','🤩','👍','👏','🙌','🙏','💪','👌','✌️','❤️','🧡','💛','💚','💙','💜','✨','🎉','🔥','⭐','💯','🧼','🫧','🖐️'];
         const emojiPanel = document.getElementById('emojiPanel');
@@ -1055,7 +1065,7 @@
             }
             // ไฟล์วิดีโอตรง: พรีวิวเงียบอัตโนมัติ + แตะเพื่อเปิดเสียง/แถบควบคุม
             return `
-                <video src="${escapeHtml(v.url)}" autoplay loop muted playsinline preload="metadata" data-id="${video.id}"></video>
+                <video src="${escapeHtml(v.url)}" loop muted playsinline preload="none" data-id="${video.id}"></video>
                 <div class="tap-hint absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 bg-black/25" id="hint-${video.id}">
                     <span class="flex flex-col items-center text-white drop-shadow">
                         <i class="fa-solid fa-volume-xmark text-3xl"></i>
@@ -1163,13 +1173,15 @@
 
             // ---- ไฟล์วิดีโอตรง (<video>) ----
             if (vidElement) {
-                const playPreview = () => { const p = vidElement.play(); if (p) p.catch(() => {}); };
-                playPreview();
+                // เล่นพรีวิวเมื่อเลื่อนมาเห็น (lazy) — ถ้าเบราว์เซอร์ไม่รองรับ ค่อยเล่นเลย
+                if (videoObserver) videoObserver.observe(vidElement);
+                else { const p = vidElement.play(); if (p) p.catch(() => {}); }
 
                 // แตะ -> หยุดคลิปอื่นทั้งหมด แล้วเปิดเสียง + แถบควบคุม
                 vidElement.addEventListener('click', () => {
                     if (vidElement.dataset.activated) return;
                     vidElement.dataset.activated = 'true';
+                    if (videoObserver) videoObserver.unobserve(vidElement); // เลิกคุมอัตโนมัติ
 
                     stopAllPlayers();          // กันเสียงซ้อน: ปิดทุกตัวก่อน
                     vidElement.muted = false;
