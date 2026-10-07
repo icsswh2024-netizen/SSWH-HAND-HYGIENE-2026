@@ -633,12 +633,15 @@
                 const box = document.getElementById('rulesBox');
                 if (box) box.innerHTML = siteSettings.rules; // แอดมินใส่ข้อความ/HTML ได้ (เช่น <br>, <b>)
             }
-            // แบนเนอร์ด้านบน — ใช้ค่าจาก Settings ถ้ามี, ไม่งั้นใช้รูปในโปรเจกต์เป็นค่าเริ่มต้น
+            // แบนเนอร์ด้านบน — ใช้ค่าจาก Settings ถ้ามี, ถ้าลิงก์โหลดไม่ได้ให้ fallback เป็นรูปในโปรเจกต์
             const banner = document.getElementById('siteBanner');
             const bannerImg = document.getElementById('siteBannerImg');
             if (banner && bannerImg) {
                 const src = siteSettings.banner ? toDisplayImage(siteSettings.banner) : DEFAULT_BANNER;
-                bannerImg.onerror = () => banner.classList.add('hidden');
+                bannerImg.onerror = () => {
+                    if (bannerImg.src.indexOf(DEFAULT_BANNER) === -1) { bannerImg.src = DEFAULT_BANNER; } // ลองรูปในโปรเจกต์
+                    else { banner.classList.add('hidden'); } // ถ้ายังไม่ได้ค่อยซ่อน
+                };
                 bannerImg.onload = () => banner.classList.remove('hidden');
                 bannerImg.src = src;
             }
