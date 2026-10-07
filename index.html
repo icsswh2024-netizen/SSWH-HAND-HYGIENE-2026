@@ -588,6 +588,18 @@
         }
         createBubbles();
 
+        // รูปแบนเนอร์เริ่มต้น (ไฟล์ในโปรเจกต์) — ใช้เมื่อยังไม่ได้ตั้งค่า banner ใน Settings
+        const DEFAULT_BANNER = 'og-image.jpg';
+        (function showDefaultBanner() {
+            const banner = document.getElementById('siteBanner');
+            const bannerImg = document.getElementById('siteBannerImg');
+            if (banner && bannerImg && !bannerImg.getAttribute('src')) {
+                bannerImg.onerror = () => banner.classList.add('hidden');
+                bannerImg.onload = () => banner.classList.remove('hidden');
+                bannerImg.src = DEFAULT_BANNER;
+            }
+        })();
+
         // ฟองเด้งในแถบหัวเว็บ — คละขนาด (minSize–maxSize)
         function addHeaderBubbles(count, minSize, maxSize) {
             const container = document.getElementById('headerBubbles');
@@ -621,17 +633,14 @@
                 const box = document.getElementById('rulesBox');
                 if (box) box.innerHTML = siteSettings.rules; // แอดมินใส่ข้อความ/HTML ได้ (เช่น <br>, <b>)
             }
-            // แบนเนอร์ด้านบน (ถ้าตั้งค่า banner ไว้) — ซ่อนถ้าโหลดรูปไม่ได้
+            // แบนเนอร์ด้านบน — ใช้ค่าจาก Settings ถ้ามี, ไม่งั้นใช้รูปในโปรเจกต์เป็นค่าเริ่มต้น
             const banner = document.getElementById('siteBanner');
             const bannerImg = document.getElementById('siteBannerImg');
             if (banner && bannerImg) {
-                if (siteSettings.banner) {
-                    bannerImg.onerror = () => banner.classList.add('hidden');
-                    bannerImg.onload = () => banner.classList.remove('hidden');
-                    bannerImg.src = toDisplayImage(siteSettings.banner);
-                } else {
-                    banner.classList.add('hidden');
-                }
+                const src = siteSettings.banner ? toDisplayImage(siteSettings.banner) : DEFAULT_BANNER;
+                bannerImg.onerror = () => banner.classList.add('hidden');
+                bannerImg.onload = () => banner.classList.remove('hidden');
+                bannerImg.src = src;
             }
             // โลโก้ในฟุตเตอร์ (รองรับ 2 อัน) — ซ่อนถ้าโหลดรูปไม่ได้ (ไม่โชว์ไอคอนรูปแตก)
             const setLogo = (id, val) => {
