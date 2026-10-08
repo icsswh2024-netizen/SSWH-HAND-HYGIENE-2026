@@ -138,7 +138,7 @@
         .mobile-landscape-frame {
             position: relative;
             width: 100%;
-            padding-bottom: 56.25%; /* 16:9 landscape */
+            padding-bottom: 62%; /* เผื่อพื้นที่แถบของ Google Drive ไม่ให้ตัดภาพด้านล่าง */
             background-color: #000;
             border-radius: 16px;
             border: 3px solid #111827;
@@ -958,7 +958,7 @@
         function clipModalHtml(url) {
             const v = detectVideo(url);
             // iframe เป็นกรอบ 16:9 กว้างเต็มจอ จัดกลางแนวตั้ง — ตัวเล่น+แถบควบคุมพอดีกับคลิป
-            const frameStyle = 'width:100%;max-width:min(96vw,1400px);aspect-ratio:16/9;height:auto;max-height:86vh;border-radius:12px;background:#000';
+            const frameStyle = 'width:100%;max-width:min(96vw,1400px);aspect-ratio:16/10;height:auto;max-height:88vh;border-radius:12px;background:#000';
             if (v.type === 'drive')
                 return `<iframe src="https://drive.google.com/file/d/${v.id}/preview" style="${frameStyle}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>`;
             if (v.type === 'youtube')
