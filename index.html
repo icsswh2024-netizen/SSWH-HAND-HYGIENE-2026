@@ -1174,6 +1174,14 @@
             return { type: 'file', url: url };
         }
 
+        // ลิงก์ "เปิดดูแบบเต็ม" ที่เปิดแล้วเล่นได้สะอาดสุดต่อประเภท
+        function fullViewUrl(url) {
+            const v = detectVideo(url);
+            if (v.type === 'drive') return 'https://drive.google.com/file/d/' + v.id + '/preview';
+            if (v.type === 'youtube') return 'https://www.youtube.com/watch?v=' + v.id;
+            return url;
+        }
+
         // ตัวเล่นฝัง (Drive/YouTube): เริ่มเป็นปุ่ม "แตะเพื่อเล่น" แล้วค่อยโหลด iframe ตอนแตะ
         // (ทำแบบนี้เพื่อหยุดคลิปอื่นก่อน จะได้ไม่มีเสียงซ้อนกัน)
         function embedPlayerHtml(video, embedUrl) {
@@ -1250,7 +1258,7 @@
                     </div>
                     ${detectVideo(video.url).type !== 'file' ? `
                     <div class="mt-2 text-center">
-                        <a href="${escapeHtml(video.url)}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-xs text-sky-600 hover:text-sky-700 hover:underline">
+                        <a href="${escapeHtml(fullViewUrl(video.url))}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-xs text-sky-600 hover:text-sky-700 hover:underline">
                             <i class="fa-solid fa-up-right-from-square"></i>เล่นไม่ได้? แตะเปิดดูแบบเต็ม
                         </a>
                     </div>` : ''}
