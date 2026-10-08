@@ -679,12 +679,18 @@
                 bannerImg.src = src;
             }
             // โลโก้ในฟุตเตอร์ (รองรับ 2 อัน) — ซ่อนถ้าโหลดรูปไม่ได้ (ไม่โชว์ไอคอนรูปแตก)
+            const LOGO_TIMEOUT = 6000; // ถ้าโหลดเกิน 6 วิ ถือว่าโหลดไม่ได้ -> ซ่อนไปเลย
             const setLogo = (id, val) => {
                 const el = document.getElementById(id);
                 if (!el) return;
                 if (val) {
-                    el.onerror = () => el.classList.add('hidden');
-                    el.onload = () => el.classList.remove('hidden');
+                    let done = false;
+                    const hide = () => { if (done) return; done = true; el.classList.add('hidden'); };
+                    const show = () => { if (done) return; done = true; el.classList.remove('hidden'); };
+                    const timer = setTimeout(hide, LOGO_TIMEOUT); // กันโหลดค้างนานเกินไป
+                    el.onerror = () => { clearTimeout(timer); hide(); };
+                    el.onload = () => { clearTimeout(timer); show(); };
+                    el.classList.add('hidden'); // ซ่อนไว้ก่อน ค่อยโชว์เมื่อโหลดสำเร็จ
                     el.src = toDisplayImage(val);
                 } else {
                     el.classList.add('hidden');
