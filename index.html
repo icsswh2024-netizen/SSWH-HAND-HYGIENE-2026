@@ -326,7 +326,7 @@
         </section>
 
         <!-- Submission Form Section -->
-        <section class="bg-white rounded-3xl shadow-xl shadow-sky-100 p-6 md:p-8 mb-14 border border-sky-50">
+        <section id="submissionSection" class="bg-white rounded-3xl shadow-xl shadow-sky-100 p-6 md:p-8 mb-14 border border-sky-50">
             <h3 class="font-display text-2xl font-semibold text-gradient mb-5 flex items-center gap-3">
                 <i class="fa-solid fa-cloud-arrow-up text-sky-500"></i>ส่งผลงานเข้าประกวด
             </h3>
@@ -363,6 +363,15 @@
                     </button>
                 </div>
             </form>
+        </section>
+
+        <!-- แจ้งเตือนเมื่อปิดรับผลงาน (ซ่อนฟอร์มด้านบน แล้วโชว์อันนี้แทน) -->
+        <section id="submissionClosed" class="hidden bg-white rounded-3xl shadow-xl shadow-sky-100 p-8 md:p-10 mb-14 border border-rose-100 text-center">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-rose-50 flex items-center justify-center">
+                <i class="fa-solid fa-flag-checkered text-rose-500 text-2xl"></i>
+            </div>
+            <h3 class="font-display text-2xl font-semibold text-rose-600 mb-2">ปิดรับผลงานแล้ว</h3>
+            <p class="text-slate-500 text-sm md:text-base">ขอบคุณทุกท่านที่ร่วมส่งผลงานเข้าประกวด<br>ขณะนี้หมดเขตรับผลงานแล้ว — ยังสามารถรับชมคลิป โหวต และคอมเมนต์ได้ตามปกติ</p>
         </section>
 
         <!-- Prizes Section -->
@@ -481,6 +490,15 @@
                             <div class="text-sm text-slate-400 mt-0.5">ปิดโหวตได้ โดยที่ผู้ชมยังดูคลิป/คอมเมนต์ได้ปกติ</div>
                         </div>
                         <button id="adminVotingToggle" class="text-base font-semibold px-5 py-2.5 rounded-lg transition"></button>
+                    </div>
+
+                    <!-- ควบคุมการรับผลงาน -->
+                    <div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 mb-7">
+                        <div>
+                            <div class="font-semibold text-slate-700 text-base md:text-lg"><i class="fa-solid fa-cloud-arrow-up text-sky-500 mr-1.5"></i>การรับผลงาน</div>
+                            <div class="text-sm text-slate-400 mt-0.5">ปิดรับได้ ฟอร์มส่งผลงานจะถูกซ่อน ผู้ชมยังดู/โหวต/คอมเมนต์ได้ปกติ</div>
+                        </div>
+                        <button id="adminSubmissionsToggle" class="text-base font-semibold px-5 py-2.5 rounded-lg transition"></button>
                     </div>
 
                     <!-- แดชบอร์ดสรุปผล -->
@@ -659,6 +677,21 @@
             };
             setLogo('siteFooterLogo', siteSettings.footerLogo);
             setLogo('siteFooterLogo2', siteSettings.footerLogo2);
+            // เปิด/ปิดรับผลงาน — ซ่อนฟอร์มส่งผลงานเมื่อปิดรับ แล้วโชว์ข้อความแจ้งแทน
+            applySubmissionsOpen();
+        }
+
+        // เปิดรับผลงานอยู่ไหม? (ค่าตั้งต้น = เปิด)
+        function isSubmissionsOpen() {
+            const v = siteSettings.submissionsOpen;
+            return String(v == null ? 'TRUE' : v).toUpperCase() !== 'FALSE';
+        }
+        function applySubmissionsOpen() {
+            const form = document.getElementById('submissionSection');
+            const closed = document.getElementById('submissionClosed');
+            const open = isSubmissionsOpen();
+            if (form) form.classList.toggle('hidden', !open);
+            if (closed) closed.classList.toggle('hidden', open);
         }
 
         // ข้อความกติกาเริ่มต้น (แอดมินแก้ได้ที่แท็บ Settings คีย์ rulesFull — ใส่ HTML ได้)
@@ -890,6 +923,7 @@
         // Form Submit Handler
         form.addEventListener('submit', function(e) {
             e.preventDefault();
+            if (!isSubmissionsOpen()) { notify('info', 'ปิดรับผลงานแล้ว ไม่สามารถส่งผลงานเพิ่มได้'); return; }
             const title = document.getElementById('teamName').value;
             const organization = document.getElementById('organization').value;
             const url = document.getElementById('videoUrl').value;
@@ -1351,6 +1385,7 @@
                     renderDashboard(data.manage);
                     renderManage(data.manage);
                     updateVotingToggle();
+                    updateSubmissionsToggle();
                 }
                 delete window[cb]; script.remove();
             };
@@ -1484,6 +1519,28 @@
             updateVotingToggle();
             sendDataToSheet('SET_SETTING', { setting: 'votingEnabled', value: next, key: getAdminKey() });
             notify('success', next === 'TRUE' ? 'เปิดระบบโหวตแล้ว' : 'ปิดระบบโหวตแล้ว (ผู้ชมยังดูได้ปกติ)');
+            setTimeout(fetchFromSheet, 1500);
+        });
+
+        // ===== ปิด/เปิดการรับผลงาน =====
+        function updateSubmissionsToggle() {
+            const btn = document.getElementById('adminSubmissionsToggle');
+            if (!btn) return;
+            if (isSubmissionsOpen()) {
+                btn.innerHTML = '<i class="fa-solid fa-toggle-on mr-1"></i>กำลังเปิดรับ — กดเพื่อปิดรับผลงาน';
+                btn.className = 'text-sm font-semibold px-4 py-2 rounded-lg transition bg-green-500 hover:bg-green-600 text-white';
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-toggle-off mr-1"></i>ปิดรับอยู่ — กดเพื่อเปิดรับผลงาน';
+                btn.className = 'text-sm font-semibold px-4 py-2 rounded-lg transition bg-slate-300 hover:bg-slate-400 text-slate-700';
+            }
+        }
+        document.getElementById('adminSubmissionsToggle').addEventListener('click', () => {
+            const next = isSubmissionsOpen() ? 'FALSE' : 'TRUE';
+            siteSettings.submissionsOpen = next; // อัปเดตทันทีในหน้า
+            updateSubmissionsToggle();
+            applySubmissionsOpen();
+            sendDataToSheet('SET_SETTING', { setting: 'submissionsOpen', value: next, key: getAdminKey() });
+            notify('success', next === 'TRUE' ? 'เปิดรับผลงานแล้ว' : 'ปิดรับผลงานแล้ว (ซ่อนฟอร์มส่งผลงาน)');
             setTimeout(fetchFromSheet, 1500);
         });
 

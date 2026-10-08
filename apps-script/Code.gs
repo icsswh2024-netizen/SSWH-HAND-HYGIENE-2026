@@ -37,10 +37,11 @@ function setup() {
   // แท็บตั้งค่าหน้าเว็บ (แก้ข้อความได้โดยไม่ต้องแตะโค้ด)
   const settings = ensureSheet(ss, TAB_SETTINGS, ['Key', 'Value']);
   if (settings.getLastRow() < 2) {
-    settings.getRange(2, 1, 8, 2).setValues([
+    settings.getRange(2, 1, 9, 2).setValues([
       ['adminKey', 'icn10725'],
       ['requireApproval', 'TRUE'],
       ['votingEnabled', 'TRUE'],
+      ['submissionsOpen', 'TRUE'],
       ['title', 'วันล้างมือโลก'],
       ['subtitle', 'Global Handwashing Day Video Contest'],
       ['rules', 'ส่งผลงานวิดีโอสร้างสรรค์รณรงค์การล้างมือให้ถูกวิธี 7 ขั้นตอน<br><b>กติกา:</b> แนบลิงก์ผลงาน (MP4) อัปโหลดเพื่อร่วมสนุก ให้คะแนน และคอมเมนต์เป็นกำลังใจ!'],
@@ -88,6 +89,11 @@ function doPost(e) {
     const now = new Date();
 
     if (action === 'ADD_VIDEO') {
+      // ปิดรับผลงานอยู่ไหม? (Settings.submissionsOpen = FALSE -> ไม่รับ)
+      const submissionsOpen = String(getSettings(ss).submissionsOpen || 'TRUE').toUpperCase() !== 'FALSE';
+      if (!submissionsOpen) {
+        return jsonOut({ ok: false, error: 'submissions_closed' });
+      }
       // ต้องอนุมัติก่อนไหม? (Settings.requireApproval) -> pending / approved
       const requireApproval = String(getSettings(ss).requireApproval || 'TRUE').toUpperCase() !== 'FALSE';
       const status = requireApproval ? 'pending' : 'approved';
