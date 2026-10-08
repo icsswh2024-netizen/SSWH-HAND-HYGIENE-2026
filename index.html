@@ -960,11 +960,13 @@
         function clipModalHtml(url) {
             const v = detectVideo(url);
             // iframe เป็นกรอบ 16:9 กว้างเต็มจอ จัดกลางแนวตั้ง — ตัวเล่น+แถบควบคุมพอดีกับคลิป
-            const frameStyle = 'width:100%;max-width:min(100vw,1600px);aspect-ratio:16/10;height:auto;max-height:94vh;border-radius:10px;background:#000';
+            const frameStyle = 'width:100%;max-width:min(100vw,1600px);aspect-ratio:16/10;height:auto;max-height:90vh;border-radius:10px;background:#000';
+            // ข้อความแนะนำ (คลิป Drive/YouTube มีแถบควบคุมของตัวเอง — แตะเพื่อซ่อน)
+            const hint = `<div style="color:rgba(255,255,255,.85);font-family:Kanit,sans-serif;font-size:13px;text-align:center;margin-top:10px"><i class="fa-solid fa-hand-pointer"></i> แตะที่คลิปเพื่อซ่อน/แสดงแถบควบคุม &nbsp;·&nbsp; หมุนจอแนวนอนเพื่อดูเต็มจอ</div>`;
             if (v.type === 'drive')
-                return `<iframe src="https://drive.google.com/file/d/${v.id}/preview" style="${frameStyle}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>`;
+                return `<div style="width:100%;display:flex;flex-direction:column;align-items:center"><iframe src="https://drive.google.com/file/d/${v.id}/preview" style="${frameStyle}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>${hint}</div>`;
             if (v.type === 'youtube')
-                return `<iframe src="https://www.youtube.com/embed/${v.id}?rel=0&playsinline=1&autoplay=1" style="${frameStyle}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>`;
+                return `<div style="width:100%;display:flex;flex-direction:column;align-items:center"><iframe src="https://www.youtube.com/embed/${v.id}?rel=0&playsinline=1&autoplay=1" style="${frameStyle}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>${hint}</div>`;
             return `<video src="${escapeHtml(v.url)}" controls autoplay playsinline style="max-width:100%;max-height:86vh;border-radius:12px"></video>`;
         }
         function openClipModal(url) {
