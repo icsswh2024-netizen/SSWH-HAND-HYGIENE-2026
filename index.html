@@ -568,6 +568,12 @@
     <!-- แผงเลือกอิโมจิ (ใช้ร่วมทุกช่องคอมเมนต์) -->
     <div id="emojiPanel" class="hidden fixed z-[70] bg-white border border-slate-200 rounded-2xl shadow-2xl p-2"></div>
 
+    <!-- ตัวเล่นเต็มจอในเว็บแอป (lightbox) — ไม่กระโดดไป Drive -->
+    <div id="clipModal" class="fixed inset-0 z-[90] hidden bg-black/95 items-center justify-center">
+        <button id="clipModalClose" class="absolute top-4 right-4 z-[91] text-white/90 hover:text-white bg-white/10 hover:bg-white/20 w-11 h-11 rounded-full flex items-center justify-center text-2xl leading-none backdrop-blur" aria-label="ปิด">&times;</button>
+        <div id="clipModalBody" class="w-full h-full flex items-center justify-center p-2 md:p-6"></div>
+    </div>
+
     <script>
         // ==========================================
         // ส่วนตั้งค่าเชื่อมต่อ GOOGLE APPS SCRIPT
@@ -900,8 +906,38 @@
             const del = e.target.closest('.comment-del');
             if (del) { confirmDeleteComment(del.dataset.vid, del.dataset.user, del.dataset.text); return; }
             const shr = e.target.closest('.share-btn');
-            if (shr) { e.stopPropagation(); shareClip(shr.dataset.id, shr.dataset.title); }
+            if (shr) { e.stopPropagation(); shareClip(shr.dataset.id, shr.dataset.title); return; }
+            const fs = e.target.closest('.clip-fullscreen');
+            if (fs) { e.stopPropagation(); openClipModal(fs.dataset.url); }
         });
+
+        // ===== ตัวเล่นเต็มจอในเว็บแอป (lightbox) =====
+        const clipModal = document.getElementById('clipModal');
+        const clipModalBody = document.getElementById('clipModalBody');
+        function clipModalHtml(url) {
+            const v = detectVideo(url);
+            if (v.type === 'drive')
+                return `<iframe src="https://drive.google.com/file/d/${v.id}/preview" class="w-full h-full max-w-[1400px] max-h-[82vh] rounded-xl" style="aspect-ratio:16/9" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>`;
+            if (v.type === 'youtube')
+                return `<iframe src="https://www.youtube.com/embed/${v.id}?rel=0&playsinline=1&autoplay=1" class="w-full h-full max-w-[1400px] max-h-[82vh] rounded-xl" style="aspect-ratio:16/9" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>`;
+            return `<video src="${escapeHtml(v.url)}" controls autoplay playsinline class="max-w-full max-h-full rounded-xl"></video>`;
+        }
+        function openClipModal(url) {
+            stopAllPlayers(); // กันเสียงซ้อนกับคลิปในแกลเลอรี
+            clipModalBody.innerHTML = clipModalHtml(url);
+            clipModal.classList.remove('hidden');
+            clipModal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeClipModal() {
+            clipModalBody.innerHTML = ''; // หยุดเล่น
+            clipModal.classList.add('hidden');
+            clipModal.classList.remove('flex');
+            document.body.style.overflow = '';
+        }
+        document.getElementById('clipModalClose').addEventListener('click', closeClipModal);
+        clipModal.addEventListener('click', (e) => { if (e.target === clipModal || e.target === clipModalBody) closeClipModal(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !clipModal.classList.contains('hidden')) closeClipModal(); });
 
         // ===== แชร์คลิป (ลิงก์หน้าเว็บของเรา ชี้ไปที่คลิปนั้นโดยตรง) =====
         function shareUrlFor(id) {
@@ -1256,12 +1292,11 @@
                     <div class="mobile-landscape-frame">
                         ${playerHtml(video)}
                     </div>
-                    ${detectVideo(video.url).type !== 'file' ? `
                     <div class="mt-2 text-center">
-                        <a href="${escapeHtml(fullViewUrl(video.url))}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-xs text-sky-600 hover:text-sky-700 hover:underline">
-                            <i class="fa-solid fa-up-right-from-square"></i>เล่นไม่ได้? แตะเปิดดูแบบเต็ม
-                        </a>
-                    </div>` : ''}
+                        <button type="button" class="clip-fullscreen inline-flex items-center gap-1.5 text-xs text-sky-600 hover:text-sky-700 hover:underline" data-url="${escapeHtml(video.url)}">
+                            <i class="fa-solid fa-expand"></i>ดูแบบเต็มจอ
+                        </button>
+                    </div>
                 </div>
 
                 <div class="p-5 flex-1 flex flex-col">
@@ -1361,8 +1396,6 @@
                     const holder = card.querySelector('.embed-holder');
                     if (holder) {
                         holder.innerHTML = `<iframe src="${holder.dataset.embed}" class="player-embed" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>`;
-                        const frame = holder.querySelector('iframe');
-                        goFullscreenMobile(frame || holder); // เข้าเต็มจอบนมือถือ (Drive/YouTube)
                     }
                     embedPlay.style.display = 'none';
                     countViewOnce();
