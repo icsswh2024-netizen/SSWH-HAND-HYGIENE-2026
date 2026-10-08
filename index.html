@@ -1310,6 +1310,19 @@
                 sendDataToSheet('ADD_VIEW', { id: video.id, device: deviceId() });
             };
 
+            // เข้าเต็มจอเฉพาะมือถือ/แท็บเล็ต (จอสัมผัส) — ต้องเรียกตอนผู้ใช้แตะ (user gesture)
+            const goFullscreenMobile = (el, videoEl) => {
+                const isTouch = (navigator.maxTouchPoints || 0) > 0 &&
+                    window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+                if (!isTouch || !el) return;
+                try {
+                    // iOS: วิดีโอไฟล์ตรงเข้าเต็มจอด้วย webkitEnterFullscreen
+                    if (videoEl && typeof videoEl.webkitEnterFullscreen === 'function') { videoEl.webkitEnterFullscreen(); return; }
+                    if (el.requestFullscreen) { const r = el.requestFullscreen(); if (r && r.catch) r.catch(() => {}); }
+                    else if (el.webkitRequestFullscreen) { el.webkitRequestFullscreen(); }
+                } catch (e) {}
+            };
+
             // ---- ไฟล์วิดีโอตรง (<video>) ----
             if (vidElement) {
                 // เล่นพรีวิวเมื่อเลื่อนมาเห็น (lazy) — ถ้าเบราว์เซอร์ไม่รองรับ ค่อยเล่นเลย
@@ -1328,6 +1341,7 @@
                     vidElement.play();
                     if (tapHint) tapHint.style.display = 'none';
                     countViewOnce();
+                    goFullscreenMobile(vidElement, vidElement); // เข้าเต็มจอบนมือถือ
                 });
             }
 
@@ -1339,6 +1353,8 @@
                     const holder = card.querySelector('.embed-holder');
                     if (holder) {
                         holder.innerHTML = `<iframe src="${holder.dataset.embed}" class="player-embed" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>`;
+                        const frame = holder.querySelector('iframe');
+                        goFullscreenMobile(frame || holder); // เข้าเต็มจอบนมือถือ (Drive/YouTube)
                     }
                     embedPlay.style.display = 'none';
                     countViewOnce();
