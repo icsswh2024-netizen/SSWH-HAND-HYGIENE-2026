@@ -257,6 +257,8 @@
             margin: 0.5rem auto !important;
             border-radius: 12px !important;
         }
+        /* ปิดรับผลงาน -> ซ่อนส่วนคอมเมนต์ในทุกการ์ด */
+        body.submissions-closed .card-comments { display: none !important; }
         /* ไฮไลต์การ์ดเมื่อเปิดมาจากลิงก์แชร์ */
         .shared-highlight {
             animation: sharedPulse 2.6s ease;
@@ -715,6 +717,8 @@
             const open = isSubmissionsOpen();
             if (form) form.classList.toggle('hidden', !open);
             if (closed) closed.classList.toggle('hidden', open);
+            // ปิดรับผลงาน -> ซ่อนคอมเมนต์ในทุกการ์ดด้วย
+            document.body.classList.toggle('submissions-closed', !open);
         }
 
         // ข้อความกติกาเริ่มต้น (แอดมินแก้ได้ที่แท็บ Settings คีย์ rulesFull — ใส่ HTML ได้)
@@ -1261,7 +1265,7 @@
                     </div>
 
                     <!-- Comments Section -->
-                    <div class="mt-auto border-t border-slate-100 pt-4">
+                    <div class="card-comments mt-auto border-t border-slate-100 pt-4">
                         <h5 class="text-sm font-semibold text-sky-700 mb-2 flex items-center gap-1"><i class="fa-regular fa-comments"></i>ความคิดเห็น <span class="text-slate-400 font-medium" id="comment-count-${video.id}">(${video.comments.length})</span></h5>
                         <div class="comments-container max-h-56 overflow-y-auto mb-3 space-y-2 pr-1" id="comments-${video.id}">
                             ${commentsInner}
