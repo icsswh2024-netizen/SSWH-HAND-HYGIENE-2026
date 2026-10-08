@@ -376,7 +376,7 @@
             </h3>
             <div class="border-t border-slate-100 mb-6"></div>
 
-            <form id="submissionForm">
+            <form id="submissionForm" novalidate>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                     <div>
                         <label class="block text-slate-600 font-semibold text-sm mb-2">ชื่อผลงาน / ผู้เข้าแข่งขัน</label>
@@ -1083,9 +1083,39 @@
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             if (!isSubmissionsOpen()) { notify('info', 'ปิดรับผลงานแล้ว ไม่สามารถส่งผลงานเพิ่มได้'); return; }
-            const title = document.getElementById('teamName').value;
-            const organization = document.getElementById('organization').value;
-            const url = document.getElementById('videoUrl').value;
+            const title = document.getElementById('teamName').value.trim();
+            const organization = document.getElementById('organization').value.trim();
+            const url = document.getElementById('videoUrl').value.trim();
+
+            // ตรวจกรอกข้อมูลให้ครบ -> ป๊อปอัปแจ้งเตือน
+            const missing = [];
+            if (!title) missing.push('ชื่อผลงาน / ผู้เข้าแข่งขัน');
+            if (!organization) missing.push('หน่วยงาน');
+            if (!url) missing.push('ลิงก์วิดีโอ');
+            if (missing.length) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'กรอกข้อมูลไม่ครบ',
+                    html: '<div style="font-family:Kanit,sans-serif;text-align:left;color:#475569">กรุณากรอก:<ul style="margin:8px 0 0;padding-left:22px;color:#e11d48;font-weight:600">' +
+                          missing.map(m => '<li>' + m + '</li>').join('') + '</ul></div>',
+                    confirmButtonText: 'ตกลง',
+                    confirmButtonColor: '#2563eb',
+                    customClass: { popup: 'swal-warning', confirmButton: 'swal-confirm-btn' }
+                });
+                return;
+            }
+            // ตรวจรูปแบบลิงก์
+            if (!/^https?:\/\/.+/i.test(url)) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'ลิงก์วิดีโอไม่ถูกต้อง',
+                    html: '<div style="font-family:Kanit,sans-serif;color:#475569">กรุณาวางลิงก์ที่ขึ้นต้นด้วย <b>http://</b> หรือ <b>https://</b><br>เช่น ลิงก์ Google Drive หรือลิงก์ไฟล์ .mp4</div>',
+                    confirmButtonText: 'ตกลง',
+                    confirmButtonColor: '#2563eb',
+                    customClass: { popup: 'swal-warning', confirmButton: 'swal-confirm-btn' }
+                });
+                return;
+            }
 
             const newVideo = {
                 id: Date.now(),
