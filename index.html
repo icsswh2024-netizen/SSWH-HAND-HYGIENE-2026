@@ -614,7 +614,7 @@
     <!-- ตัวเล่นเต็มจอในเว็บแอป (lightbox) — ไม่กระโดดไป Drive -->
     <div id="clipModal" class="fixed inset-0 z-[90] hidden bg-black/95 items-center justify-center">
         <button id="clipModalClose" class="absolute top-4 right-4 z-[91] text-white/90 hover:text-white bg-white/10 hover:bg-white/20 w-11 h-11 rounded-full flex items-center justify-center text-2xl leading-none backdrop-blur" aria-label="ปิด">&times;</button>
-        <div id="clipModalBody" class="w-full h-full flex items-center justify-center p-2 md:p-6"></div>
+        <div id="clipModalBody" class="w-full h-full flex items-center justify-center p-1 md:p-3"></div>
     </div>
 
     <script>
@@ -960,7 +960,7 @@
         function clipModalHtml(url) {
             const v = detectVideo(url);
             // iframe เป็นกรอบ 16:9 กว้างเต็มจอ จัดกลางแนวตั้ง — ตัวเล่น+แถบควบคุมพอดีกับคลิป
-            const frameStyle = 'width:100%;max-width:min(96vw,1400px);aspect-ratio:16/10;height:auto;max-height:88vh;border-radius:12px;background:#000';
+            const frameStyle = 'width:100%;max-width:min(100vw,1600px);aspect-ratio:16/10;height:auto;max-height:94vh;border-radius:10px;background:#000';
             if (v.type === 'drive')
                 return `<iframe src="https://drive.google.com/file/d/${v.id}/preview" style="${frameStyle}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>`;
             if (v.type === 'youtube')
