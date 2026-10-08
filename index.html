@@ -1315,11 +1315,17 @@
                 ? [...video.comments].reverse().map(c => commentHtml(c, video.id)).join('')
                 : emptyCommentsHtml;
 
+            const clipNo = videoMap.size || (gallery.children.length + 1); // ลำดับคลิป
             card.innerHTML = `
                 <div class="px-5 pt-5 pb-3">
-                    <h4 class="font-display text-lg font-semibold text-slate-800 leading-snug truncate" title="${escapeHtml(video.title)}">${escapeHtml(video.title)}</h4>
-                    <p class="text-sm text-cyan-600 font-medium mt-1"><i class="fa-solid fa-pen-nib mr-1"></i>โดย ${escapeHtml(video.author)}</p>
-                    ${video.organization ? `<p class="text-xs text-slate-400 mt-0.5 truncate" title="${escapeHtml(video.organization)}"><i class="fa-solid fa-building mr-1"></i>${escapeHtml(video.organization)}</p>` : ''}
+                    <div class="flex items-start gap-3">
+                        <span class="shrink-0 mt-0.5 w-9 h-9 rounded-full bg-gradient-to-br from-sky-500 to-cyan-500 text-white font-display font-bold flex items-center justify-center shadow-md shadow-sky-200">${clipNo}</span>
+                        <div class="min-w-0 flex-1">
+                            <h4 class="font-display text-lg font-semibold text-slate-800 leading-snug truncate" title="${escapeHtml(video.title)}">${escapeHtml(video.title)}</h4>
+                            <p class="text-sm text-cyan-600 font-medium mt-1"><i class="fa-solid fa-pen-nib mr-1"></i>โดย ${escapeHtml(video.author)}</p>
+                            ${video.organization ? `<p class="text-xs text-slate-400 mt-0.5 truncate" title="${escapeHtml(video.organization)}"><i class="fa-solid fa-building mr-1"></i>${escapeHtml(video.organization)}</p>` : ''}
+                        </div>
+                    </div>
                 </div>
 
                 <div class="px-5">
