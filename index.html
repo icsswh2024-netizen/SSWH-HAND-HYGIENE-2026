@@ -1495,16 +1495,11 @@
                 });
             }
 
-            // ---- ตัวเล่นฝัง Drive/YouTube (iframe) ----
+            // ---- ตัวเล่น Drive/YouTube: แตะแล้วเปิดในป๊อปอัปเต็มจอ (ใหญ่ ชัด แถบควบคุมพอดี) ----
             const embedPlay = card.querySelector('.embed-play');
             if (embedPlay) {
                 embedPlay.addEventListener('click', () => {
-                    stopAllPlayers();          // หยุดคลิปอื่นก่อน (กันเสียงซ้อน)
-                    const holder = card.querySelector('.embed-holder');
-                    if (holder) {
-                        holder.innerHTML = `<iframe src="${holder.dataset.embed}" class="player-embed" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>`;
-                    }
-                    embedPlay.style.display = 'none';
+                    openClipModal(video.url); // เล่นในป๊อปอัปเต็มจอของเว็บแทนการฝังในการ์ดเล็ก
                     countViewOnce();
                 });
             }
