@@ -110,6 +110,30 @@
             100% { transform: translate(0, 0); }
         }
 
+        /* หน้าจอกำลังโหลด */
+        #pageLoader {
+            position: fixed; inset: 0; z-index: 200;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: linear-gradient(160deg, #2563eb 0%, #0891b2 100%);
+            color: #fff; gap: 14px;
+            transition: opacity .5s ease, visibility .5s ease;
+        }
+        #pageLoader.loaded { opacity: 0; visibility: hidden; pointer-events: none; }
+        .loader-inner { position: relative; width: 84px; height: 84px; }
+        .loader-ring {
+            position: absolute; inset: 0; border-radius: 50%;
+            border: 5px solid rgba(255,255,255,0.25);
+            border-top-color: #fff; animation: loaderSpin .9s linear infinite;
+        }
+        .loader-icon {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            font-size: 34px; color: #fff; animation: loaderPulse 1.4s ease-in-out infinite;
+        }
+        .loader-text { font-family: Kanit, sans-serif; font-weight: 600; font-size: 1.15rem; letter-spacing: .3px; }
+        .loader-sub { font-family: Kanit, sans-serif; font-size: .85rem; color: rgba(255,255,255,0.8); }
+        @keyframes loaderSpin { to { transform: rotate(360deg); } }
+        @keyframes loaderPulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(.82); opacity: .6; } }
+
         /* กรอบคลิป 16:9 แบบสะอาด — คลิปเต็มพอดีทุกเครื่อง ไม่มีของตกแต่งบังเนื้อคลิป */
         .mobile-landscape-frame {
             position: relative;
@@ -259,6 +283,16 @@
     </style>
 </head>
 <body class="min-h-screen">
+
+    <!-- หน้าจอกำลังโหลด -->
+    <div id="pageLoader">
+        <div class="loader-inner">
+            <div class="loader-ring"></div>
+            <i class="fa-solid fa-hands-bubbles loader-icon"></i>
+        </div>
+        <div class="loader-text">โปรดรอโหลดสักครู่…</div>
+        <div class="loader-sub">กำลังเตรียมผลงานเข้าประกวด</div>
+    </div>
 
     <!-- Bubble Background Elements -->
     <div id="bubbles-container"></div>
@@ -1121,6 +1155,17 @@
         }
 
         // โหลดข้อมูลจาก Google Sheet แบบ JSONP (เลี่ยงปัญหา CORS ข้ามโดเมน)
+        // ซ่อนหน้าจอกำลังโหลด (เรียกได้หลายครั้ง ทำงานครั้งเดียว)
+        let pageLoaderHidden = false;
+        function hidePageLoader() {
+            if (pageLoaderHidden) return;
+            pageLoaderHidden = true;
+            const el = document.getElementById('pageLoader');
+            if (el) { el.classList.add('loaded'); setTimeout(() => el.remove(), 600); }
+        }
+        // กันค้าง: ถ้าโหลดช้ามากก็ซ่อนให้ใช้งานได้ภายใน 8 วินาที
+        setTimeout(hidePageLoader, 8000);
+
         function fetchFromSheet() {
             if (DEMO_MODE) return;
             const cb = 'ghdcb_' + Date.now();
@@ -1149,12 +1194,14 @@
                 } catch (err) {
                     console.error('ประมวลผลข้อมูลจาก Sheet ไม่สำเร็จ:', err);
                 }
+                hidePageLoader(); // โหลดข้อมูลเสร็จ -> ซ่อนหน้าจอโหลด
                 delete window[cb];
                 script.remove();
             };
             script.src = GOOGLE_SCRIPT_URL + '?callback=' + cb + '&t=' + Date.now();
             script.onerror = function() {
                 console.error('โหลดข้อมูลจาก Sheet ไม่สำเร็จ');
+                hidePageLoader();
                 delete window[cb];
                 script.remove();
             };
@@ -1705,6 +1752,7 @@
         if (DEMO_MODE) {
             // ยังไม่ได้ตั้งค่า Apps Script -> แสดงข้อมูลตัวอย่าง
             upsertVideos(MOCK_DATA);
+            hidePageLoader();
         } else {
             // นับยอดเยี่ยมชมเว็บไซต์ 1 ครั้งต่อการเข้าชม 1 เซสชัน (รีเฟรชในเซสชันเดิมไม่นับซ้ำ)
             try {
