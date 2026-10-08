@@ -257,6 +257,16 @@
             margin: 0.5rem auto !important;
             border-radius: 12px !important;
         }
+        /* ไฮไลต์การ์ดเมื่อเปิดมาจากลิงก์แชร์ */
+        .shared-highlight {
+            animation: sharedPulse 2.6s ease;
+            box-shadow: 0 0 0 4px rgba(6,182,212,.55), 0 20px 45px rgba(8,145,178,.25) !important;
+        }
+        @keyframes sharedPulse {
+            0% { box-shadow: 0 0 0 0 rgba(6,182,212,.0); }
+            15% { box-shadow: 0 0 0 6px rgba(6,182,212,.65), 0 22px 50px rgba(8,145,178,.3); }
+            100% { box-shadow: 0 0 0 0 rgba(6,182,212,.0); }
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -871,8 +881,56 @@
             const emo = e.target.closest('.emoji-btn');
             if (emo) { e.stopPropagation(); if (emojiTargetId === emo.dataset.input) closeEmojiPanel(); else openEmojiPanel(emo); return; }
             const del = e.target.closest('.comment-del');
-            if (del) { confirmDeleteComment(del.dataset.vid, del.dataset.user, del.dataset.text); }
+            if (del) { confirmDeleteComment(del.dataset.vid, del.dataset.user, del.dataset.text); return; }
+            const shr = e.target.closest('.share-btn');
+            if (shr) { e.stopPropagation(); shareClip(shr.dataset.id, shr.dataset.title); }
         });
+
+        // ===== แชร์คลิป (ลิงก์หน้าเว็บของเรา ชี้ไปที่คลิปนั้นโดยตรง) =====
+        function shareUrlFor(id) {
+            // ตัด hash/query เดิมออก ให้เหลือ URL หน้าเว็บจริง แล้วต่อ #clip-<id>
+            return location.origin + location.pathname + '#clip-' + encodeURIComponent(id);
+        }
+        async function shareClip(id, title) {
+            const url = shareUrlFor(id);
+            const shareText = title ? ('ชมคลิป "' + title + '" — วันล้างมือโลก รพ.ศรีสังวรสุโขทัย') : 'ชมคลิปประกวด วันล้างมือโลก รพ.ศรีสังวรสุโขทัย';
+            // มือถือที่รองรับ Web Share API (ไลน์/เฟซ/ฯลฯ)
+            if (navigator.share) {
+                try { await navigator.share({ title: 'วันล้างมือโลก', text: shareText, url: url }); return; }
+                catch (err) { if (err && err.name === 'AbortError') return; } // ผู้ใช้กดยกเลิก
+            }
+            // สำรอง: คัดลอกลิงก์ + โชว์ปุ่มเปิด
+            let copied = false;
+            try { await navigator.clipboard.writeText(url); copied = true; } catch (e) {}
+            Swal.fire({
+                icon: copied ? 'success' : 'info',
+                title: copied ? 'คัดลอกลิงก์แล้ว!' : 'ลิงก์สำหรับแชร์',
+                html: '<div style="font-family:Kanit,sans-serif">' +
+                      (copied ? '<p style="margin:0 0 10px;color:#475569">วางลิงก์นี้เพื่อแชร์ได้เลย — ผู้รับจะเปิดมาเจอคลิปนี้ทันที</p>' : '<p style="margin:0 0 10px;color:#475569">คัดลอกลิงก์ด้านล่างเพื่อแชร์ ผู้รับจะเปิดมาเจอคลิปนี้ทันที</p>') +
+                      '<input id="shareLinkBox" readonly value="' + escapeHtml(url) + '" style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:13px;color:#0f172a;background:#f8fafc" onclick="this.select()">' +
+                      '</div>',
+                confirmButtonText: 'เสร็จสิ้น',
+                confirmButtonColor: '#0891b2',
+                customClass: { popup: 'swal-info', confirmButton: 'swal-confirm-btn' }
+            });
+        }
+
+        // เปิดหน้าเว็บด้วยลิงก์ #clip-<id> -> เลื่อนไปที่คลิปนั้น + ไฮไลต์
+        let sharedClipHandled = false;
+        function maybeScrollToSharedClip() {
+            if (sharedClipHandled) return;
+            const m = (location.hash || '').match(/^#clip-(.+)$/);
+            if (!m) return;
+            const id = decodeURIComponent(m[1]);
+            const card = document.getElementById('card-' + id);
+            if (!card) return; // คลิปยังโหลดไม่เสร็จ -> ลองใหม่รอบ fetch ถัดไป
+            sharedClipHandled = true;
+            setTimeout(() => {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                card.classList.add('shared-highlight');
+                setTimeout(() => card.classList.remove('shared-highlight'), 2600);
+            }, 300);
+        }
 
         function confirmDeleteComment(vid, user, text) {
             Swal.fire({
@@ -980,6 +1038,7 @@
                 }
             });
             clipCount.textContent = `${videoMap.size} คลิป`;
+            maybeScrollToSharedClip(); // ถ้าเปิดมาด้วยลิงก์แชร์ #clip-<id>
         }
 
         // อัปเดตข้อมูลบนการ์ดเดิม: ยอดวิว และความคิดเห็น (ข้ามถ้าผู้ใช้กำลังพิมพ์คอมเมนต์อยู่)
@@ -1169,9 +1228,12 @@
                 <div class="p-5 flex-1 flex flex-col">
                     <!-- Views + Rating -->
                     <div class="flex justify-between items-center mb-4">
-                        <span class="inline-flex items-center gap-2 bg-sky-50 text-sky-700 font-semibold text-sm px-3 py-1.5 rounded-full">
-                            <i class="fa-solid fa-eye"></i><span id="views-${video.id}">${formatViews(video.views)}</span>
-                        </span>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center gap-2 bg-sky-50 text-sky-700 font-semibold text-sm px-3 py-1.5 rounded-full">
+                                <i class="fa-solid fa-eye"></i><span id="views-${video.id}">${formatViews(video.views)}</span>
+                            </span>
+                            <button type="button" class="share-btn inline-flex items-center gap-1.5 bg-cyan-50 hover:bg-cyan-100 text-cyan-600 font-semibold text-sm px-3 py-1.5 rounded-full transition" data-id="${video.id}" data-title="${escapeHtml(video.title || '')}" title="แชร์คลิปนี้"><i class="fa-solid fa-share-nodes"></i>แชร์</button>
+                        </div>
                         <div class="flex items-center">
                             <div class="stars-container flex items-center space-x-1" data-id="${video.id}">
                                 ${starsHtml}
