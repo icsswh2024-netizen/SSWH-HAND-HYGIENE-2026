@@ -989,6 +989,11 @@
         function hasInSet(key, id) { return getSet(key).has(String(id)); }
         const VOTED_KEY = 'ghd_voted';
         const VIEWED_KEY = 'ghd_viewed';
+        // เก็บ "คะแนนล่าสุด" ที่เครื่องนี้ให้แต่ละคลิป (เพื่อให้เปลี่ยนใจ/แก้คะแนนได้)
+        const VOTE_SCORE_KEY = 'ghd_votescore';
+        function getVoteMap() { try { return JSON.parse(localStorage.getItem(VOTE_SCORE_KEY) || '{}'); } catch (e) { return {}; } }
+        function getMyVote(id) { return Number(getVoteMap()[String(id)]) || 0; }
+        function setMyVote(id, score) { const m = getVoteMap(); m[String(id)] = score; try { localStorage.setItem(VOTE_SCORE_KEY, JSON.stringify(m)); } catch (e) {} }
 
         // เก็บออบเจกต์วิดีโอที่ผูกกับการ์ด (id -> video) เพื่ออัปเดตในที่โดยไม่สร้างการ์ดใหม่
         const videoMap = new Map();
@@ -1225,7 +1230,7 @@
 
             // Determine if voted text should show
             const voteStatusHtml = video.hasVoted
-                ? `<span class="text-green-500 font-semibold ml-2 text-sm">โหวตแล้ว <i class="fa-solid fa-check"></i></span>`
+                ? `<span class="text-green-500 font-semibold ml-2 text-sm">โหวตแล้ว <i class="fa-solid fa-check"></i><span class="text-slate-400 font-normal"> (แตะดาวเพื่อแก้)</span></span>`
                 : `<span class="text-sm text-slate-400 ml-2 vote-prompt">ให้คะแนน</span>`;
 
             const commentsInner = video.comments.length
@@ -1334,27 +1339,26 @@
                 });
             }
 
-            // Restore star visuals if already voted in this session
-            if (video.hasVoted) {
-                stars.forEach(s => {
-                    s.classList.replace('text-slate-200', 'text-yellow-400');
-                    s.classList.remove('cursor-pointer');
+            // ระบายดาวให้ตรงกับคะแนนที่เลือก (n ดาวแรกเป็นสีเหลือง)
+            const paintStars = (n) => {
+                stars.forEach((s, i) => {
+                    if (i < n) s.classList.replace('text-slate-200', 'text-yellow-400');
+                    else s.classList.replace('text-yellow-400', 'text-slate-200');
                 });
-            }
+            };
+
+            // แสดงคะแนนเดิมที่เครื่องนี้เคยให้ (ถ้ามี) — เปลี่ยนใจได้ ไม่ล็อก
+            paintStars(getMyVote(video.id));
 
             // Star Rating Logic
             stars.forEach((star, index) => {
                 star.addEventListener('mouseenter', () => {
-                    if(video.hasVoted) return;
-                    stars.forEach((s, i) => {
-                        if(i <= index) s.classList.replace('text-slate-200', 'text-yellow-400');
-                        else s.classList.replace('text-yellow-400', 'text-slate-200');
-                    });
+                    if(!isVotingEnabled()) return;
+                    paintStars(index + 1); // พรีวิวตอนชี้
                 });
 
                 star.addEventListener('mouseleave', () => {
-                    if(video.hasVoted) return;
-                    stars.forEach(s => s.classList.replace('text-yellow-400', 'text-slate-200'));
+                    paintStars(getMyVote(video.id)); // คืนกลับเป็นคะแนนที่เลือกไว้
                 });
 
                 star.addEventListener('click', () => {
@@ -1362,30 +1366,25 @@
                         notify('warning', 'ปิดระบบโหวตแล้ว ขณะนี้ไม่สามารถให้คะแนนได้');
                         return;
                     }
-                    if(video.hasVoted) {
-                        notify('warning', 'คุณได้โหวตผลงานนี้ไปแล้ว!');
-                        return;
-                    }
 
                     const score = index + 1;
+                    const prev = getMyVote(video.id);
+                    if (score === prev) return; // กดดาวเดิมซ้ำ ไม่ต้องทำอะไร
+
+                    const isChange = prev > 0; // เคยโหวตแล้ว = เปลี่ยนคะแนน
                     video.hasVoted = true;
-                    addToSet(VOTED_KEY, video.id); // จำว่าเครื่องนี้โหวตคลิปนี้แล้ว
+                    addToSet(VOTED_KEY, video.id);
+                    setMyVote(video.id, score); // จำคะแนนล่าสุดของเครื่องนี้
 
-                    // Lock visually
-                    stars.forEach((s, i) => {
-                        if(i <= index) s.classList.replace('text-slate-200', 'text-yellow-400');
-                        else s.classList.replace('text-yellow-400', 'text-slate-200');
-                        s.classList.remove('cursor-pointer');
-                    });
+                    paintStars(score);
 
-                    // Hide raw score, Show "โหวตแล้ว"
                     const display = document.getElementById(`score-display-${video.id}`);
-                    display.innerHTML = `<span class="text-green-500 font-semibold ml-2 text-sm animate-pulse">โหวตแล้ว <i class="fa-solid fa-check"></i></span>`;
+                    if (display) display.innerHTML = `<span class="text-green-500 font-semibold ml-2 text-sm">โหวตแล้ว <i class="fa-solid fa-check"></i><span class="text-slate-400 font-normal"> (แตะดาวเพื่อแก้)</span></span>`;
 
-                    // ส่งข้อมูลคะแนนไปเรียงเก็บเป็น Log ที่ Sheet หลังบ้าน
+                    // ส่งคะแนนไปหลังบ้าน (นับเฉพาะคะแนนล่าสุดต่อเครื่อง)
                     sendDataToSheet('ADD_VOTE', { id: video.id, score: score, device: deviceId() });
 
-                    notify('success', 'บันทึกคะแนนโหวตสำเร็จ!');
+                    notify('success', isChange ? ('แก้คะแนนเป็น ' + score + ' ดาวแล้ว') : 'บันทึกคะแนนโหวตสำเร็จ!');
                 });
             });
 

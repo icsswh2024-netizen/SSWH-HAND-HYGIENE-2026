@@ -210,12 +210,22 @@ function doGet(e) {
     (commentMap[id] = commentMap[id] || []).push({ user: String(r[2]), text: String(r[3]) });
   });
 
-  // นับคะแนนโหวตต่อคลิป
-  const voteCount = {}, scoreSum = {};
+  // นับคะแนนโหวตต่อคลิป — "นับเฉพาะคะแนนล่าสุดต่อ 1 เครื่อง" (รองรับเปลี่ยนใจ/แก้คะแนน)
+  // แถวเรียงตามเวลา (appendRow) => คะแนนล่าสุดของ device+clip จะทับของเดิม
+  // ถ้าไม่มี DeviceID จะถือเป็นโหวตแยกแต่ละแถว (กันข้อมูลเก่าหาย)
+  const latestScore = {}; // key = clip|device -> score
+  let anonSeq = 0;
   votes.forEach(r => {
     const id = String(r[1]);
+    const dev = String(r[3] || '').trim();
+    const key = id + '|' + (dev || ('anon#' + (anonSeq++)));
+    latestScore[key] = Number(r[2]) || 0;
+  });
+  const voteCount = {}, scoreSum = {};
+  Object.keys(latestScore).forEach(key => {
+    const id = key.split('|')[0];
     voteCount[id] = (voteCount[id] || 0) + 1;
-    scoreSum[id] = (scoreSum[id] || 0) + (Number(r[2]) || 0);
+    scoreSum[id] = (scoreSum[id] || 0) + latestScore[key];
   });
 
   const settings = getSettings(ss);
