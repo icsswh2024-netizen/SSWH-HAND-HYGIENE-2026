@@ -295,8 +295,11 @@
             </div>
 
             <div class="text-center md:pt-6">
-                <!-- โลโก้กลางหัวเว็บ (ดึงลิงก์จาก Settings คีย์ headerLogo) -->
-                <img id="siteHeaderLogo" src="" alt="โลโก้" class="hidden mx-auto mb-5 h-24 md:h-32 w-auto object-contain drop-shadow-lg">
+                <!-- โลโก้กลางหัวเว็บ รองรับ 2 อัน (Settings คีย์ headerLogo / headerLogo2) -->
+                <div class="flex items-center justify-center gap-5 md:gap-8 mb-5 flex-wrap">
+                    <img id="siteHeaderLogo" src="" alt="โลโก้" class="hidden h-24 md:h-32 w-auto object-contain drop-shadow-lg">
+                    <img id="siteHeaderLogo2" src="" alt="โลโก้" class="hidden h-24 md:h-32 w-auto object-contain drop-shadow-lg">
+                </div>
                 <h1 class="font-display text-3xl sm:text-4xl md:text-6xl font-bold mb-2 leading-tight flex flex-wrap items-center justify-center gap-x-3 gap-y-1 drop-shadow-sm">
                     <i class="fa-solid fa-hands-bubbles"></i><span id="siteTitle">วันล้างมือโลก</span>
                 </h1>
@@ -688,6 +691,7 @@
                 }
             };
             setLogo('siteHeaderLogo', siteSettings.headerLogo);
+            setLogo('siteHeaderLogo2', siteSettings.headerLogo2);
             setLogo('siteFooterLogo', siteSettings.footerLogo);
             setLogo('siteFooterLogo2', siteSettings.footerLogo2);
             // เปิด/ปิดรับผลงาน — ซ่อนฟอร์มส่งผลงานเมื่อปิดรับ แล้วโชว์ข้อความแจ้งแทน
