@@ -295,6 +295,8 @@
             </div>
 
             <div class="text-center md:pt-6">
+                <!-- โลโก้กลางหัวเว็บ (ดึงลิงก์จาก Settings คีย์ headerLogo) -->
+                <img id="siteHeaderLogo" src="" alt="โลโก้" class="hidden mx-auto mb-5 h-24 md:h-32 w-auto object-contain drop-shadow-lg">
                 <h1 class="font-display text-3xl sm:text-4xl md:text-6xl font-bold mb-2 leading-tight flex flex-wrap items-center justify-center gap-x-3 gap-y-1 drop-shadow-sm">
                     <i class="fa-solid fa-hands-bubbles"></i><span id="siteTitle">วันล้างมือโลก</span>
                 </h1>
@@ -685,6 +687,7 @@
                     el.classList.add('hidden');
                 }
             };
+            setLogo('siteHeaderLogo', siteSettings.headerLogo);
             setLogo('siteFooterLogo', siteSettings.footerLogo);
             setLogo('siteFooterLogo2', siteSettings.footerLogo2);
             // เปิด/ปิดรับผลงาน — ซ่อนฟอร์มส่งผลงานเมื่อปิดรับ แล้วโชว์ข้อความแจ้งแทน
