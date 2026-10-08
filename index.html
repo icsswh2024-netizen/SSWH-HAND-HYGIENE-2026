@@ -1324,12 +1324,24 @@
 
         // ตัวเล่นฝัง (Drive/YouTube): เริ่มเป็นปุ่ม "แตะเพื่อเล่น" แล้วค่อยโหลด iframe ตอนแตะ
         // (ทำแบบนี้เพื่อหยุดคลิปอื่นก่อน จะได้ไม่มีเสียงซ้อนกัน)
+        // รูปปก (ภาพหน้าแรก) ของคลิป — Drive/YouTube มีให้ดึง
+        function posterUrl(url) {
+            const v = detectVideo(url);
+            if (v.type === 'drive') return 'https://drive.google.com/thumbnail?id=' + v.id + '&sz=w1600';
+            if (v.type === 'youtube') return 'https://img.youtube.com/vi/' + v.id + '/hqdefault.jpg';
+            return '';
+        }
         function embedPlayerHtml(video, embedUrl) {
+            const poster = posterUrl(video.url);
+            const posterImg = poster
+                ? `<img src="${poster}" alt="" class="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" onerror="this.style.display='none'">`
+                : '';
             return `
                 <div class="embed-holder absolute inset-0" data-embed="${embedUrl}"></div>
-                <button class="embed-play absolute inset-0 flex flex-col items-center justify-center bg-black/35 text-white hover:bg-black/45 transition" data-id="${video.id}">
-                    <i class="fa-solid fa-circle-play text-5xl drop-shadow"></i>
-                    <span class="text-xs mt-2 font-medium">แตะเพื่อเล่น</span>
+                ${posterImg}
+                <button class="embed-play absolute inset-0 flex flex-col items-center justify-center bg-black/30 text-white hover:bg-black/40 transition" data-id="${video.id}">
+                    <i class="fa-solid fa-circle-play text-5xl drop-shadow-lg"></i>
+                    <span class="text-xs mt-2 font-medium drop-shadow">แตะเพื่อเล่น</span>
                 </button>`;
         }
 
