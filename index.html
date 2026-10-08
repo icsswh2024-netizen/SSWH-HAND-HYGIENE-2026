@@ -333,10 +333,16 @@
                     <span class="font-semibold text-white">กติกา:</span> แนบลิงก์ผลงาน (MP4) อัปโหลดเพื่อร่วมสนุก ให้คะแนน และคอมเมนต์เป็นกำลังใจ!
                 </div>
 
-                <!-- ยอดเยี่ยมชมเว็บไซต์ -->
-                <div class="mt-5 flex justify-center">
+                <!-- ตัวนับรวม: เยี่ยมชมเว็บ / ยอดดูคลิป / คอมเมนต์ -->
+                <div class="mt-5 flex flex-wrap justify-center gap-2.5">
                     <span class="inline-flex items-center gap-2 bg-white/20 border border-white/30 text-white text-sm font-display font-semibold px-4 py-1.5 rounded-full backdrop-blur">
                         <i class="fa-solid fa-eye"></i>เยี่ยมชมเว็บไซต์ <span id="siteVisits">—</span> ครั้ง
+                    </span>
+                    <span class="inline-flex items-center gap-2 bg-white/20 border border-white/30 text-white text-sm font-display font-semibold px-4 py-1.5 rounded-full backdrop-blur">
+                        <i class="fa-solid fa-film"></i>ยอดดูคลิป <span id="totalViews">—</span> ครั้ง
+                    </span>
+                    <span class="inline-flex items-center gap-2 bg-white/20 border border-white/30 text-white text-sm font-display font-semibold px-4 py-1.5 rounded-full backdrop-blur">
+                        <i class="fa-regular fa-comments"></i>ความคิดเห็น <span id="totalComments">—</span>
                     </span>
                 </div>
             </div>
@@ -1133,7 +1139,21 @@
                 }
             });
             clipCount.textContent = `${videoMap.size} คลิป`;
+            updateTotals(); // ยอดดูคลิป + คอมเมนต์รวมบนหัวเว็บ
             maybeScrollToSharedClip(); // ถ้าเปิดมาด้วยลิงก์แชร์ #clip-<id>
+        }
+
+        // อัปเดตยอดรวม "ดูคลิป" และ "ความคิดเห็น" บนหัวเว็บ
+        function updateTotals() {
+            let views = 0, comments = 0;
+            videoMap.forEach(v => {
+                views += Number(v.views) || 0;
+                comments += Array.isArray(v.comments) ? v.comments.length : 0;
+            });
+            const vEl = document.getElementById('totalViews');
+            const cEl = document.getElementById('totalComments');
+            if (vEl) vEl.textContent = views.toLocaleString('en-US');
+            if (cEl) cEl.textContent = comments.toLocaleString('en-US');
         }
 
         // อัปเดตข้อมูลบนการ์ดเดิม: ยอดวิว และความคิดเห็น (ข้ามถ้าผู้ใช้กำลังพิมพ์คอมเมนต์อยู่)
@@ -1373,7 +1393,8 @@
 
                     <!-- Comments Section -->
                     <div class="card-comments mt-auto border-t border-slate-100 pt-4">
-                        <h5 class="text-sm font-semibold text-sky-700 mb-2 flex items-center gap-1"><i class="fa-regular fa-comments"></i>ความคิดเห็น <span class="text-slate-400 font-medium" id="comment-count-${video.id}">(${video.comments.length})</span></h5>
+                        <h5 class="text-sm font-semibold text-sky-700 mb-1 flex items-center gap-1"><i class="fa-regular fa-comments"></i>ความคิดเห็น <span class="text-slate-400 font-medium" id="comment-count-${video.id}">(${video.comments.length})</span></h5>
+                        <p class="text-xs text-rose-400 mb-2 flex items-center gap-1"><i class="fa-regular fa-heart"></i>โปรดแสดงความคิดเห็นด้วยความสุภาพ</p>
                         <div class="comments-container max-h-56 overflow-y-auto mb-3 space-y-2 pr-1" id="comments-${video.id}">
                             ${commentsInner}
                         </div>
