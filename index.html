@@ -894,8 +894,11 @@
         async function shareClip(id, title) {
             const url = shareUrlFor(id);
             const shareText = title ? ('ชมคลิป "' + title + '" — วันล้างมือโลก รพ.ศรีสังวรสุโขทัย') : 'ชมคลิปประกวด วันล้างมือโลก รพ.ศรีสังวรสุโขทัย';
-            // มือถือที่รองรับ Web Share API (ไลน์/เฟซ/ฯลฯ)
-            if (navigator.share) {
+            // ใช้เมนูแชร์ของเครื่อง "เฉพาะมือถือ/แท็บเล็ต" (จอสัมผัส) เท่านั้น
+            // บน PC เมนูแชร์ของ Windows มักค้าง/ว่างเปล่า จึงให้ใช้วิธีคัดลอกลิงก์แทน
+            const isTouchDevice = (navigator.maxTouchPoints || 0) > 0 &&
+                window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+            if (isTouchDevice && navigator.share) {
                 try { await navigator.share({ title: 'วันล้างมือโลก', text: shareText, url: url }); return; }
                 catch (err) { if (err && err.name === 'AbortError') return; } // ผู้ใช้กดยกเลิก
             }
