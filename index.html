@@ -562,6 +562,19 @@
                         </div>
                     </div>
 
+                    <!-- ผลการตัดสินปัจจุบัน (รางวัลตามอันดับ) -->
+                    <h4 class="font-display text-2xl md:text-3xl font-semibold text-gradient mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-trophy text-amber-400"></i>ผลการตัดสินปัจจุบัน
+                    </h4>
+                    <p class="text-sm text-slate-400 mb-5">จัดอันดับจากคะแนนเฉลี่ยสูงสุด (เสมอกันดูจำนวนโหวตมากกว่า) · อัปเดตแบบเรียลไทม์</p>
+                    <div id="prizeStandings" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7"></div>
+
+                    <!-- ตารางอันดับละเอียด -->
+                    <h4 class="font-display text-xl md:text-2xl font-semibold text-slate-700 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-ranking-star text-sky-500"></i>ตารางคะแนนทุกผลงาน
+                    </h4>
+                    <div id="standingsTable" class="overflow-x-auto mb-8"></div>
+
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-9">
                         <div class="border border-slate-200 rounded-2xl p-5">
                             <h5 class="font-semibold text-slate-700 text-base md:text-lg mb-4"><i class="fa-solid fa-eye text-sky-500 mr-1.5"></i>ยอดวิวต่อคลิป</h5>
@@ -1590,6 +1603,96 @@
             barChart('chartViews', items.map(it => ({ label: it.title, value: Number(it.views) || 0 })), '#0ea5e9');
             barChart('chartVotes', items.map(it => ({ label: it.title, value: Number(it.votes) || 0, sub: it.avgScore ? ('⭐' + (Math.round(it.avgScore * 10) / 10)) : '' })), '#f59e0b');
             barChart('chartComments', items.map(it => ({ label: it.title, value: Number(it.comments) || 0 })), '#22c55e');
+            renderStandings(items);
+        }
+
+        // ===== ผลการตัดสินปัจจุบัน (การ์ดรางวัล + ตารางอันดับ) =====
+        // แถวดาว (รองรับครึ่งดาว) ให้เห็นชัด
+        function starsRowHtml(avg, size) {
+            avg = Number(avg) || 0;
+            size = size || 18;
+            let s = '';
+            for (let i = 1; i <= 5; i++) {
+                let cls;
+                if (avg >= i) cls = 'fa-solid fa-star';
+                else if (avg >= i - 0.5) cls = 'fa-solid fa-star-half-stroke';
+                else cls = 'fa-regular fa-star';
+                const color = avg >= i - 0.5 ? '#f59e0b' : '#cbd5e1';
+                s += `<i class="${cls}" style="color:${color};font-size:${size}px"></i>`;
+            }
+            return `<span style="display:inline-flex;gap:3px">${s}</span>`;
+        }
+        function renderStandings(items) {
+            items = (items || []).slice().sort((a, b) =>
+                (Number(b.avgScore) || 0) - (Number(a.avgScore) || 0) ||
+                (Number(b.votes) || 0) - (Number(a.votes) || 0)
+            );
+            const prizes = [
+                { name: 'รางวัลชนะเลิศ', money: '700', medal: '🥇', grad: 'linear-gradient(135deg,#fef9c3,#fde68a)', ring: '#f59e0b' },
+                { name: 'รองชนะเลิศอันดับที่ 1', money: '500', medal: '🥈', grad: 'linear-gradient(135deg,#f1f5f9,#e2e8f0)', ring: '#94a3b8' },
+                { name: 'รองชนะเลิศอันดับที่ 2', money: '300', medal: '🥉', grad: 'linear-gradient(135deg,#ffedd5,#fed7aa)', ring: '#ea9a5b' },
+                { name: 'รางวัลชมเชย', money: '200', medal: '⭐', grad: 'linear-gradient(135deg,#cffafe,#a5f3fc)', ring: '#22d3ee' }
+            ];
+            const cards = prizes.map((p, i) => {
+                const v = items[i];
+                const avg = v ? (Number(v.avgScore) || 0) : 0;
+                const pct = (avg / 5 * 100);
+                const body = v ? `
+                    <div style="font-family:Kanit,sans-serif;font-weight:700;color:#1e293b;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escapeHtml(v.title || '')}">${escapeHtml(v.title || '(ไม่มีชื่อ)')}</div>
+                    <div style="font-size:12px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:8px" title="${escapeHtml(v.organization || '')}">${escapeHtml(v.organization || '')}</div>
+                    <div style="margin-bottom:6px">${starsRowHtml(avg, 18)}</div>
+                    <div style="font-family:Kanit,sans-serif"><span style="font-size:26px;font-weight:800;color:#b45309">${avg.toFixed(3)}</span><span style="font-size:13px;color:#94a3b8"> / 5.000</span></div>
+                    <div style="display:flex;justify-content:center;gap:10px;font-size:12px;color:#475569;margin-top:4px">
+                        <span><i class="fa-solid fa-user-group" style="color:#f59e0b"></i> ${Number(v.votes) || 0} โหวต</span>
+                        <span><i class="fa-solid fa-percent" style="color:#0891b2"></i> ${pct.toFixed(1)}%</span>
+                    </div>`
+                    : `<div style="color:#94a3b8;font-family:Kanit,sans-serif;padding:14px 0">— ยังไม่มีผลงาน —</div>`;
+                return `
+                <div style="background:${p.grad};border-radius:20px;padding:18px 16px;text-align:center;box-shadow:0 10px 24px rgba(15,23,42,.08)">
+                    <div style="width:54px;height:54px;margin:0 auto 10px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 2px 8px rgba(0,0,0,.08);border:2px solid ${p.ring}">${p.medal}</div>
+                    <div style="display:inline-block;font-family:Kanit,sans-serif;font-size:11px;font-weight:600;color:#475569;background:rgba(255,255,255,.6);padding:2px 10px;border-radius:999px;margin-bottom:8px">${p.name}</div>
+                    ${body}
+                    <div style="font-family:Kanit,sans-serif;margin-top:10px;font-weight:800;color:#1e293b;font-size:18px">${p.money} <span style="font-size:13px;font-weight:500;color:#64748b">บาท</span></div>
+                </div>`;
+            }).join('');
+            const ps = document.getElementById('prizeStandings');
+            if (ps) ps.innerHTML = cards;
+
+            // ตารางอันดับละเอียดทุกผลงาน
+            const rows = items.map((v, i) => {
+                const avg = Number(v.avgScore) || 0;
+                const pct = (avg / 5 * 100);
+                const medal = ['🥇', '🥈', '🥉'][i] || `<span style="color:#94a3b8;font-weight:700">${i + 1}</span>`;
+                return `
+                <tr style="border-bottom:1px solid #f1f5f9">
+                    <td style="text-align:center;padding:10px 8px;font-size:18px">${medal}</td>
+                    <td style="padding:10px 8px">
+                        <div style="font-family:Kanit,sans-serif;font-weight:600;color:#1e293b">${escapeHtml(v.title || '(ไม่มีชื่อ)')}</div>
+                        <div style="font-size:12px;color:#94a3b8">${escapeHtml(v.organization || '')}</div>
+                    </td>
+                    <td style="padding:10px 8px;white-space:nowrap">${starsRowHtml(avg, 15)}</td>
+                    <td style="text-align:right;padding:10px 8px;font-family:Kanit,sans-serif;font-weight:800;color:#b45309;white-space:nowrap">${avg.toFixed(3)}</td>
+                    <td style="text-align:right;padding:10px 8px;color:#0891b2;font-weight:600;white-space:nowrap">${pct.toFixed(1)}%</td>
+                    <td style="text-align:right;padding:10px 8px;color:#475569;white-space:nowrap">${Number(v.votes) || 0}</td>
+                    <td style="text-align:right;padding:10px 8px;color:#475569;white-space:nowrap">${Number(v.views) || 0}</td>
+                </tr>`;
+            }).join('');
+            const tbl = document.getElementById('standingsTable');
+            if (tbl) tbl.innerHTML = items.length ? `
+                <table style="width:100%;border-collapse:collapse;min-width:620px;font-size:14px">
+                    <thead>
+                        <tr style="background:#f8fafc;font-family:Kanit,sans-serif;color:#64748b;font-size:13px">
+                            <th style="padding:10px 8px">อันดับ</th>
+                            <th style="padding:10px 8px;text-align:left">ผลงาน / หน่วยงาน</th>
+                            <th style="padding:10px 8px;text-align:left">ดาว</th>
+                            <th style="padding:10px 8px;text-align:right">เฉลี่ย</th>
+                            <th style="padding:10px 8px;text-align:right">ร้อยละ</th>
+                            <th style="padding:10px 8px;text-align:right">โหวต</th>
+                            <th style="padding:10px 8px;text-align:right">วิว</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>` : '<p class="text-slate-400 text-sm italic">ยังไม่มีข้อมูล</p>';
         }
 
         // กราฟแท่งแนวนอน (ไม่พึ่งไลบรารีภายนอก) เรียงมาก -> น้อย
