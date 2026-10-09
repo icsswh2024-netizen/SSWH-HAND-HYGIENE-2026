@@ -432,7 +432,7 @@
         </section>
 
         <!-- Prizes Section -->
-        <section class="mb-14">
+        <section id="prizesSection" class="mb-14">
             <h3 class="font-display text-2xl md:text-3xl font-semibold text-gradient mb-7 text-center flex items-center justify-center gap-3">
                 <i class="fa-solid fa-trophy text-amber-400"></i>รางวัลการประกวด
             </h3>
@@ -556,6 +556,15 @@
                             <div class="text-sm text-slate-400 mt-0.5">ปิดรับได้ ฟอร์มส่งผลงานจะถูกซ่อน ผู้ชมยังดู/โหวต/คอมเมนต์ได้ปกติ</div>
                         </div>
                         <button id="adminSubmissionsToggle" class="text-base font-semibold px-5 py-2.5 rounded-lg transition"></button>
+                    </div>
+
+                    <!-- ควบคุมการแสดงการ์ดรางวัล -->
+                    <div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 mb-7">
+                        <div>
+                            <div class="font-semibold text-slate-700 text-base md:text-lg"><i class="fa-solid fa-trophy text-amber-400 mr-1.5"></i>การ์ดรางวัลประกวด</div>
+                            <div class="text-sm text-slate-400 mt-0.5">ซ่อน/แสดงส่วนรางวัลการประกวดบนหน้าเว็บ</div>
+                        </div>
+                        <button id="adminPrizesToggle" class="text-base font-semibold px-5 py-2.5 rounded-lg transition"></button>
                     </div>
 
                     <!-- แดชบอร์ดสรุปผล -->
@@ -763,6 +772,7 @@
             setLogo('siteFooterLogo2', siteSettings.footerLogo2);
             // เปิด/ปิดรับผลงาน — ซ่อนฟอร์มส่งผลงานเมื่อปิดรับ แล้วโชว์ข้อความแจ้งแทน
             applySubmissionsOpen();
+            applyPrizesShown(); // ซ่อน/แสดงการ์ดรางวัล
         }
 
         // เปิดรับผลงานอยู่ไหม? (ค่าตั้งต้น = เปิด)
@@ -778,6 +788,16 @@
             if (closed) closed.classList.toggle('hidden', open);
             // ปิดรับผลงาน -> ซ่อนคอมเมนต์ในทุกการ์ดด้วย
             document.body.classList.toggle('submissions-closed', !open);
+        }
+
+        // แสดงการ์ดรางวัลประกวดหรือไม่ (ค่าเริ่มต้น = แสดง)
+        function isPrizesShown() {
+            const v = siteSettings.showPrizes;
+            return String(v == null ? 'TRUE' : v).toUpperCase() !== 'FALSE';
+        }
+        function applyPrizesShown() {
+            const el = document.getElementById('prizesSection');
+            if (el) el.classList.toggle('hidden', !isPrizesShown());
         }
 
         // ข้อความกติกาเริ่มต้น (แอดมินแก้ได้ที่แท็บ Settings คีย์ rulesFull — ใส่ HTML ได้)
@@ -1683,6 +1703,7 @@
                     renderManage(data.manage);
                     updateVotingToggle();
                     updateSubmissionsToggle();
+                    updatePrizesToggle();
                 }
                 delete window[cb]; script.remove();
             };
@@ -1928,6 +1949,28 @@
             applySubmissionsOpen();
             sendDataToSheet('SET_SETTING', { setting: 'submissionsOpen', value: next, key: getAdminKey() });
             notify('success', next === 'TRUE' ? 'เปิดรับผลงานแล้ว' : 'ปิดรับผลงานแล้ว (ซ่อนฟอร์มส่งผลงาน)');
+            setTimeout(fetchFromSheet, 1500);
+        });
+
+        // ===== ซ่อน/แสดงการ์ดรางวัลประกวด =====
+        function updatePrizesToggle() {
+            const btn = document.getElementById('adminPrizesToggle');
+            if (!btn) return;
+            if (isPrizesShown()) {
+                btn.innerHTML = '<i class="fa-solid fa-eye mr-1"></i>กำลังแสดง — กดเพื่อซ่อนรางวัล';
+                btn.className = 'text-sm font-semibold px-4 py-2 rounded-lg transition bg-green-500 hover:bg-green-600 text-white';
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-eye-slash mr-1"></i>ซ่อนอยู่ — กดเพื่อแสดงรางวัล';
+                btn.className = 'text-sm font-semibold px-4 py-2 rounded-lg transition bg-slate-300 hover:bg-slate-400 text-slate-700';
+            }
+        }
+        document.getElementById('adminPrizesToggle').addEventListener('click', () => {
+            const next = isPrizesShown() ? 'FALSE' : 'TRUE';
+            siteSettings.showPrizes = next;
+            updatePrizesToggle();
+            applyPrizesShown();
+            sendDataToSheet('SET_SETTING', { setting: 'showPrizes', value: next, key: getAdminKey() });
+            notify('success', next === 'TRUE' ? 'แสดงการ์ดรางวัลแล้ว' : 'ซ่อนการ์ดรางวัลแล้ว');
             setTimeout(fetchFromSheet, 1500);
         });
 
