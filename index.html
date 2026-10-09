@@ -1225,16 +1225,22 @@
         }
 
         // โหลดข้อมูลจาก Google Sheet แบบ JSONP (เลี่ยงปัญหา CORS ข้ามโดเมน)
-        // ซ่อนหน้าจอกำลังโหลด (เรียกได้หลายครั้ง ทำงานครั้งเดียว)
-        let pageLoaderHidden = false;
-        function hidePageLoader() {
+        // ซ่อนหน้าจอกำลังโหลด — ซ่อนจริงเมื่อ (ก) ข้อมูลพร้อม และ (ข) หน้าแต่งสไตล์เสร็จ (window load)
+        // เพื่อให้การเปิดครั้งแรก (ยังไม่แคช) เผยหน้าที่สวยครบ เหมือนครั้งที่ 2
+        let pageLoaderHidden = false, dataReady = false, assetsReady = false;
+        function doHideLoader() {
             if (pageLoaderHidden) return;
             pageLoaderHidden = true;
             const el = document.getElementById('pageLoader');
             if (el) { el.classList.add('loaded'); setTimeout(() => el.remove(), 600); }
         }
-        // กันค้าง: ถ้าโหลดช้ามากก็ซ่อนให้ใช้งานได้ภายใน 8 วินาที
-        setTimeout(hidePageLoader, 8000);
+        function maybeHideLoader() { if (dataReady && assetsReady) doHideLoader(); }
+        function hidePageLoader() { dataReady = true; maybeHideLoader(); } // ข้อมูลพร้อม
+        // หน้าแต่งสไตล์/โหลด asset เสร็จ (CDN ครบ)
+        if (document.readyState === 'complete') { assetsReady = true; }
+        else { window.addEventListener('load', () => { assetsReady = true; maybeHideLoader(); }); }
+        // กันค้าง: ถ้าโหลดช้ามาก (CDN ถูกบล็อก ฯลฯ) ก็ซ่อนให้ใช้งานได้ภายใน 10 วินาที
+        setTimeout(doHideLoader, 10000);
 
         function fetchFromSheet() {
             if (DEMO_MODE) return;
