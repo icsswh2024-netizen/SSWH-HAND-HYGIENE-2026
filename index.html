@@ -509,8 +509,8 @@
             </div>
         </section>
 
-        <!-- แบบประเมินกิจกรรม -->
-        <section class="mb-14">
+        <!-- แบบประเมินกิจกรรม (ค่าเริ่มต้นซ่อน จนกว่าแอดมินจะเปิด หลัง deploy GS) -->
+        <section id="evalSection" class="mb-14 hidden">
             <div class="relative overflow-hidden bg-gradient-to-br from-white via-emerald-50 to-teal-50 rounded-3xl shadow-2xl shadow-emerald-200/50 p-7 md:p-9 border-2 border-emerald-200 text-center">
                 <span class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500"></span>
                 <div class="w-14 h-14 mx-auto mb-3 rounded-full bg-emerald-100 flex items-center justify-center">
@@ -585,6 +585,15 @@
                             <div class="text-sm text-slate-400 mt-0.5">ซ่อน/แสดงส่วนรางวัลการประกวดบนหน้าเว็บ</div>
                         </div>
                         <button id="adminPrizesToggle" class="text-base font-semibold px-5 py-2.5 rounded-lg transition"></button>
+                    </div>
+
+                    <!-- ควบคุมแบบประเมิน -->
+                    <div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 mb-7">
+                        <div>
+                            <div class="font-semibold text-slate-700 text-base md:text-lg"><i class="fa-solid fa-clipboard-check text-emerald-600 mr-1.5"></i>แบบประเมินกิจกรรม</div>
+                            <div class="text-sm text-slate-400 mt-0.5">เปิดได้หลัง Deploy Apps Script ใหม่แล้ว (ไม่งั้นข้อมูลจะไม่ถูกบันทึก)</div>
+                        </div>
+                        <button id="adminEvalToggle" class="text-base font-semibold px-5 py-2.5 rounded-lg transition"></button>
                     </div>
 
                     <!-- แดชบอร์ดสรุปผล -->
@@ -804,6 +813,7 @@
             // เปิด/ปิดรับผลงาน — ซ่อนฟอร์มส่งผลงานเมื่อปิดรับ แล้วโชว์ข้อความแจ้งแทน
             applySubmissionsOpen();
             applyPrizesShown(); // ซ่อน/แสดงการ์ดรางวัล
+            applyEvalShown();   // ซ่อน/แสดงแบบประเมิน
         }
 
         // เปิดรับผลงานอยู่ไหม? (ค่าตั้งต้น = เปิด)
@@ -829,6 +839,15 @@
         function applyPrizesShown() {
             const el = document.getElementById('prizesSection');
             if (el) el.classList.toggle('hidden', !isPrizesShown());
+        }
+
+        // แสดงแบบประเมินหรือไม่ (ค่าเริ่มต้น = ซ่อน จนกว่าจะ deploy GS แล้วแอดมินเปิด)
+        function isEvalShown() {
+            return String(siteSettings.showEval || 'FALSE').toUpperCase() === 'TRUE';
+        }
+        function applyEvalShown() {
+            const el = document.getElementById('evalSection');
+            if (el) el.classList.toggle('hidden', !isEvalShown());
         }
 
         // ข้อความกติกาเริ่มต้น (แอดมินแก้ได้ที่แท็บ Settings คีย์ rulesFull — ใส่ HTML ได้)
@@ -1860,6 +1879,7 @@
                     updateVotingToggle();
                     updateSubmissionsToggle();
                     updatePrizesToggle();
+                    updateEvalToggle();
                 }
                 delete window[cb]; script.remove();
             };
@@ -2127,6 +2147,28 @@
             applyPrizesShown();
             sendDataToSheet('SET_SETTING', { setting: 'showPrizes', value: next, key: getAdminKey() });
             notify('success', next === 'TRUE' ? 'แสดงการ์ดรางวัลแล้ว' : 'ซ่อนการ์ดรางวัลแล้ว');
+            setTimeout(fetchFromSheet, 1500);
+        });
+
+        // ===== เปิด/ปิดแบบประเมิน =====
+        function updateEvalToggle() {
+            const btn = document.getElementById('adminEvalToggle');
+            if (!btn) return;
+            if (isEvalShown()) {
+                btn.innerHTML = '<i class="fa-solid fa-toggle-on mr-1"></i>เปิดอยู่ — กดเพื่อปิดแบบประเมิน';
+                btn.className = 'text-sm font-semibold px-4 py-2 rounded-lg transition bg-emerald-500 hover:bg-emerald-600 text-white';
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-toggle-off mr-1"></i>ปิดอยู่ — กดเพื่อเปิดแบบประเมิน';
+                btn.className = 'text-sm font-semibold px-4 py-2 rounded-lg transition bg-slate-300 hover:bg-slate-400 text-slate-700';
+            }
+        }
+        document.getElementById('adminEvalToggle').addEventListener('click', () => {
+            const next = isEvalShown() ? 'FALSE' : 'TRUE';
+            siteSettings.showEval = next;
+            updateEvalToggle();
+            applyEvalShown();
+            sendDataToSheet('SET_SETTING', { setting: 'showEval', value: next, key: getAdminKey() });
+            notify('success', next === 'TRUE' ? 'เปิดแบบประเมินแล้ว' : 'ปิดแบบประเมินแล้ว');
             setTimeout(fetchFromSheet, 1500);
         });
 
