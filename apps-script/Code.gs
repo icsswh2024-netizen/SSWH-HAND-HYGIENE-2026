@@ -21,6 +21,15 @@ const TAB_VOTES       = 'Votes';
 const TAB_COMMENTS    = 'Comments';
 const TAB_SETTINGS    = 'Settings';
 const TAB_VISITS      = 'Visits';
+const TAB_EVALS       = 'Evaluations';
+
+// หัวข้อคำถามแบบประเมิน (Q1–Q10) — ใช้ทั้งตอนสร้างหัวตารางและรับข้อมูล
+const EVAL_QHEADERS = [
+  'Q1 เนื้อหาเข้าใจง่าย', 'Q2 เนื้อหาเป็นประโยชน์',
+  'Q3 รูปแบบน่าสนใจ', 'Q4 เวลาเหมาะสม', 'Q5 ประชาสัมพันธ์เข้าถึงง่าย',
+  'Q6 เว็บไซต์ใช้งานง่าย', 'Q7 คลิปมีคุณภาพ',
+  'Q8 ได้ความรู้เพิ่ม', 'Q9 ตั้งใจล้างมือถูกวิธี', 'Q10 ภาพรวมพึงพอใจ'
+];
 
 // สถานะที่จะ "แสดงบนเว็บ" (คลิปที่แอดมินอนุมัติแล้ว)
 const VISIBLE_STATUS = ['approved', 'active'];
@@ -33,6 +42,9 @@ function setup() {
   ensureSheet(ss, TAB_VOTES,    ['Timestamp', 'VideoID', 'Score', 'DeviceID']);
   ensureSheet(ss, TAB_COMMENTS, ['Timestamp', 'VideoID', 'ผู้แสดงความเห็น', 'ข้อความ', 'DeviceID']);
   ensureSheet(ss, TAB_VISITS,   ['Timestamp', 'DeviceID']);
+  ensureSheet(ss, TAB_EVALS,    ['Timestamp', 'เพศ', 'อายุ', 'สถานภาพ', 'หน่วยงาน', 'ช่องทาง']
+    .concat(EVAL_QHEADERS)
+    .concat(['ความรู้ก่อน', 'ความรู้หลัง', 'สิ่งที่ประทับใจ', 'สิ่งที่ควรปรับปรุง', 'หัวข้อครั้งต่อไป', 'DeviceID']));
 
   // แท็บตั้งค่าหน้าเว็บ (แก้ข้อความได้โดยไม่ต้องแตะโค้ด)
   const settings = ensureSheet(ss, TAB_SETTINGS, ['Key', 'Value']);
@@ -108,6 +120,15 @@ function doPost(e) {
       ss.getSheetByName(TAB_COMMENTS).appendRow([now, payload.id, payload.user || 'ผู้เยี่ยมชม', payload.text || '', payload.device || '']);
     } else if (action === 'ADD_VISIT') {
       ss.getSheetByName(TAB_VISITS).appendRow([now, payload.device || '']);
+    } else if (action === 'ADD_EVAL') {
+      // แบบประเมินกิจกรรม — เก็บลงแท็บ Evaluations (1 แถว/1 ผู้ตอบ)
+      const q = payload.q || {};
+      const row = [now, payload.gender || '', payload.age || '', payload.role || '',
+                   payload.dept || '', payload.channel || '']
+        .concat(EVAL_QHEADERS.map((h, i) => q['q' + (i + 1)] || ''))
+        .concat([payload.knowPre || '', payload.knowPost || '',
+                 payload.impress || '', payload.improve || '', payload.nextTopic || '', payload.device || '']);
+      ss.getSheetByName(TAB_EVALS).appendRow(row);
     } else if (action === 'SET_STATUS') {
       // แอดมินเผยแพร่/หยุดเผยแพร่คลิป — ต้องมีรหัสแอดมินที่ถูกต้อง
       if (!isAdmin(ss, payload.key)) {

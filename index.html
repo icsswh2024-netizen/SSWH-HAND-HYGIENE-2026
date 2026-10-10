@@ -161,6 +161,11 @@
             cursor: pointer;
         }
 
+        /* ช่องกรอกในแบบประเมิน */
+        .ev-input{width:100%;font-family:Kanit,sans-serif;font-size:14px;color:#0f172a;
+            border:1px solid #cbd5e1;border-radius:10px;padding:8px 10px;background:#f8fafc;margin-top:3px}
+        .ev-input:focus{outline:none;border-color:#059669;box-shadow:0 0 0 3px rgba(5,150,105,.15);background:#fff}
+
         /* เฟรมแนวตั้ง (คลิปแนวตั้ง 9:16) — แคบลง จัดกึ่งกลาง */
         .mobile-landscape-frame.portrait {
             padding-bottom: 0;
@@ -504,6 +509,21 @@
             </div>
         </section>
 
+        <!-- แบบประเมินกิจกรรม -->
+        <section class="mb-14">
+            <div class="relative overflow-hidden bg-gradient-to-br from-white via-emerald-50 to-teal-50 rounded-3xl shadow-2xl shadow-emerald-200/50 p-7 md:p-9 border-2 border-emerald-200 text-center">
+                <span class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500"></span>
+                <div class="w-14 h-14 mx-auto mb-3 rounded-full bg-emerald-100 flex items-center justify-center">
+                    <i class="fa-solid fa-clipboard-check text-emerald-600 text-2xl"></i>
+                </div>
+                <h3 class="font-display text-2xl font-semibold text-emerald-700 mb-2">แบบประเมินกิจกรรม</h3>
+                <p class="text-slate-500 text-sm md:text-base mb-5">ร่วมประเมินกิจกรรมวันล้างมือโลก เพื่อนำไปปรับปรุงครั้งต่อไป — ใช้เวลาไม่ถึง 2 นาที 🙏</p>
+                <button id="openEvalBtn" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold px-7 py-3 rounded-xl shadow-lg shadow-emerald-500/30 transition">
+                    <i class="fa-solid fa-pen-to-square"></i>ทำแบบประเมิน
+                </button>
+            </div>
+        </section>
+
     </main>
 
     <!-- Footer -->
@@ -634,6 +654,17 @@
     <div id="clipModal" class="fixed inset-0 z-[90] hidden bg-black/95 items-center justify-center">
         <button id="clipModalClose" class="absolute top-4 right-4 z-[91] text-white/90 hover:text-white bg-white/10 hover:bg-white/20 w-11 h-11 rounded-full flex items-center justify-center text-2xl leading-none backdrop-blur" aria-label="ปิด">&times;</button>
         <div id="clipModalBody" class="w-full h-full flex items-center justify-center p-1 md:p-3"></div>
+    </div>
+
+    <!-- โมดัลแบบประเมินกิจกรรม -->
+    <div id="evalModal" class="fixed inset-0 z-[95] hidden bg-black/50 items-start justify-center overflow-y-auto p-3 md:p-6">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl my-4 overflow-hidden">
+            <div class="brand-gradient text-white px-6 py-4 flex items-center justify-between">
+                <h3 class="font-display text-lg md:text-xl font-semibold"><i class="fa-solid fa-clipboard-check mr-2"></i>แบบประเมินกิจกรรมวันล้างมือโลก</h3>
+                <button id="evalClose" class="text-white/90 hover:text-white text-3xl leading-none">&times;</button>
+            </div>
+            <div id="evalBody" class="p-5 md:p-7 max-h-[75vh] overflow-y-auto"></div>
+        </div>
     </div>
 
     <script>
@@ -1017,6 +1048,131 @@
         document.getElementById('clipModalClose').addEventListener('click', closeClipModal);
         clipModal.addEventListener('click', (e) => { if (e.target === clipModal || e.target === clipModalBody) closeClipModal(); });
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !clipModal.classList.contains('hidden')) closeClipModal(); });
+
+        // ===== แบบประเมินกิจกรรม =====
+        const EVAL_QUESTIONS = [
+            { g: 'ด้านเนื้อหา/การให้ความรู้' },
+            { q: 'q1', t: 'เนื้อหาการล้างมือ 7 ขั้นตอน เข้าใจง่าย ชัดเจน' },
+            { q: 'q2', t: 'เนื้อหาตรงประเด็น ทันสมัย เป็นประโยชน์' },
+            { g: 'ด้านรูปแบบ/การจัดกิจกรรม' },
+            { q: 'q3', t: 'รูปแบบกิจกรรมน่าสนใจ สร้างสรรค์' },
+            { q: 'q4', t: 'ระยะเวลา/ช่วงเวลาจัดกิจกรรมเหมาะสม' },
+            { q: 'q5', t: 'การประชาสัมพันธ์เข้าถึงง่าย' },
+            { g: 'ด้านสื่อ/ช่องทางออนไลน์' },
+            { q: 'q6', t: 'เว็บไซต์ใช้งานง่าย ดูคลิป/โหวต/คอมเมนต์สะดวก' },
+            { q: 'q7', t: 'คลิปที่ส่งเข้าประกวดมีคุณภาพ สื่อสารได้ดี' },
+            { g: 'ด้านประโยชน์/การนำไปใช้' },
+            { q: 'q8', t: 'ได้รับความรู้เพิ่มขึ้นเกี่ยวกับการล้างมือ' },
+            { q: 'q9', t: 'ตั้งใจจะล้างมือให้ถูกวิธี/สม่ำเสมอมากขึ้น' },
+            { q: 'q10', t: 'ภาพรวมความพึงพอใจต่อกิจกรรม' }
+        ];
+        const evalModal = document.getElementById('evalModal');
+        const evalBody = document.getElementById('evalBody');
+        const EVAL_DONE_KEY = 'ghd_evaluated';
+
+        function likertRow(q, t) {
+            const scale = [5,4,3,2,1].map(n =>
+                `<label style="display:inline-flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer">
+                   <input type="radio" name="${q}" value="${n}" style="width:18px;height:18px;accent-color:#059669">
+                   <span style="font-size:11px;color:#94a3b8">${n}</span>
+                 </label>`).join('');
+            return `<div style="padding:10px 0;border-bottom:1px solid #f1f5f9">
+                <div style="font-size:14px;color:#334155;margin-bottom:6px">${t}</div>
+                <div style="display:flex;gap:14px;justify-content:flex-start">${scale}</div>
+            </div>`;
+        }
+        function buildEvalForm() {
+            const likert = EVAL_QUESTIONS.map(it => it.g
+                ? `<div style="font-family:Kanit,sans-serif;font-weight:700;color:#0f766e;margin:14px 0 2px;font-size:14px">${it.g}</div>`
+                : likertRow(it.q, it.t)).join('');
+            evalBody.innerHTML = `
+            <div style="font-family:Kanit,sans-serif;color:#334155">
+                <p style="font-size:13px;color:#64748b;margin:0 0 14px">กรุณาตอบตามความเป็นจริง ข้อมูลเป็นความลับ · <b style="color:#059669">5=มากที่สุด ... 1=น้อยที่สุด</b></p>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px">
+                    <div>
+                        <label style="font-size:13px;color:#64748b">เพศ</label>
+                        <select id="evGender" class="ev-input"><option value="">— เลือก —</option><option>ชาย</option><option>หญิง</option><option>ไม่ระบุ</option></select>
+                    </div>
+                    <div>
+                        <label style="font-size:13px;color:#64748b">อายุ</label>
+                        <select id="evAge" class="ev-input"><option value="">— เลือก —</option><option>ต่ำกว่า 20</option><option>20–30</option><option>31–40</option><option>41–50</option><option>มากกว่า 50</option></select>
+                    </div>
+                    <div>
+                        <label style="font-size:13px;color:#64748b">สถานภาพ</label>
+                        <select id="evRole" class="ev-input"><option value="">— เลือก —</option><option>บุคลากรทางการแพทย์</option><option>บุคลากรสนับสนุน</option><option>นักศึกษา/ฝึกงาน</option><option>ผู้รับบริการ/ประชาชน</option><option>อื่น ๆ</option></select>
+                    </div>
+                    <div>
+                        <label style="font-size:13px;color:#64748b">หน่วยงาน/กลุ่มงาน</label>
+                        <input id="evDept" class="ev-input" placeholder="(ถ้ามี)">
+                    </div>
+                </div>
+
+                ${likert}
+
+                <div style="margin-top:14px">
+                    <label style="font-size:13px;color:#64748b">ล้างมือถูกวิธีครบ 7 ขั้นตอน (ก่อน → หลังร่วมกิจกรรม)</label>
+                    <div style="display:flex;gap:10px;margin-top:4px">
+                        <select id="evKnowPre" class="ev-input"><option value="">ก่อน: —</option><option>ทำได้</option><option>ทำได้บางส่วน</option><option>ทำไม่ได้</option></select>
+                        <select id="evKnowPost" class="ev-input"><option value="">หลัง: —</option><option>ทำได้</option><option>ทำได้บางส่วน</option><option>ทำไม่ได้</option></select>
+                    </div>
+                </div>
+
+                <div style="margin-top:12px">
+                    <label style="font-size:13px;color:#64748b">สิ่งที่ประทับใจ</label>
+                    <textarea id="evImpress" class="ev-input" rows="2" placeholder="(ไม่บังคับ)"></textarea>
+                </div>
+                <div style="margin-top:8px">
+                    <label style="font-size:13px;color:#64748b">สิ่งที่ควรปรับปรุง / อยากให้เพิ่ม</label>
+                    <textarea id="evImprove" class="ev-input" rows="2" placeholder="(ไม่บังคับ)"></textarea>
+                </div>
+                <div style="margin-top:8px">
+                    <label style="font-size:13px;color:#64748b">หัวข้อ/กิจกรรมที่อยากให้จัดครั้งต่อไป</label>
+                    <textarea id="evNext" class="ev-input" rows="2" placeholder="(ไม่บังคับ)"></textarea>
+                </div>
+
+                <button id="evalSubmit" style="margin-top:18px;width:100%;background:#059669;color:#fff;font-family:Kanit,sans-serif;font-weight:700;border:0;border-radius:12px;padding:12px;font-size:15px;cursor:pointer">
+                    <i class="fa-solid fa-paper-plane"></i> ส่งแบบประเมิน
+                </button>
+            </div>`;
+            document.getElementById('evalSubmit').addEventListener('click', submitEval);
+        }
+        function openEvalModal() {
+            if (hasInSet2(EVAL_DONE_KEY)) {
+                Swal.fire({ icon:'info', title:'ขอบคุณครับ', text:'เครื่องนี้ได้ทำแบบประเมินไปแล้ว', confirmButtonColor:'#059669', customClass:{ popup:'swal-info', confirmButton:'swal-confirm-btn' } });
+                return;
+            }
+            buildEvalForm();
+            evalModal.classList.remove('hidden'); evalModal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeEvalModal() { evalModal.classList.add('hidden'); evalModal.classList.remove('flex'); document.body.style.overflow = ''; }
+        function hasInSet2(k){ try { return localStorage.getItem(k)==='1'; } catch(e){ return false; } }
+        function setDone2(k){ try { localStorage.setItem(k,'1'); } catch(e){} }
+
+        function submitEval() {
+            const q = {};
+            let answered = 0;
+            for (let i=1;i<=10;i++){ const el=document.querySelector(`input[name="q${i}"]:checked`); if(el){ q['q'+i]=el.value; answered++; } }
+            if (answered < 10) {
+                Swal.fire({ icon:'warning', title:'กรุณาให้คะแนนให้ครบ', text:`ยังเหลืออีก ${10-answered} ข้อ`, confirmButtonColor:'#2563eb', customClass:{ popup:'swal-warning', confirmButton:'swal-confirm-btn' } });
+                return;
+            }
+            const val = id => (document.getElementById(id)?.value || '').trim();
+            const payload = {
+                gender: val('evGender'), age: val('evAge'), role: val('evRole'), dept: val('evDept'), channel: '',
+                q: q, knowPre: val('evKnowPre'), knowPost: val('evKnowPost'),
+                impress: val('evImpress'), improve: val('evImprove'), nextTopic: val('evNext'),
+                device: deviceId()
+            };
+            sendDataToSheet('ADD_EVAL', payload);
+            setDone2(EVAL_DONE_KEY);
+            closeEvalModal();
+            Swal.fire({ icon:'success', title:'ส่งแบบประเมินสำเร็จ!', text:'ขอบคุณที่ร่วมประเมินกิจกรรม 🙏', confirmButtonColor:'#059669', customClass:{ popup:'swal-info', confirmButton:'swal-confirm-btn' } });
+        }
+        document.getElementById('openEvalBtn').addEventListener('click', openEvalModal);
+        document.getElementById('evalClose').addEventListener('click', closeEvalModal);
+        evalModal.addEventListener('click', (e) => { if (e.target === evalModal) closeEvalModal(); });
 
         // ===== แชร์คลิป (ลิงก์หน้าเว็บของเรา ชี้ไปที่คลิปนั้นโดยตรง) =====
         function shareUrlFor(id) {
