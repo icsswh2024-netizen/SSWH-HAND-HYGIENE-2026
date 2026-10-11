@@ -1298,6 +1298,7 @@
 
         // เก็บออบเจกต์วิดีโอที่ผูกกับการ์ด (id -> video) เพื่ออัปเดตในที่โดยไม่สร้างการ์ดใหม่
         const videoMap = new Map();
+        let serverTotalStars = null; // ผลรวมดาวทั้งหมดจากเซิร์ฟเวอร์ (เปิดเผยได้แม้ยังเปิดโหวต)
 
         // Format number with thousands separator
         function formatViews(n) {
@@ -1411,7 +1412,9 @@
             const sEl = document.getElementById('totalStarsSum');
             if (vEl) vEl.textContent = views.toLocaleString('en-US');
             if (cEl) cEl.textContent = comments.toLocaleString('en-US');
-            if (sEl) sEl.textContent = stars.toLocaleString('en-US');
+            // ใช้ยอดรวมจากเซิร์ฟเวอร์ก่อน (เปิดเผยได้แม้ยังเปิดโหวต); ไม่งั้นใช้ค่าจากการ์ด (หลังปิดโหวต)
+            const starsShown = (serverTotalStars != null) ? serverTotalStars : stars;
+            if (sEl) sEl.textContent = Number(starsShown).toLocaleString('en-US');
         }
 
         // อัปเดตข้อมูลบนการ์ดเดิม: ยอดวิว และความคิดเห็น (ข้ามถ้าผู้ใช้กำลังพิมพ์คอมเมนต์อยู่)
@@ -1476,6 +1479,8 @@
                         const el = document.getElementById('siteVisits');
                         if (el) el.textContent = Number(data.siteVisits).toLocaleString('en-US');
                     }
+                    // ผลรวมดาวจากเซิร์ฟเวอร์ (เปิดเผยได้แม้ยังเปิดโหวต — ไม่เผยอันดับรายคลิป)
+                    serverTotalStars = (data && typeof data.totalStars === 'number') ? data.totalStars : null;
                     const list = videos.map(d => ({
                         id: d.id,
                         title: d.title,

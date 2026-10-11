@@ -278,7 +278,13 @@ function doGet(e) {
   const visitSheet = ss.getSheetByName(TAB_VISITS);
   const siteVisits = (visitSheet && visitSheet.getLastRow() > 1) ? visitSheet.getLastRow() - 1 : 0;
 
-  const payload = { settings: publicSettings, videos: videos, resultsReleased: votingOff, siteVisits: siteVisits };
+  // ผลรวมดาวทั้งหมด (นับเฉพาะโหวตล่าสุดต่อเครื่อง) — เปิดเผยได้แม้ยังเปิดโหวต
+  // เพราะเป็นยอดรวมทั้งงาน ไม่เผยอันดับรายคลิป
+  let totalStars = 0;
+  Object.keys(scoreSum).forEach(id => { totalStars += scoreSum[id]; });
+  totalStars = Math.round(totalStars);
+
+  const payload = { settings: publicSettings, videos: videos, resultsReleased: votingOff, siteVisits: siteVisits, totalStars: totalStars };
 
   // ถ้าใส่ ?admin=<รหัส> ถูกต้อง -> แนบรายการคลิป "ทั้งหมด" + สถิติ (สำหรับตารางจัดการ + แดชบอร์ด)
   const adminKey = e && e.parameter && e.parameter.admin;
