@@ -946,6 +946,21 @@
         document.getElementById('viewResultsBtn').addEventListener('click', () => {
             // ปิดโหวตแล้ว -> แสดงผลอันดับ / ยังเปิดอยู่ -> แจ้งยังดูไม่ได้
             if (!isVotingEnabled()) {
+                // เงื่อนไข: ต้องทำแบบประเมินกิจกรรมก่อน ถึงจะดูผลโหวตได้
+                // (บังคับเฉพาะเมื่อเปิดใช้งานแบบประเมินอยู่ · 1 เครื่องทำ 1 ครั้ง)
+                if (isEvalShown() && !hasInSet2(EVAL_DONE_KEY)) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'กรุณาทำแบบประเมินก่อน',
+                        html: 'ดูผลโหวตได้หลัง<b>ทำแบบประเมินกิจกรรมเสร็จแล้ว</b><br>ใช้เวลาไม่ถึง 2 นาที 🙏',
+                        showCancelButton: true,
+                        confirmButtonText: '<i class="fa-solid fa-clipboard-check"></i> ทำแบบประเมินเลย',
+                        cancelButtonText: 'ยังก่อน',
+                        confirmButtonColor: '#059669',
+                        customClass: { popup: 'swal-info', confirmButton: 'swal-confirm-btn' }
+                    }).then(res => { if (res.isConfirmed) openEvalModal(); });
+                    return;
+                }
                 showResults();
             } else {
                 Swal.fire({
@@ -1231,7 +1246,16 @@
             sendDataToSheet('ADD_EVAL', payload);
             setDone2(EVAL_DONE_KEY);
             closeEvalModal();
-            Swal.fire({ icon:'success', title:'ส่งแบบประเมินสำเร็จ!', text:'ขอบคุณที่ร่วมประเมินกิจกรรม 🙏', confirmButtonColor:'#059669', customClass:{ popup:'swal-info', confirmButton:'swal-confirm-btn' } });
+            // ปิดโหวตแล้ว -> ทำประเมินเสร็จ ปลดล็อกให้ดูผลโหวตต่อได้ทันที
+            const unlocked = !isVotingEnabled();
+            Swal.fire({
+                icon: 'success',
+                title: 'ส่งแบบประเมินสำเร็จ!',
+                text: unlocked ? 'ขอบคุณครับ 🙏 ปลดล็อกดูผลโหวตแล้ว' : 'ขอบคุณที่ร่วมประเมินกิจกรรม 🙏',
+                confirmButtonText: unlocked ? 'ดูผลโหวต' : 'ตกลง',
+                confirmButtonColor: '#059669',
+                customClass: { popup: 'swal-info', confirmButton: 'swal-confirm-btn' }
+            }).then(() => { if (unlocked) showResults(); });
         }
         document.getElementById('openEvalBtn').addEventListener('click', openEvalModal);
         document.getElementById('openEvalBtnTop').addEventListener('click', openEvalModal);
