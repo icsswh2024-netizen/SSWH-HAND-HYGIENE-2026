@@ -623,7 +623,7 @@
                     <h4 class="font-display text-2xl md:text-3xl font-semibold text-gradient mb-2 flex items-center gap-2">
                         <i class="fa-solid fa-trophy text-amber-400"></i>ผลการตัดสินปัจจุบัน
                     </h4>
-                    <p class="text-sm text-slate-400 mb-5">จัดอันดับจากคะแนนเฉลี่ยสูงสุด (เสมอกันดูจำนวนโหวตมากกว่า) · อัปเดตแบบเรียลไทม์</p>
+                    <p class="text-sm text-slate-400 mb-5">จัดอันดับจาก<b>ผลรวมดาวสูงสุด</b> (เสมอกันดูคะแนนเฉลี่ย) · ยอดวิว/คอมเมนต์ไม่คิดคะแนน · อัปเดตเรียลไทม์</p>
                     <div id="prizeStandings" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7"></div>
 
                     <!-- ตารางอันดับละเอียด -->
@@ -864,8 +864,9 @@
                 </ol>
                 <p style="margin:0 0 6px"><b>การตัดสิน</b></p>
                 <ul style="margin:0;padding-left:20px">
-                    <li>ให้คะแนนด้วยดาว 1–5 ดาว (1 เครื่อง/1 โหวตต่อคลิป)</li>
-                    <li>ตัดสินจากคะแนนเฉลี่ยสูงสุด เมื่อแอดมินปิดระบบโหวต</li>
+                    <li>ให้คะแนนด้วยดาว 1–5 ดาว (1 เครื่อง/1 โหวตต่อคลิป · เปลี่ยนใจได้)</li>
+                    <li>ตัดสินจาก<b>ผลรวมดาวสูงสุด</b> (รวมคะแนนดาวจากโหวตล่าสุดของทุกเครื่อง) เมื่อแอดมินปิดระบบโหวต</li>
+                    <li>ยอดวิวและความคิดเห็น <b>ไม่นำมาคิดคะแนน</b></li>
                 </ul>
             </div>`;
 
@@ -924,15 +925,22 @@
             }
         });
 
-        // แสดงผลการโหวตเป็นตารางอันดับ (เรียงตามคะแนนเฉลี่ย -> จำนวนโหวต)
+        // ผลรวมดาว = คะแนนเฉลี่ย × จำนวนโหวต (= ผลรวมคะแนนดาวจากโหวตล่าสุดของทุกเครื่อง)
+        function totalStars(v) {
+            return Math.round((Number(v.avgScore) || 0) * (Number(v.votes) || 0));
+        }
+
+        // แสดงผลการโหวตเป็นตารางอันดับ (เรียงตามผลรวมดาว -> เฉลี่ย -> จำนวนโหวต)
         function showResults() {
             const vids = [...videoMap.values()].slice().sort((a, b) =>
+                totalStars(b) - totalStars(a) ||
                 (Number(b.avgScore) || 0) - (Number(a.avgScore) || 0) ||
                 (Number(b.votes) || 0) - (Number(a.votes) || 0)
             );
             const medals = ['🥇', '🥈', '🥉'];
             const rows = vids.map((v, i) => {
                 const avg = v.avgScore ? (Math.round(v.avgScore * 10) / 10) : 0;
+                const sum = totalStars(v);
                 const rankCell = medals[i] || `<span style="color:#94a3b8;font-weight:700">${i + 1}</span>`;
                 return `
                 <div style="display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid #f1f5f9;text-align:left">
@@ -942,8 +950,8 @@
                         <div style="font-size:12px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(v.organization || '')}</div>
                     </div>
                     <div style="text-align:right;white-space:nowrap">
-                        <div style="color:#f59e0b;font-weight:700">⭐ ${avg}</div>
-                        <div style="font-size:11px;color:#94a3b8">${Number(v.votes) || 0} โหวต</div>
+                        <div style="color:#f59e0b;font-weight:800;font-size:16px">⭐ ${sum}</div>
+                        <div style="font-size:11px;color:#94a3b8">เฉลี่ย ${avg} · ${Number(v.votes) || 0} โหวต</div>
                     </div>
                 </div>`;
             }).join('');
@@ -1921,6 +1929,7 @@
         }
         function renderStandings(items) {
             items = (items || []).slice().sort((a, b) =>
+                totalStars(b) - totalStars(a) ||
                 (Number(b.avgScore) || 0) - (Number(a.avgScore) || 0) ||
                 (Number(b.votes) || 0) - (Number(a.votes) || 0)
             );
@@ -1933,15 +1942,15 @@
             const cards = prizes.map((p, i) => {
                 const v = items[i];
                 const avg = v ? (Number(v.avgScore) || 0) : 0;
-                const pct = (avg / 5 * 100);
+                const sum = v ? totalStars(v) : 0;
                 const body = v ? `
                     <div style="font-family:Kanit,sans-serif;font-weight:700;color:#1e293b;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escapeHtml(v.title || '')}">${escapeHtml(v.title || '(ไม่มีชื่อ)')}</div>
                     <div style="font-size:12px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:8px" title="${escapeHtml(v.organization || '')}">${escapeHtml(v.organization || '')}</div>
                     <div style="margin-bottom:6px">${starsRowHtml(avg, 18)}</div>
-                    <div style="font-family:Kanit,sans-serif"><span style="font-size:26px;font-weight:800;color:#b45309">${avg.toFixed(3)}</span><span style="font-size:13px;color:#94a3b8"> / 5.000</span></div>
-                    <div style="display:flex;justify-content:center;gap:10px;font-size:12px;color:#475569;margin-top:4px">
+                    <div style="font-family:Kanit,sans-serif;line-height:1.1"><span style="font-size:30px;font-weight:800;color:#b45309">⭐ ${sum}</span><div style="font-size:11px;color:#94a3b8;margin-top:2px">ผลรวมดาว</div></div>
+                    <div style="display:flex;justify-content:center;gap:10px;font-size:12px;color:#475569;margin-top:6px">
+                        <span>เฉลี่ย <b>${avg.toFixed(3)}</b></span>
                         <span><i class="fa-solid fa-user-group" style="color:#f59e0b"></i> ${Number(v.votes) || 0} โหวต</span>
-                        <span><i class="fa-solid fa-percent" style="color:#0891b2"></i> ${pct.toFixed(1)}%</span>
                     </div>`
                     : `<div style="color:#94a3b8;font-family:Kanit,sans-serif;padding:14px 0">— ยังไม่มีผลงาน —</div>`;
                 return `
@@ -1958,7 +1967,7 @@
             // ตารางอันดับละเอียดทุกผลงาน
             const rows = items.map((v, i) => {
                 const avg = Number(v.avgScore) || 0;
-                const pct = (avg / 5 * 100);
+                const sum = totalStars(v);
                 const medal = ['🥇', '🥈', '🥉'][i] || `<span style="color:#94a3b8;font-weight:700">${i + 1}</span>`;
                 return `
                 <tr style="border-bottom:1px solid #f1f5f9">
@@ -1968,10 +1977,10 @@
                         <div style="font-size:12px;color:#94a3b8">${escapeHtml(v.organization || '')}</div>
                     </td>
                     <td style="padding:10px 8px;white-space:nowrap">${starsRowHtml(avg, 15)}</td>
-                    <td style="text-align:right;padding:10px 8px;font-family:Kanit,sans-serif;font-weight:800;color:#b45309;white-space:nowrap">${avg.toFixed(3)}</td>
-                    <td style="text-align:right;padding:10px 8px;color:#0891b2;font-weight:600;white-space:nowrap">${pct.toFixed(1)}%</td>
+                    <td style="text-align:right;padding:10px 8px;font-family:Kanit,sans-serif;font-weight:800;color:#b45309;white-space:nowrap">⭐ ${sum}</td>
+                    <td style="text-align:right;padding:10px 8px;color:#475569;white-space:nowrap">${avg.toFixed(3)}</td>
                     <td style="text-align:right;padding:10px 8px;color:#475569;white-space:nowrap">${Number(v.votes) || 0}</td>
-                    <td style="text-align:right;padding:10px 8px;color:#475569;white-space:nowrap">${Number(v.views) || 0}</td>
+                    <td style="text-align:right;padding:10px 8px;color:#94a3b8;white-space:nowrap">${Number(v.views) || 0}</td>
                 </tr>`;
             }).join('');
             const tbl = document.getElementById('standingsTable');
@@ -1982,10 +1991,10 @@
                             <th style="padding:10px 8px">อันดับ</th>
                             <th style="padding:10px 8px;text-align:left">ผลงาน / หน่วยงาน</th>
                             <th style="padding:10px 8px;text-align:left">ดาว</th>
+                            <th style="padding:10px 8px;text-align:right">ผลรวมดาว</th>
                             <th style="padding:10px 8px;text-align:right">เฉลี่ย</th>
-                            <th style="padding:10px 8px;text-align:right">ร้อยละ</th>
                             <th style="padding:10px 8px;text-align:right">โหวต</th>
-                            <th style="padding:10px 8px;text-align:right">วิว</th>
+                            <th style="padding:10px 8px;text-align:right">วิว (ไม่คิดคะแนน)</th>
                         </tr>
                     </thead>
                     <tbody>${rows}</tbody>
