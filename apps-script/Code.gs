@@ -40,7 +40,7 @@ function setup() {
   ensureSheet(ss, TAB_SUBMISSIONS, ['Timestamp', 'VideoID', 'ชื่อผลงาน/ผู้เข้าแข่งขัน', 'หน่วยงาน', 'ลิงก์วิดีโอ (URL MP4)', 'Status']);
   ensureSheet(ss, TAB_VIEWS,    ['Timestamp', 'VideoID', 'DeviceID']);
   ensureSheet(ss, TAB_VOTES,    ['Timestamp', 'VideoID', 'Score', 'DeviceID']);
-  ensureSheet(ss, TAB_COMMENTS, ['Timestamp', 'VideoID', 'ผู้แสดงความเห็น', 'ข้อความ', 'DeviceID']);
+  ensureSheet(ss, TAB_COMMENTS, ['Timestamp', 'VideoID', 'ผู้แสดงความเห็น', 'ข้อความ', 'DeviceID', 'CommentID', 'ReplyTo']);
   ensureSheet(ss, TAB_VISITS,   ['Timestamp', 'DeviceID']);
   ensureSheet(ss, TAB_EVALS,    ['Timestamp', 'เพศ', 'อายุ', 'สถานภาพ', 'หน่วยงาน', 'ช่องทาง']
     .concat(EVAL_QHEADERS)
@@ -117,7 +117,9 @@ function doPost(e) {
     } else if (action === 'ADD_VOTE') {
       ss.getSheetByName(TAB_VOTES).appendRow([now, payload.id, payload.score, payload.device || '']);
     } else if (action === 'ADD_COMMENT') {
-      ss.getSheetByName(TAB_COMMENTS).appendRow([now, payload.id, payload.user || 'ผู้เยี่ยมชม', payload.text || '', payload.device || '']);
+      // รองรับการตอบกลับ 1 ชั้น: cid = รหัสคอมเมนต์นี้, replyTo = รหัสคอมเมนต์หลักที่ตอบ (ว่าง = คอมเมนต์หลัก)
+      const cid = payload.cid || ('c' + now.getTime() + Math.floor(Math.random() * 1000));
+      ss.getSheetByName(TAB_COMMENTS).appendRow([now, payload.id, payload.user || 'ผู้เยี่ยมชม', payload.text || '', payload.device || '', cid, payload.replyTo || '']);
     } else if (action === 'ADD_VISIT') {
       ss.getSheetByName(TAB_VISITS).appendRow([now, payload.device || '']);
     } else if (action === 'ADD_EVAL') {
@@ -169,15 +171,30 @@ function doPost(e) {
       const sh = ss.getSheetByName(TAB_COMMENTS);
       const n = sh.getLastRow() - 1;
       if (n > 0) {
-        const rows = sh.getRange(2, 1, n, 4).getValues(); // Timestamp, VideoID, User, Text
+        const lc = Math.max(sh.getLastColumn(), 5);
+        const rows = sh.getRange(2, 1, n, lc).getValues();
+        let targetCid = payload.cid ? String(payload.cid) : '';
+        const toDelete = [];
+        // หาคอมเมนต์เป้าหมาย (ด้วย cid ถ้ามี, ไม่งั้นด้วย id+user+text)
         for (let i = 0; i < rows.length; i++) {
-          if (String(rows[i][1]) === String(payload.id) &&
-              String(rows[i][2]) === String(payload.user) &&
-              String(rows[i][3]) === String(payload.text)) {
-            sh.deleteRow(i + 2);
-            break;
+          const rowCid = String(rows[i][5] || ('c' + (i + 2)));
+          const matchByCid = targetCid && rowCid === targetCid;
+          const matchByText = !targetCid &&
+            String(rows[i][1]) === String(payload.id) &&
+            String(rows[i][2]) === String(payload.user) &&
+            String(rows[i][3]) === String(payload.text);
+          if (matchByCid || matchByText) {
+            toDelete.push(i + 2);
+            if (!targetCid) targetCid = rowCid; // จะได้ลบคอมเมนต์ตอบกลับของมันด้วย
           }
         }
+        // ลบคอมเมนต์ตอบกลับ (ลูก) ของคอมเมนต์หลักที่ถูกลบ
+        if (targetCid) {
+          for (let i = 0; i < rows.length; i++) {
+            if (String(rows[i][6] || '') === targetCid && toDelete.indexOf(i + 2) === -1) toDelete.push(i + 2);
+          }
+        }
+        toDelete.sort((a, b) => b - a).forEach(rn => sh.deleteRow(rn));
       }
     } else if (action === 'SET_SETTING') {
       // แอดมินแก้ค่าใน Settings (เช่น เปิด/ปิดโหวต) — ต้องมีรหัสแอดมิน
@@ -217,7 +234,7 @@ function doGet(e) {
 
   const subs     = rowsAfterHeader(ss, TAB_SUBMISSIONS); // [Timestamp, VideoID, Title, Org, URL, Status]
   const views    = rowsAfterHeader(ss, TAB_VIEWS);       // [Timestamp, VideoID, Device]
-  const comments = rowsAfterHeader(ss, TAB_COMMENTS);    // [Timestamp, VideoID, User, Text, Device]
+  const comments = rowsAfterHeader(ss, TAB_COMMENTS);    // [Timestamp, VideoID, User, Text, Device, CommentID, ReplyTo]
   const votes    = rowsAfterHeader(ss, TAB_VOTES);       // [Timestamp, VideoID, Score, Device]
 
   // นับยอดวิวต่อคลิป
@@ -226,9 +243,11 @@ function doGet(e) {
 
   // รวมความคิดเห็นต่อคลิป (เรียงเก่า -> ใหม่ ตามลำดับแถว)
   const commentMap = {};
-  comments.forEach(r => {
+  comments.forEach((r, i) => {
     const id = String(r[1]);
-    (commentMap[id] = commentMap[id] || []).push({ user: String(r[2]), text: String(r[3]) });
+    const cid = String(r[5] || ('c' + (i + 2))); // รหัสคอมเมนต์ (เก่าที่ไม่มีให้ใช้เลขแถวแทน)
+    const replyTo = String(r[6] || '');
+    (commentMap[id] = commentMap[id] || []).push({ user: String(r[2]), text: String(r[3]), cid: cid, replyTo: replyTo });
   });
 
   // นับคะแนนโหวตต่อคลิป — "นับเฉพาะคะแนนล่าสุดต่อ 1 เครื่อง" (รองรับเปลี่ยนใจ/แก้คะแนน)

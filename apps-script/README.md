@@ -59,7 +59,7 @@ const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_WEB_APP_ID/ex
 | `ADD_VIDEO` | `{ id, title, organization, url }` |
 | `ADD_VIEW` | `{ id, device }` |
 | `ADD_VOTE` | `{ id, score, device }` |
-| `ADD_COMMENT` | `{ id, user, text, device }` |
+| `ADD_COMMENT` | `{ id, user, text, device, cid, replyTo }` (replyTo = รหัสคอมเมนต์หลักที่ตอบ · ว่าง = คอมเมนต์หลัก) |
 | `DELETE_COMMENT` | `{ id, user, text, key }` (แอดมินลบคอมเมนต์) |
 | `ADD_VISIT` | `{ device }` (นับยอดเยี่ยมชมเว็บไซต์ 1 ครั้ง/เซสชัน) |
 
@@ -116,6 +116,7 @@ const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_WEB_APP_ID/ex
 ---
 
 ### หมายเหตุ
+- **ตอบกลับความคิดเห็น (1 ชั้น)**: ผู้ชมกด "ตอบกลับ" ใต้คอมเมนต์หลักได้ · หลังบ้านเพิ่มคอลัมน์ `CommentID` และ `ReplyTo` ในแท็บ `Comments` (ต่อท้าย ไม่กระทบข้อมูลเดิม) — ต้อง **Deploy เวอร์ชันใหม่** · เมื่อแอดมินลบคอมเมนต์หลัก ระบบจะลบการตอบกลับของมันให้อัตโนมัติ
 - **โหวตเปลี่ยนใจได้**: ผู้ชมแตะดาวใหม่เพื่อแก้คะแนนได้ · หลังบ้านจะ **นับเฉพาะคะแนนล่าสุดต่อ 1 เครื่อง** (ใช้ DeviceID) ไม่นับซ้ำ — จึงต้องใช้ Code.gs เวอร์ชันนี้และ **Deploy เวอร์ชันใหม่** ด้วย
 - **นับวิวซ้ำ**: ฝั่งเว็บกันไว้ด้วย `localStorage` ต่อเครื่อง (จำว่าเครื่องนี้ดูคลิปไหนแล้ว) — กันซ้ำระดับเบื้องต้น ไม่ใช่ระดับบัญชีผู้ใช้
 - **อัปเดตโค้ด Apps Script ภายหลัง**: ต้อง **Deploy → Manage deployments → แก้ไข (ดินสอ) → Version: New version → Deploy** เพื่อให้ URL เดิมใช้โค้ดใหม่

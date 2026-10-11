@@ -1089,7 +1089,11 @@
             const emo = e.target.closest('.emoji-btn');
             if (emo) { e.stopPropagation(); if (emojiTargetId === emo.dataset.input) closeEmojiPanel(); else openEmojiPanel(emo); return; }
             const del = e.target.closest('.comment-del');
-            if (del) { confirmDeleteComment(del.dataset.vid, del.dataset.user, del.dataset.text); return; }
+            if (del) { confirmDeleteComment(del.dataset.vid, del.dataset.user, del.dataset.text, del.dataset.cid); return; }
+            const rb = e.target.closest('.reply-btn');
+            if (rb) { e.stopPropagation(); toggleReplyBox(rb); return; }
+            const rs = e.target.closest('.reply-send');
+            if (rs) { e.stopPropagation(); sendReply(rs); return; }
             const shr = e.target.closest('.share-btn');
             if (shr) { e.stopPropagation(); shareClip(shr.dataset.id, shr.dataset.title); return; }
             const fs = e.target.closest('.clip-fullscreen');
@@ -1331,7 +1335,45 @@
             }, 300);
         }
 
-        function confirmDeleteComment(vid, user, text) {
+        // แสดง/ซ่อนช่องตอบกลับใต้คอมเมนต์หลัก
+        function toggleReplyBox(btn) {
+            const thread = btn.nextElementSibling; // .reply-thread
+            if (!thread || !thread.classList.contains('reply-thread')) return;
+            const existing = thread.querySelector('.reply-input-row');
+            if (existing) { existing.remove(); return; }
+            const row = document.createElement('div');
+            row.className = 'reply-input-row flex gap-1.5 items-center mt-1.5';
+            row.innerHTML = `
+                <input class="reply-input premium-input flex-1 px-3 py-1.5 text-sm bg-white border border-cyan-200 rounded-full focus:outline-none" maxlength="200" placeholder="ตอบกลับ...">
+                <button class="reply-send bg-cyan-500 hover:bg-cyan-600 text-white w-8 h-8 rounded-full flex items-center justify-center shrink-0"><i class="fa-solid fa-paper-plane text-xs"></i></button>`;
+            thread.insertBefore(row, thread.firstChild);
+            const inp = row.querySelector('.reply-input');
+            inp.focus();
+            inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); row.querySelector('.reply-send').click(); } });
+        }
+
+        // ส่งคอมเมนต์ตอบกลับ
+        function sendReply(btn) {
+            const thread = btn.closest('.reply-thread');
+            const row = btn.closest('.reply-input-row');
+            if (!thread || !row) return;
+            const vid = thread.dataset.vid;
+            const parentCid = thread.dataset.parent;
+            const inp = row.querySelector('.reply-input');
+            const text = (inp.value || '').trim().slice(0, 200);
+            if (!text) return;
+            const cid = genCid();
+            const newC = { user: 'ผู้เยี่ยมชม', text: text, cid: cid, replyTo: parentCid };
+            const v = videoMap.get(String(vid));
+            if (v) v.comments.push(newC);
+            row.remove();
+            thread.insertAdjacentHTML('beforeend', commentHtml(newC, vid, true));
+            const countEl = document.getElementById(`comment-count-${vid}`);
+            if (countEl && v) countEl.textContent = `(${v.comments.length})`;
+            sendDataToSheet('ADD_COMMENT', { id: vid, text: text, user: 'ผู้เยี่ยมชม', device: deviceId(), cid: cid, replyTo: parentCid });
+        }
+
+        function confirmDeleteComment(vid, user, text, cid) {
             Swal.fire({
                 icon: 'warning',
                 title: 'ลบคอมเมนต์นี้?',
@@ -1344,17 +1386,16 @@
                 customClass: { popup: 'swal-warning', confirmButton: 'swal-confirm-btn' }
             }).then(r => {
                 if (!r.isConfirmed) return;
-                sendDataToSheet('DELETE_COMMENT', { id: vid, user: user, text: text, key: getAdminKey() });
+                sendDataToSheet('DELETE_COMMENT', { id: vid, user: user, text: text, cid: cid || '', key: getAdminKey() });
                 const v = videoMap.get(String(vid));
                 if (v) {
-                    const idx = v.comments.findIndex(c => c.user === user && c.text === text);
-                    if (idx > -1) v.comments.splice(idx, 1);
+                    // ลบคอมเมนต์เป้าหมาย + การตอบกลับของมัน (ถ้าเป็นคอมเมนต์หลัก)
+                    v.comments = v.comments.filter(c => {
+                        if (cid) return c.cid !== cid && c.replyTo !== cid;
+                        return !(c.user === user && c.text === text);
+                    });
                     const container = document.getElementById(`comments-${vid}`);
-                    if (container) {
-                        container.innerHTML = v.comments.length
-                            ? [...v.comments].reverse().map(c => commentHtml(c, vid)).join('')
-                            : emptyCommentsHtml;
-                    }
+                    if (container) container.innerHTML = renderComments(v.comments, vid);
                     const cnt = document.getElementById(`comment-count-${vid}`);
                     if (cnt) cnt.textContent = `(${v.comments.length})`;
                 }
@@ -1512,15 +1553,14 @@
             // ความคิดเห็น — อัปเดตเมื่อจำนวนเปลี่ยน และผู้ใช้ไม่ได้กำลังพิมพ์อยู่
             const incomingComments = Array.isArray(incoming.comments) ? incoming.comments : video.comments;
             const input = document.getElementById(`comment-input-${id}`);
-            const typing = input && document.activeElement === input;
+            const container = document.getElementById(`comments-${id}`);
+            const ae = document.activeElement;
+            // ข้ามการอัปเดตถ้าผู้ใช้กำลังพิมพ์ (ช่องหลัก หรือช่องตอบกลับในการ์ดนี้)
+            const typing = (input && ae === input) ||
+                (container && ae && container.contains(ae) && ae.classList && ae.classList.contains('reply-input'));
             if (!typing && incomingComments.length !== video.comments.length) {
                 video.comments = incomingComments;
-                const container = document.getElementById(`comments-${id}`);
-                if (container) {
-                    container.innerHTML = incomingComments.length
-                        ? [...incomingComments].reverse().map(c => commentHtml(c, id)).join('')
-                        : emptyCommentsHtml;
-                }
+                if (container) container.innerHTML = renderComments(incomingComments, id);
                 const countEl = document.getElementById(`comment-count-${id}`);
                 if (countEl) countEl.textContent = `(${incomingComments.length})`;
             }
@@ -1596,15 +1636,52 @@
         }
 
         // Comment markup helper
-        function commentHtml(c, videoId) {
+        // สร้างรหัสคอมเมนต์ใหม่ (ฝั่งเว็บ) เพื่อผูกการตอบกลับ
+        function genCid() { return 'c' + Date.now() + Math.floor(Math.random() * 1000); }
+
+        function commentHtml(c, videoId, isReply) {
+            const cid = c.cid || '';
             const delBtn = getAdminKey()
-                ? `<button class="comment-del text-rose-400 hover:text-rose-600 shrink-0 ml-1" title="ลบคอมเมนต์" data-vid="${escapeHtml(videoId)}" data-user="${escapeHtml(c.user)}" data-text="${escapeHtml(c.text)}"><i class="fa-solid fa-xmark"></i></button>`
+                ? `<button class="comment-del text-rose-400 hover:text-rose-600 shrink-0 ml-1" title="ลบคอมเมนต์" data-vid="${escapeHtml(videoId)}" data-cid="${escapeHtml(cid)}" data-user="${escapeHtml(c.user)}" data-text="${escapeHtml(c.text)}"><i class="fa-solid fa-xmark"></i></button>`
                 : '';
+            if (isReply) {
+                return `
+                <div class="bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-lg text-sm flex items-start justify-between gap-2">
+                    <div><i class="fa-solid fa-reply fa-flip-horizontal text-slate-300 mr-1 text-xs"></i><span class="font-semibold text-cyan-700">${escapeHtml(c.user)}:</span> <span class="text-slate-600">${escapeHtml(c.text)}</span></div>
+                    ${delBtn}
+                </div>`;
+            }
+            const replyBtn = `<button class="reply-btn text-xs text-cyan-600 hover:text-cyan-800 font-medium mt-0.5 ml-1 inline-flex items-center gap-1" data-vid="${escapeHtml(videoId)}" data-cid="${escapeHtml(cid)}"><i class="fa-solid fa-reply"></i> ตอบกลับ</button>`;
             return `
                 <div class="bg-sky-50 border border-sky-100 px-3 py-2 rounded-xl text-sm flex items-start justify-between gap-2">
                     <div><span class="font-semibold text-blue-600">${escapeHtml(c.user)}:</span> <span class="text-slate-600">${escapeHtml(c.text)}</span></div>
                     ${delBtn}
-                </div>`;
+                </div>
+                ${replyBtn}`;
+        }
+
+        // จัดกลุ่มคอมเมนต์เป็น "คอมเมนต์หลัก + การตอบกลับ 1 ชั้น"
+        function buildThreads(comments) {
+            const parents = [], childrenOf = {}, parentCids = {};
+            comments.forEach(c => { if (c && !c.replyTo) { parents.push(c); if (c.cid) parentCids[c.cid] = true; } });
+            comments.forEach(c => {
+                if (c && c.replyTo) (childrenOf[c.replyTo] = childrenOf[c.replyTo] || []).push(c);
+            });
+            // คอมเมนต์ตอบกลับที่หาคอมเมนต์หลักไม่เจอ (เช่นหลักถูกลบ) -> แสดงเป็นคอมเมนต์หลักแทน ไม่ให้หาย
+            Object.keys(childrenOf).forEach(pc => { if (!parentCids[pc]) childrenOf[pc].forEach(o => parents.push(o)); });
+            return { parents, childrenOf };
+        }
+
+        // เรนเดอร์คอมเมนต์ทั้งหมดแบบมีเธรด (หลักใหม่สุดอยู่บน · ตอบกลับเรียงเก่า->ใหม่ใต้หลัก)
+        function renderComments(comments, videoId) {
+            if (!comments || !comments.length) return emptyCommentsHtml;
+            const { parents, childrenOf } = buildThreads(comments);
+            return [...parents].reverse().map(p => {
+                const replies = (p.cid && childrenOf[p.cid]) ? childrenOf[p.cid] : [];
+                const repliesHtml = replies.map(r => commentHtml(r, videoId, true)).join('');
+                return commentHtml(p, videoId, false) +
+                    `<div class="reply-thread ml-5 mt-1.5 space-y-1.5" data-parent="${escapeHtml(p.cid || '')}" data-vid="${escapeHtml(videoId)}">${repliesHtml}</div>`;
+            }).join('');
         }
 
         const emptyCommentsHtml = `<p class="text-center text-slate-400 text-sm italic py-2">ยังไม่มีความคิดเห็น</p>`;
@@ -1703,9 +1780,7 @@
                 ? `<span class="text-green-600 font-semibold text-xs whitespace-nowrap">โหวตแล้ว <i class="fa-solid fa-check"></i> <span class="text-slate-400 font-normal">· แตะดาวเพื่อแก้</span></span>`
                 : `<span class="text-xs text-slate-400 vote-prompt whitespace-nowrap">แตะดาวเพื่อให้คะแนน</span>`;
 
-            const commentsInner = video.comments.length
-                ? [...video.comments].reverse().map(c => commentHtml(c, video.id)).join('')
-                : emptyCommentsHtml;
+            const commentsInner = renderComments(video.comments, video.id);
 
             const clipNo = videoMap.size || (gallery.children.length + 1); // ลำดับคลิป
             card.innerHTML = `
@@ -1899,25 +1974,24 @@
                 const input = document.getElementById(`comment-input-${video.id}`);
                 const text = input.value.trim().slice(0, 200); // จำกัดความยาว 200 ตัวอักษร
                 if(text) {
-                    const newComment = { user: "ผู้เยี่ยมชม", text: text };
-                    const isFirst = video.comments.length === 0;
+                    const cid = genCid();
+                    const newComment = { user: "ผู้เยี่ยมชม", text: text, cid: cid, replyTo: '' };
                     video.comments.push(newComment);
 
                     const container = document.getElementById(`comments-${video.id}`);
-                    if(isFirst) container.innerHTML = '';
-                    // คอมเมนต์ใหม่แสดงบนสุด
-                    container.insertAdjacentHTML('afterbegin', commentHtml(newComment, video.id));
+                    // เรนเดอร์ใหม่ทั้งก้อน (คอมเมนต์ใหม่อยู่บนสุด พร้อมพื้นที่สำหรับตอบกลับ)
+                    if (container) container.innerHTML = renderComments(video.comments, video.id);
 
                     // อัปเดตตัวนับจำนวนความคิดเห็น
                     const countEl = document.getElementById(`comment-count-${video.id}`);
                     if (countEl) countEl.textContent = `(${video.comments.length})`;
 
                     // เลื่อนขึ้นบนสุดเพื่อเห็นคอมเมนต์ล่าสุด
-                    container.scrollTop = 0;
+                    if (container) container.scrollTop = 0;
                     input.value = '';
 
                     // ส่งข้อมูลคอมเมนต์ไป Sheet
-                    sendDataToSheet('ADD_COMMENT', { id: video.id, text: text, user: "ผู้เยี่ยมชม", device: deviceId() });
+                    sendDataToSheet('ADD_COMMENT', { id: video.id, text: text, user: "ผู้เยี่ยมชม", device: deviceId(), cid: cid, replyTo: '' });
                 }
             });
 
