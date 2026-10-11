@@ -1649,8 +1649,8 @@
 
             // Determine if voted text should show
             const voteStatusHtml = video.hasVoted
-                ? `<span class="text-green-500 font-semibold ml-2 text-sm">โหวตแล้ว <i class="fa-solid fa-check"></i><span class="text-slate-400 font-normal"> (แตะดาวเพื่อแก้)</span></span>`
-                : `<span class="text-sm text-slate-400 ml-2 vote-prompt">ให้คะแนน</span>`;
+                ? `<span class="text-green-600 font-semibold text-xs whitespace-nowrap">โหวตแล้ว <i class="fa-solid fa-check"></i> <span class="text-slate-400 font-normal">· แตะดาวเพื่อแก้</span></span>`
+                : `<span class="text-xs text-slate-400 vote-prompt whitespace-nowrap">แตะดาวเพื่อให้คะแนน</span>`;
 
             const commentsInner = video.comments.length
                 ? [...video.comments].reverse().map(c => commentHtml(c, video.id)).join('')
@@ -1689,14 +1689,12 @@
                             </span>
                             <button type="button" class="share-btn inline-flex items-center gap-1.5 bg-cyan-50 hover:bg-cyan-100 text-cyan-600 font-semibold text-sm px-3 py-1.5 rounded-full transition" data-id="${video.id}" data-title="${escapeHtml(video.title || '')}" title="แชร์คลิปนี้"><i class="fa-solid fa-share-nodes"></i>แชร์</button>
                         </div>
-                        <div class="flex items-center">
-                            <div class="stars-container flex items-center space-x-1" data-id="${video.id}">
-                                ${starsHtml}
-                            </div>
-                            <div class="score-display" id="score-display-${video.id}">
-                                ${voteStatusHtml}
-                            </div>
+                        <div class="stars-container flex items-center gap-1" data-id="${video.id}">
+                            ${starsHtml}
                         </div>
+                    </div>
+                    <div class="score-display text-right -mt-2 mb-3 min-h-[18px]" id="score-display-${video.id}">
+                        ${voteStatusHtml}
                     </div>
 
                     <!-- Comments Section -->
@@ -1836,7 +1834,7 @@
                     paintStars(score);
 
                     const display = document.getElementById(`score-display-${video.id}`);
-                    if (display) display.innerHTML = `<span class="text-green-500 font-semibold ml-2 text-sm">โหวตแล้ว <i class="fa-solid fa-check"></i><span class="text-slate-400 font-normal"> (แตะดาวเพื่อแก้)</span></span>`;
+                    if (display) display.innerHTML = `<span class="text-green-600 font-semibold text-xs whitespace-nowrap">โหวตแล้ว <i class="fa-solid fa-check"></i> <span class="text-slate-400 font-normal">· แตะดาวเพื่อแก้</span></span>`;
 
                     // ส่งคะแนนไปหลังบ้าน (นับเฉพาะคะแนนล่าสุดต่อเครื่อง)
                     sendDataToSheet('ADD_VOTE', { id: video.id, score: score, device: deviceId() });
