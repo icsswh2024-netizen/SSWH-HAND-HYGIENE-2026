@@ -524,7 +524,12 @@
                 <h3 class="font-display text-2xl md:text-3xl font-semibold text-gradient flex items-center gap-3">
                     <i class="fa-solid fa-photo-film text-sky-500"></i>แกลเลอรีผลงาน
                 </h3>
-                <span id="clipCount" class="bg-cyan-100 text-cyan-700 font-display font-semibold text-sm px-4 py-1.5 rounded-full shadow-sm">0 คลิป</span>
+                <div class="flex items-center gap-2">
+                    <button id="shareGalleryBtn" class="inline-flex items-center gap-1.5 bg-cyan-500 hover:bg-cyan-600 text-white font-display font-semibold text-sm px-4 py-1.5 rounded-full shadow-sm transition" title="แชร์หน้าแกลเลอรีผลงานทั้งหมด">
+                        <i class="fa-solid fa-share-nodes"></i> แชร์แกลเลอรี
+                    </button>
+                    <span id="clipCount" class="bg-cyan-100 text-cyan-700 font-display font-semibold text-sm px-4 py-1.5 rounded-full shadow-sm">0 คลิป</span>
+                </div>
             </div>
 
             <!-- 3 Columns Grid -->
@@ -1267,25 +1272,39 @@
             // ตัด hash/query เดิมออก ให้เหลือ URL หน้าเว็บจริง แล้วต่อ #clip-<id>
             return location.origin + location.pathname + '#clip-' + encodeURIComponent(id);
         }
+        // แชร์หน้าแกลเลอรีผลงานทั้งหมด (ลิงก์หน้าเว็บหลัก ไม่เจาะคลิปใด)
+        function galleryUrl() { return location.origin + location.pathname; }
+        async function shareGallery() {
+            const url = galleryUrl();
+            const shareText = 'ชมผลงานประกวดคลิปทั้งหมด — วันล้างมือโลก รพ.ศรีสังวรสุโขทัย';
+            await doShare(url, shareText, {
+                successMsg: 'วางลิงก์นี้เพื่อแชร์ได้เลย — ผู้รับจะเปิดมาเจอแกลเลอรีผลงานทั้งหมด',
+                infoMsg: 'คัดลอกลิงก์ด้านล่างเพื่อแชร์ ผู้รับจะเปิดมาเจอแกลเลอรีผลงานทั้งหมด'
+            });
+        }
         async function shareClip(id, title) {
             const url = shareUrlFor(id);
             const shareText = title ? ('ชมคลิป "' + title + '" — วันล้างมือโลก รพ.ศรีสังวรสุโขทัย') : 'ชมคลิปประกวด วันล้างมือโลก รพ.ศรีสังวรสุโขทัย';
-            // ใช้เมนูแชร์ของเครื่อง "เฉพาะมือถือ/แท็บเล็ต" (จอสัมผัส) เท่านั้น
-            // บน PC เมนูแชร์ของ Windows มักค้าง/ว่างเปล่า จึงให้ใช้วิธีคัดลอกลิงก์แทน
+            await doShare(url, shareText, {
+                successMsg: 'วางลิงก์นี้เพื่อแชร์ได้เลย — ผู้รับจะเปิดมาเจอคลิปนี้ทันที',
+                infoMsg: 'คัดลอกลิงก์ด้านล่างเพื่อแชร์ ผู้รับจะเปิดมาเจอคลิปนี้ทันที'
+            });
+        }
+        // ตัวช่วยแชร์: มือถือ/แท็บเล็ต (จอสัมผัส) ใช้เมนูแชร์ของเครื่อง · PC คัดลอกลิงก์ให้
+        async function doShare(url, shareText, msg) {
             const isTouchDevice = (navigator.maxTouchPoints || 0) > 0 &&
                 window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
             if (isTouchDevice && navigator.share) {
                 try { await navigator.share({ title: 'วันล้างมือโลก', text: shareText, url: url }); return; }
-                catch (err) { if (err && err.name === 'AbortError') return; } // ผู้ใช้กดยกเลิก
+                catch (err) { if (err && err.name === 'AbortError') return; }
             }
-            // สำรอง: คัดลอกลิงก์ + โชว์ปุ่มเปิด
             let copied = false;
             try { await navigator.clipboard.writeText(url); copied = true; } catch (e) {}
             Swal.fire({
                 icon: copied ? 'success' : 'info',
                 title: copied ? 'คัดลอกลิงก์แล้ว!' : 'ลิงก์สำหรับแชร์',
                 html: '<div style="font-family:Kanit,sans-serif">' +
-                      (copied ? '<p style="margin:0 0 10px;color:#475569">วางลิงก์นี้เพื่อแชร์ได้เลย — ผู้รับจะเปิดมาเจอคลิปนี้ทันที</p>' : '<p style="margin:0 0 10px;color:#475569">คัดลอกลิงก์ด้านล่างเพื่อแชร์ ผู้รับจะเปิดมาเจอคลิปนี้ทันที</p>') +
+                      '<p style="margin:0 0 10px;color:#475569">' + (copied ? msg.successMsg : msg.infoMsg) + '</p>' +
                       '<input id="shareLinkBox" readonly value="' + escapeHtml(url) + '" style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:13px;color:#0f172a;background:#f8fafc" onclick="this.select()">' +
                       '</div>',
                 confirmButtonText: 'เสร็จสิ้น',
@@ -1293,6 +1312,7 @@
                 customClass: { popup: 'swal-info', confirmButton: 'swal-confirm-btn' }
             });
         }
+        document.getElementById('shareGalleryBtn').addEventListener('click', shareGallery);
 
         // เปิดหน้าเว็บด้วยลิงก์ #clip-<id> -> เลื่อนไปที่คลิปนั้น + ไฮไลต์
         let sharedClipHandled = false;
