@@ -361,6 +361,9 @@
                     <span class="inline-flex items-center gap-2 bg-white/20 border border-white/30 text-white text-sm font-display font-semibold px-4 py-1.5 rounded-full backdrop-blur">
                         <i class="fa-regular fa-comments"></i>ความคิดเห็น <span id="totalComments">—</span>
                     </span>
+                    <span class="inline-flex items-center gap-2 bg-white/20 border border-white/30 text-white text-sm font-display font-semibold px-4 py-1.5 rounded-full backdrop-blur" title="นับเฉพาะคะแนนโหวตล่าสุดของแต่ละเครื่อง">
+                        <i class="fa-solid fa-star text-yellow-300"></i>คะแนนดาวรวม <span id="totalStarsSum">—</span>
+                    </span>
                 </div>
             </div>
         </div>
@@ -1397,15 +1400,18 @@
 
         // อัปเดตยอดรวม "ดูคลิป" และ "ความคิดเห็น" บนหัวเว็บ
         function updateTotals() {
-            let views = 0, comments = 0;
+            let views = 0, comments = 0, stars = 0;
             videoMap.forEach(v => {
                 views += Number(v.views) || 0;
                 comments += Array.isArray(v.comments) ? v.comments.length : 0;
+                stars += totalStars(v); // ผลรวมดาว (นับเฉพาะโหวตล่าสุดต่อเครื่อง)
             });
             const vEl = document.getElementById('totalViews');
             const cEl = document.getElementById('totalComments');
+            const sEl = document.getElementById('totalStarsSum');
             if (vEl) vEl.textContent = views.toLocaleString('en-US');
             if (cEl) cEl.textContent = comments.toLocaleString('en-US');
+            if (sEl) sEl.textContent = stars.toLocaleString('en-US');
         }
 
         // อัปเดตข้อมูลบนการ์ดเดิม: ยอดวิว และความคิดเห็น (ข้ามถ้าผู้ใช้กำลังพิมพ์คอมเมนต์อยู่)
