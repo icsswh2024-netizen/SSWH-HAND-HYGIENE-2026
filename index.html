@@ -1280,10 +1280,20 @@
         function galleryUrl() { return location.origin + location.pathname; }
         async function shareGallery() {
             const url = galleryUrl();
-            const shareText = 'ชมผลงานประกวดคลิปทั้งหมด — วันล้างมือโลก รพ.ศรีสังวรสุโขทัย';
+            // สรุปรายชื่อผลงาน + หน่วยงาน ตามลำดับคลิป
+            const vids = [...videoMap.values()];
+            const lines = vids.map((v, i) => {
+                const org = (v.organization || '').trim();
+                return `${i + 1}. ${v.title}${org ? ' — ' + org : ''}`;
+            });
+            const header = '🎬 ผลงานประกวดคลิป "วันล้างมือโลก"\nโรงพยาบาลศรีสังวรสุโขทัย (IPC)';
+            const listText = lines.length ? ('\n\n📋 ผลงานทั้งหมด ' + lines.length + ' คลิป:\n' + lines.join('\n')) : '';
+            const shareText = header + listText + '\n\n👉 ชมทั้งหมด ร่วมโหวต & คอมเมนต์:';
             await doShare(url, shareText, {
-                successMsg: 'วางลิงก์นี้เพื่อแชร์ได้เลย — ผู้รับจะเปิดมาเจอแกลเลอรีผลงานทั้งหมด',
-                infoMsg: 'คัดลอกลิงก์ด้านล่างเพื่อแชร์ ผู้รับจะเปิดมาเจอแกลเลอรีผลงานทั้งหมด'
+                successMsg: 'คัดลอกข้อความสรุป + ลิงก์แล้ว — วางเพื่อแชร์ได้เลย',
+                infoMsg: 'คัดลอกข้อความสรุป + ลิงก์ด้านล่างเพื่อแชร์',
+                copyContent: shareText + '\n' + url,
+                multiline: true
             });
         }
         async function shareClip(id, title) {
@@ -1298,18 +1308,22 @@
         async function doShare(url, shareText, msg) {
             const isTouchDevice = (navigator.maxTouchPoints || 0) > 0 &&
                 window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+            const copyContent = (msg && msg.copyContent) ? msg.copyContent : url;
             if (isTouchDevice && navigator.share) {
                 try { await navigator.share({ title: 'วันล้างมือโลก', text: shareText, url: url }); return; }
                 catch (err) { if (err && err.name === 'AbortError') return; }
             }
             let copied = false;
-            try { await navigator.clipboard.writeText(url); copied = true; } catch (e) {}
+            try { await navigator.clipboard.writeText(copyContent); copied = true; } catch (e) {}
+            const box = (msg && msg.multiline)
+                ? '<textarea readonly rows="7" style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:12.5px;line-height:1.5;color:#0f172a;background:#f8fafc;resize:vertical;white-space:pre" onclick="this.select()">' + escapeHtml(copyContent) + '</textarea>'
+                : '<input readonly value="' + escapeHtml(copyContent) + '" style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:13px;color:#0f172a;background:#f8fafc" onclick="this.select()">';
             Swal.fire({
                 icon: copied ? 'success' : 'info',
-                title: copied ? 'คัดลอกลิงก์แล้ว!' : 'ลิงก์สำหรับแชร์',
+                title: copied ? 'คัดลอกแล้ว!' : 'ข้อความสำหรับแชร์',
                 html: '<div style="font-family:Kanit,sans-serif">' +
                       '<p style="margin:0 0 10px;color:#475569">' + (copied ? msg.successMsg : msg.infoMsg) + '</p>' +
-                      '<input id="shareLinkBox" readonly value="' + escapeHtml(url) + '" style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:13px;color:#0f172a;background:#f8fafc" onclick="this.select()">' +
+                      box +
                       '</div>',
                 confirmButtonText: 'เสร็จสิ้น',
                 confirmButtonColor: '#0891b2',
