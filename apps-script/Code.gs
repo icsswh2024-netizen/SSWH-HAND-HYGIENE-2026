@@ -305,6 +305,7 @@ function doGet(e) {
         comments: (commentMap[id] || []).length
       };
     });
+    payload.evalSummary = buildEvalSummary(ss); // สรุปแบบประเมินกิจกรรม
   }
 
   // JSONP (เลี่ยง CORS) ถ้ามี callback, ไม่งั้นส่ง JSON ปกติ
@@ -315,6 +316,50 @@ function doGet(e) {
       .setMimeType(ContentService.MimeType.JAVASCRIPT);
   }
   return jsonOut(payload);
+}
+
+// สรุปผลแบบประเมินกิจกรรม (สำหรับแดชบอร์ดแอดมิน)
+function buildEvalSummary(ss) {
+  const sheet = ss.getSheetByName(TAB_EVALS);
+  const empty = { count: 0, avg: 0, questions: EVAL_QHEADERS.map(h => ({ label: h, avg: 0, n: 0 })),
+                  knowPre: {}, knowPost: {}, gender: {}, age: {}, role: {},
+                  texts: { impress: [], improve: [], next: [] } };
+  if (!sheet || sheet.getLastRow() < 2) return empty;
+
+  const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 22).getValues();
+  const QN = EVAL_QHEADERS.length; // 10
+  const qSum = new Array(QN).fill(0), qCnt = new Array(QN).fill(0);
+  const knowPre = {}, knowPost = {}, gender = {}, age = {}, role = {};
+  const texts = { impress: [], improve: [], next: [] };
+  const bump = (o, k) => { k = String(k || '').trim(); if (k) o[k] = (o[k] || 0) + 1; };
+
+  rows.forEach(r => {
+    bump(gender, r[1]); bump(age, r[2]); bump(role, r[3]);
+    for (let i = 0; i < QN; i++) {
+      const v = Number(r[6 + i]);
+      if (v >= 1 && v <= 5) { qSum[i] += v; qCnt[i]++; }
+    }
+    bump(knowPre, r[16]); bump(knowPost, r[17]);
+    const imp = String(r[18] || '').trim(); if (imp) texts.impress.push(imp);
+    const upg = String(r[19] || '').trim(); if (upg) texts.improve.push(upg);
+    const nxt = String(r[20] || '').trim(); if (nxt) texts.next.push(nxt);
+  });
+
+  const questions = EVAL_QHEADERS.map((h, i) => ({
+    label: h, n: qCnt[i], avg: qCnt[i] ? Math.round((qSum[i] / qCnt[i]) * 100) / 100 : 0
+  }));
+  let totSum = 0, totCnt = 0;
+  for (let i = 0; i < QN; i++) { totSum += qSum[i]; totCnt += qCnt[i]; }
+  const last = a => a.slice(-30).reverse(); // 30 รายการล่าสุด
+
+  return {
+    count: rows.length,
+    avg: totCnt ? Math.round((totSum / totCnt) * 100) / 100 : 0,
+    questions: questions,
+    knowPre: knowPre, knowPost: knowPost,
+    gender: gender, age: age, role: role,
+    texts: { impress: last(texts.impress), improve: last(texts.improve), next: last(texts.next) }
+  };
 }
 
 // ====== helpers ======

@@ -671,6 +671,13 @@
                         </div>
                     </div>
 
+                    <!-- สรุปผลแบบประเมินกิจกรรม -->
+                    <h4 class="font-display text-2xl md:text-3xl font-semibold text-gradient mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-clipboard-check text-emerald-500"></i>สรุปผลแบบประเมินกิจกรรม
+                    </h4>
+                    <p class="text-sm text-slate-400 mb-4">รวมผลจากผู้ตอบแบบประเมินทั้งหมด (คะแนน 1–5) · อัปเดตเรียลไทม์</p>
+                    <div id="evalDashboard" class="mb-9"></div>
+
                     <h4 class="font-display text-2xl md:text-3xl font-semibold text-gradient mb-5 flex items-center gap-2">
                         <i class="fa-solid fa-list-check text-sky-500"></i>จัดการการเผยแพร่ <span id="adminPendingCount" class="text-slate-400 font-normal text-lg"></span>
                     </h4>
@@ -1919,6 +1926,7 @@
                 } else {
                     if (data.settings) applySettings(data.settings);
                     renderDashboard(data.manage);
+                    renderEvalDashboard(data.evalSummary);
                     renderManage(data.manage);
                     updateVotingToggle();
                     updateSubmissionsToggle();
@@ -1945,6 +1953,97 @@
             barChart('chartVotes', items.map(it => ({ label: it.title, value: Number(it.votes) || 0, sub: it.avgScore ? ('⭐' + (Math.round(it.avgScore * 10) / 10)) : '' })), '#f59e0b');
             barChart('chartComments', items.map(it => ({ label: it.title, value: Number(it.comments) || 0 })), '#22c55e');
             renderStandings(items);
+        }
+
+        // ===== แดชบอร์ดสรุปผลแบบประเมินกิจกรรม =====
+        function renderEvalDashboard(s) {
+            const box = document.getElementById('evalDashboard');
+            if (!box) return;
+            if (!s || !s.count) {
+                box.innerHTML = `<div class="border border-slate-200 rounded-2xl p-6 text-center text-slate-400 text-sm">
+                    ยังไม่มีผู้ตอบแบบประเมิน หรือยังไม่ได้ Deploy โค้ด Apps Script เวอร์ชันใหม่</div>`;
+                return;
+            }
+            const pct = (obj) => {
+                const tot = Object.values(obj).reduce((a, b) => a + b, 0) || 1;
+                return Object.keys(obj).sort((a, b) => obj[b] - obj[a])
+                    .map(k => `<div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0">
+                        <span style="color:#475569">${escapeHtml(k)}</span>
+                        <span style="color:#0f172a;font-weight:600">${obj[k]} <span style="color:#94a3b8;font-weight:400">(${Math.round(obj[k] / tot * 100)}%)</span></span></div>`).join('') || '<span class="text-slate-300 text-sm">—</span>';
+            };
+            const barColor = (v) => v >= 4.5 ? '#059669' : v >= 3.5 ? '#0ea5e9' : v >= 2.5 ? '#f59e0b' : '#ef4444';
+            const qBars = s.questions.map(q => `
+                <div style="margin-bottom:10px">
+                    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px">
+                        <span style="color:#334155">${escapeHtml(q.label)}</span>
+                        <span style="font-weight:700;color:${barColor(q.avg)}">${q.avg.toFixed(2)}</span>
+                    </div>
+                    <div style="height:10px;background:#f1f5f9;border-radius:99px;overflow:hidden">
+                        <div style="height:100%;width:${(q.avg / 5 * 100)}%;background:${barColor(q.avg)};border-radius:99px;transition:width .4s"></div>
+                    </div>
+                </div>`).join('');
+            const textList = (arr, color) => arr && arr.length
+                ? arr.map(t => `<div style="background:#f8fafc;border-left:3px solid ${color};border-radius:8px;padding:7px 10px;margin-bottom:6px;font-size:13px;color:#334155">${escapeHtml(t)}</div>`).join('')
+                : '<div class="text-slate-300 text-sm">— ไม่มี —</div>';
+
+            box.innerHTML = `
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+                <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 text-center">
+                    <div class="text-3xl font-bold text-emerald-600">${s.count.toLocaleString()}</div>
+                    <div class="text-xs text-slate-500 mt-1">ผู้ตอบแบบประเมิน</div>
+                </div>
+                <div class="bg-sky-50 border border-sky-100 rounded-2xl p-4 text-center">
+                    <div class="text-3xl font-bold text-sky-600">${s.avg.toFixed(2)}</div>
+                    <div class="text-xs text-slate-500 mt-1">คะแนนเฉลี่ยรวม (เต็ม 5)</div>
+                </div>
+                <div class="bg-amber-50 border border-amber-100 rounded-2xl p-4 text-center">
+                    <div class="text-3xl font-bold text-amber-600">${Math.round(s.avg / 5 * 100)}%</div>
+                    <div class="text-xs text-slate-500 mt-1">ระดับความพึงพอใจ</div>
+                </div>
+                <div class="bg-violet-50 border border-violet-100 rounded-2xl p-4 text-center">
+                    <div class="text-3xl font-bold text-violet-600">${(s.questions.filter(q => q.avg >= 4).length)}/${s.questions.length}</div>
+                    <div class="text-xs text-slate-500 mt-1">ข้อที่ได้ ≥ 4.0</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+                <div class="border border-slate-200 rounded-2xl p-5">
+                    <h5 class="font-semibold text-slate-700 mb-4"><i class="fa-solid fa-chart-simple text-emerald-500 mr-1.5"></i>คะแนนเฉลี่ยรายข้อ</h5>
+                    ${qBars}
+                </div>
+                <div class="space-y-5">
+                    <div class="border border-slate-200 rounded-2xl p-5">
+                        <h5 class="font-semibold text-slate-700 mb-3"><i class="fa-solid fa-hands-bubbles text-sky-500 mr-1.5"></i>ล้างมือถูกวิธี 7 ขั้นตอน (ก่อน → หลัง)</h5>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><div class="text-xs text-slate-400 mb-1">ก่อนร่วมกิจกรรม</div>${pct(s.knowPre)}</div>
+                            <div><div class="text-xs text-slate-400 mb-1">หลังร่วมกิจกรรม</div>${pct(s.knowPost)}</div>
+                        </div>
+                    </div>
+                    <div class="border border-slate-200 rounded-2xl p-5">
+                        <h5 class="font-semibold text-slate-700 mb-3"><i class="fa-solid fa-users text-violet-500 mr-1.5"></i>ข้อมูลผู้ตอบ</h5>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div><div class="text-xs text-slate-400 mb-1">เพศ</div>${pct(s.gender)}</div>
+                            <div><div class="text-xs text-slate-400 mb-1">อายุ</div>${pct(s.age)}</div>
+                            <div><div class="text-xs text-slate-400 mb-1">สถานภาพ</div>${pct(s.role)}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <div class="border border-slate-200 rounded-2xl p-5">
+                    <h5 class="font-semibold text-slate-700 mb-3"><i class="fa-solid fa-heart text-rose-500 mr-1.5"></i>สิ่งที่ประทับใจ <span class="text-slate-400 font-normal text-sm">(${s.texts.impress.length})</span></h5>
+                    <div style="max-height:280px;overflow-y:auto">${textList(s.texts.impress, '#f43f5e')}</div>
+                </div>
+                <div class="border border-slate-200 rounded-2xl p-5">
+                    <h5 class="font-semibold text-slate-700 mb-3"><i class="fa-solid fa-screwdriver-wrench text-amber-500 mr-1.5"></i>ควรปรับปรุง <span class="text-slate-400 font-normal text-sm">(${s.texts.improve.length})</span></h5>
+                    <div style="max-height:280px;overflow-y:auto">${textList(s.texts.improve, '#f59e0b')}</div>
+                </div>
+                <div class="border border-slate-200 rounded-2xl p-5">
+                    <h5 class="font-semibold text-slate-700 mb-3"><i class="fa-solid fa-lightbulb text-sky-500 mr-1.5"></i>อยากให้จัดครั้งต่อไป <span class="text-slate-400 font-normal text-sm">(${s.texts.next.length})</span></h5>
+                    <div style="max-height:280px;overflow-y:auto">${textList(s.texts.next, '#0ea5e9')}</div>
+                </div>
+            </div>`;
         }
 
         // ===== ผลการตัดสินปัจจุบัน (การ์ดรางวัล + ตารางอันดับ) =====
