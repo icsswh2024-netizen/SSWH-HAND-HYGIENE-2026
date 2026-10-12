@@ -1511,6 +1511,28 @@
         });
 
         // เพิ่มการ์ดใหม่ / อัปเดตการ์ดเดิมในที่ (ไม่ล้างทั้งแกลเลอรี จึงไม่กระชากวิดีโอที่กำลังเล่น)
+        // ===== การหมุนลำดับแสดงในแกลเลอรี (fair exposure) =====
+        // แต่ละครั้งที่เปิด/รีเฟรชหน้า คลิปลำดับถัดไปจะได้ขึ้นเป็นอันดับ 1 แบบวนรอบ
+        // โดย "เลขกำกับคลิป" (seq) ยังคงเดิมเสมอ — เปลี่ยนแค่ลำดับการแสดงด้วย CSS order
+        let rotationSeed = 0;
+        (function initRotation() {
+            try {
+                let c = parseInt(localStorage.getItem('ghd_rot') || '', 10);
+                if (isNaN(c)) c = Math.floor(Math.random() * 1000);
+                rotationSeed = c;
+                localStorage.setItem('ghd_rot', String((c + 1) % 100000)); // รอบหน้าเลื่อนไป 1
+            } catch (e) { rotationSeed = Math.floor(Math.random() * 1000); }
+        })();
+        function applyGalleryRotation() {
+            const n = videoMap.size;
+            if (!n) return;
+            const off = ((rotationSeed % n) + n) % n;
+            videoMap.forEach(v => {
+                const card = document.getElementById('card-' + v.id);
+                if (card && v.seq) card.style.order = String((v.seq - 1 - off + n) % n);
+            });
+        }
+
         function upsertVideos(list) {
             list.forEach(v => {
                 const id = String(v.id);
@@ -1519,6 +1541,7 @@
                 v.author = v.author || v.title;
                 const existing = videoMap.get(id);
                 if (!existing) {
+                    v.seq = videoMap.size + 1; // เลขกำกับคลิปตามลำดับในชีต (คงที่ ไม่เปลี่ยนตามการหมุน)
                     videoMap.set(id, v);
                     const card = createCardDOM(v);
                     gallery.appendChild(card);
@@ -1528,6 +1551,7 @@
                 }
             });
             clipCount.textContent = `${videoMap.size} คลิป`;
+            applyGalleryRotation(); // หมุนลำดับแสดง (เลขกำกับคงเดิม)
             updateTotals(); // ยอดดูคลิป + คอมเมนต์รวมบนหัวเว็บ
             maybeScrollToSharedClip(); // ถ้าเปิดมาด้วยลิงก์แชร์ #clip-<id>
         }
@@ -1796,7 +1820,7 @@
 
             const commentsInner = renderComments(video.comments, video.id);
 
-            const clipNo = videoMap.size || (gallery.children.length + 1); // ลำดับคลิป
+            const clipNo = video.seq || videoMap.size || (gallery.children.length + 1); // เลขกำกับคลิป (คงที่)
             card.innerHTML = `
                 <div class="px-5 pt-5 pb-3">
                     <div class="flex items-start gap-3">
