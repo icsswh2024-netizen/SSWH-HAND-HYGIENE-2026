@@ -866,8 +866,8 @@
             // ปิดรับผลงาน -> ซ่อนกล่องคำแนะนำก่อนส่งผลงานด้วย
             const rec = document.getElementById('recommendedSection');
             if (rec) rec.classList.toggle('hidden', !open);
-            // ปิดรับผลงาน -> ซ่อนคอมเมนต์ในทุกการ์ดด้วย
-            document.body.classList.toggle('submissions-closed', !open);
+            // คอมเมนต์ยังแสดงตามปกติแม้ปิดรับผลงาน (ผู้ชมยังคอมเมนต์ได้)
+            document.body.classList.remove('submissions-closed');
         }
 
         // แสดงการ์ดรางวัลประกวดหรือไม่ (ค่าเริ่มต้น = แสดง)
