@@ -518,6 +518,15 @@
             </div>
         </section>
 
+        <!-- สารบัญผลงาน (ตารางย่อ 3 คอลัมน์) — คลิกเพื่อดูคลิป -->
+        <section id="clipIndexSection" class="mb-9 hidden">
+            <h3 class="font-display text-xl md:text-2xl font-semibold text-slate-700 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-table-cells text-sky-500"></i>ดูผลงานทั้งหมดแบบรวดเร็ว
+                <span class="text-sm text-slate-400 font-normal">· แตะเพื่อดูคลิป</span>
+            </h3>
+            <div id="clipIndexGrid" class="grid grid-cols-3 gap-2.5 md:gap-3"></div>
+        </section>
+
         <!-- Gallery Section -->
         <section>
             <div class="flex items-center justify-between mb-7">
@@ -1334,6 +1343,11 @@
             });
         }
         document.getElementById('shareGalleryBtn').addEventListener('click', shareGallery);
+        // คลิกเซลล์ในสารบัญผลงาน -> เปิดดูคลิปในป๊อปอัปเต็มจอ
+        document.getElementById('clipIndexGrid').addEventListener('click', (e) => {
+            const cell = e.target.closest('.clip-index-cell');
+            if (cell) openClipModal(cell.dataset.url, cell.dataset.portrait === '1');
+        });
 
         // เปิดหน้าเว็บด้วยลิงก์ #clip-<id> -> เลื่อนไปที่คลิปนั้น + ไฮไลต์
         let sharedClipHandled = false;
@@ -1536,6 +1550,28 @@
             });
         }
 
+        // สารบัญผลงานแบบตารางย่อ (เรียงตามเลขกำกับ) — แตะเพื่อเปิดดูคลิปในป๊อปอัป
+        function renderClipIndex() {
+            const sec = document.getElementById('clipIndexSection');
+            const grid = document.getElementById('clipIndexGrid');
+            if (!sec || !grid) return;
+            const vids = [...videoMap.values()].sort((a, b) => (a.seq || 0) - (b.seq || 0));
+            if (!vids.length) { sec.classList.add('hidden'); return; }
+            sec.classList.remove('hidden');
+            grid.innerHTML = vids.map(v => {
+                const poster = posterUrl(v.url);
+                const bg = poster
+                    ? `background-image:url('${poster.replace(/'/g, "%27")}');background-size:cover;background-position:center`
+                    : 'background:linear-gradient(135deg,#38bdf8,#0891b2)';
+                return `<button type="button" class="clip-index-cell relative rounded-xl overflow-hidden shadow-md group" style="aspect-ratio:16/11;${bg}" data-url="${escapeHtml(v.url)}" data-portrait="${v.portrait ? '1' : ''}" title="${escapeHtml(v.title || '')}">
+                    <span class="absolute inset-0 bg-black/25 group-hover:bg-black/35 transition"></span>
+                    <span class="absolute top-1 left-1 w-6 h-6 rounded-full bg-sky-600 text-white text-xs font-bold flex items-center justify-center border border-white shadow">${v.seq || ''}</span>
+                    <span class="absolute inset-0 flex items-center justify-center"><i class="fa-solid fa-circle-play text-white/90 text-2xl drop-shadow"></i></span>
+                    <span class="absolute bottom-0 inset-x-0 px-1.5 py-1 text-[10px] leading-tight text-white font-medium text-left bg-gradient-to-t from-black/70 to-transparent truncate">${escapeHtml(v.title || '')}</span>
+                </button>`;
+            }).join('');
+        }
+
         function upsertVideos(list) {
             list.forEach(v => {
                 const id = String(v.id);
@@ -1555,6 +1591,7 @@
             });
             clipCount.textContent = `${videoMap.size} คลิป`;
             applyGalleryRotation(); // หมุนลำดับแสดง (เลขกำกับคงเดิม)
+            renderClipIndex(); // สารบัญผลงานแบบตารางย่อด้านบน
             updateTotals(); // ยอดดูคลิป + คอมเมนต์รวมบนหัวเว็บ
             maybeScrollToSharedClip(); // ถ้าเปิดมาด้วยลิงก์แชร์ #clip-<id>
         }
