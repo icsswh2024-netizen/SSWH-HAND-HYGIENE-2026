@@ -549,8 +549,8 @@
                     </h3>
                     <ul class="space-y-2.5 text-sm md:text-base text-slate-700">
                         <li class="flex items-start gap-2.5"><i class="fa-solid fa-trophy text-sky-500 mt-1 shrink-0"></i><span>ตัดสินจาก <b>ผลรวมดาว</b> สูงสุด</span></li>
-                        <li class="flex items-start gap-2.5"><i class="fa-solid fa-equals text-sky-500 mt-1 shrink-0"></i><span>ผลรวมดาว = <b>คะแนนเฉลี่ย × จำนวนโหวต</b> (จากโหวตล่าสุดของแต่ละเครื่อง)</span></li>
-                        <li class="flex items-start gap-2.5"><i class="fa-solid fa-scale-balanced text-sky-500 mt-1 shrink-0"></i><span>ถ้าผลรวมเท่ากัน ดูที่ <b>คะแนนเฉลี่ย</b> แล้ว <b>จำนวนโหวต</b> ตามลำดับ</span></li>
+                        <li class="flex items-start gap-2.5"><i class="fa-solid fa-star text-sky-500 mt-1 shrink-0"></i><span>ผลรวมดาว = <b>รวมดาวทั้งหมดจากทุกเครื่อง</b> (นับเฉพาะโหวตล่าสุดต่อเครื่อง · ไม่ใช้คะแนนเฉลี่ย)</span></li>
+                        <li class="flex items-start gap-2.5"><i class="fa-solid fa-scale-balanced text-sky-500 mt-1 shrink-0"></i><span>ถ้าผลรวมเท่ากัน ดูที่ <b>จำนวนโหวต</b> (จำนวนเครื่องที่โหวต)</span></li>
                         <li class="flex items-start gap-2.5"><i class="fa-solid fa-circle-info text-slate-400 mt-1 shrink-0"></i><span><b>ยอดวิวและความคิดเห็น ไม่นำมาคิดคะแนน</b></span></li>
                     </ul>
                 </div>
@@ -691,7 +691,7 @@
                     <h4 class="font-display text-2xl md:text-3xl font-semibold text-gradient mb-2 flex items-center gap-2">
                         <i class="fa-solid fa-trophy text-amber-400"></i>ผลการตัดสินปัจจุบัน
                     </h4>
-                    <p class="text-sm text-slate-400 mb-5">จัดอันดับจาก<b>ผลรวมดาวสูงสุด</b> (เสมอกันดูคะแนนเฉลี่ย) · ยอดวิว/คอมเมนต์ไม่คิดคะแนน · อัปเดตเรียลไทม์</p>
+                    <p class="text-sm text-slate-400 mb-5">จัดอันดับจาก<b>ผลรวมดาวสูงสุด</b> (เสมอกันดูจำนวนโหวต) · ยอดวิว/คอมเมนต์ไม่คิดคะแนน · อัปเดตเรียลไทม์</p>
                     <div id="prizeStandings" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-7"></div>
 
                     <!-- ตารางอันดับละเอียด -->
@@ -1030,7 +1030,6 @@
         function showResults() {
             const vids = [...videoMap.values()].slice().sort((a, b) =>
                 totalStars(b) - totalStars(a) ||
-                (Number(b.avgScore) || 0) - (Number(a.avgScore) || 0) ||
                 (Number(b.votes) || 0) - (Number(a.votes) || 0)
             );
             const medals = ['🥇', '🥈', '🥉'];
@@ -2291,7 +2290,6 @@
         function renderStandings(items) {
             items = (items || []).slice().sort((a, b) =>
                 totalStars(b) - totalStars(a) ||
-                (Number(b.avgScore) || 0) - (Number(a.avgScore) || 0) ||
                 (Number(b.votes) || 0) - (Number(a.votes) || 0)
             );
             const prizes = [
