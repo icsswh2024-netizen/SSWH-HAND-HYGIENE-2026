@@ -1374,6 +1374,12 @@
         document.getElementById('shareGalleryBtn').addEventListener('click', shareGallery);
         // คลิกเซลล์ในสารบัญผลงาน -> เปิดดูคลิปในป๊อปอัปเต็มจอ
         document.getElementById('clipIndexGrid').addEventListener('click', (e) => {
+            const st = e.target.closest('.ix-star');
+            if (st) {
+                const wrap = st.closest('.clip-index-stars');
+                if (wrap) castVote(wrap.dataset.id, Number(st.dataset.value));
+                return;
+            }
             const cell = e.target.closest('.clip-index-cell');
             if (cell) openClipModal(cell.dataset.url, cell.dataset.portrait === '1');
         });
@@ -1475,6 +1481,39 @@
         function getMyVote(id) { return Number(getVoteMap()[String(id)]) || 0; }
         function setMyVote(id, score) { const m = getVoteMap(); m[String(id)] = score; try { localStorage.setItem(VOTE_SCORE_KEY, JSON.stringify(m)); } catch (e) {} }
 
+        // ระบายดาวให้ชุด element ตามคะแนน
+        function paintStarEls(els, n) {
+            els.forEach((s, i) => {
+                if (i < n) { s.classList.remove('text-slate-200'); s.classList.add('text-yellow-400'); }
+                else { s.classList.remove('text-yellow-400'); s.classList.add('text-slate-200'); }
+            });
+        }
+        const cssEsc = (s) => (window.CSS && CSS.escape) ? CSS.escape(String(s)) : String(s).replace(/"/g, '\\"');
+        // ซิงค์ดาวทั้งในการ์ดแกลเลอรี และในตาราง "ผลงานทั้งหมด"
+        function syncVoteUI(id, score) {
+            const g = document.querySelector(`.stars-container[data-id="${cssEsc(id)}"]`);
+            if (g) paintStarEls([...g.querySelectorAll('.star-icon')], score);
+            const idx = document.querySelector(`.clip-index-stars[data-id="${cssEsc(id)}"]`);
+            if (idx) paintStarEls([...idx.querySelectorAll('.ix-star')], score);
+            const display = document.getElementById('score-display-' + id);
+            if (display) display.innerHTML = `<span class="text-green-600 font-semibold text-xs whitespace-nowrap">โหวตแล้ว <i class="fa-solid fa-check"></i> <span class="text-slate-400 font-normal">· แตะดาวเพื่อแก้</span></span>`;
+        }
+        // โหวตคลิป (ใช้ร่วมกันทั้งการ์ดและตาราง) — นับเฉพาะคะแนนล่าสุดต่อเครื่อง
+        function castVote(id, score) {
+            if (!isVotingEnabled()) { notify('warning', 'ปิดระบบโหวตแล้ว ขณะนี้ไม่สามารถให้คะแนนได้'); return; }
+            const v = videoMap.get(String(id));
+            if (!v) return;
+            const prev = getMyVote(id);
+            if (score === prev) return;
+            const isChange = prev > 0;
+            v.hasVoted = true;
+            addToSet(VOTED_KEY, id);
+            setMyVote(id, score);
+            syncVoteUI(id, score);
+            sendDataToSheet('ADD_VOTE', { id: id, score: score, device: deviceId() });
+            notify('success', isChange ? ('แก้คะแนนเป็น ' + score + ' ดาวแล้ว') : 'บันทึกคะแนนโหวตสำเร็จ!');
+        }
+
         // เก็บออบเจกต์วิดีโอที่ผูกกับการ์ด (id -> video) เพื่ออัปเดตในที่โดยไม่สร้างการ์ดใหม่
         const videoMap = new Map();
         let serverTotalStars = null; // ผลรวมดาวทั้งหมดจากเซิร์ฟเวอร์ (เปิดเผยได้แม้ยังเปิดโหวต)
@@ -1570,12 +1609,10 @@
             } catch (e) { rotationSeed = Math.floor(Math.random() * 1000); }
         })();
         function applyGalleryRotation() {
-            const n = videoMap.size;
-            if (!n) return;
-            const off = ((rotationSeed % n) + n) % n;
+            // แสดงตามลำดับเลขกำกับคลิป (ไม่สุ่มวนแล้ว)
             videoMap.forEach(v => {
                 const card = document.getElementById('card-' + v.id);
-                if (card && v.seq) card.style.order = String((v.seq - 1 - off + n) % n);
+                if (card && v.seq) card.style.order = String(v.seq - 1);
             });
         }
 
@@ -1592,12 +1629,18 @@
                 const bg = poster
                     ? `background-image:url('${poster.replace(/'/g, "%27")}');background-size:cover;background-position:center`
                     : 'background:linear-gradient(135deg,#38bdf8,#0891b2)';
-                return `<button type="button" class="clip-index-cell relative rounded-xl overflow-hidden shadow-md group" style="aspect-ratio:16/11;${bg}" data-url="${escapeHtml(v.url)}" data-portrait="${v.portrait ? '1' : ''}" title="${escapeHtml(v.title || '')}">
-                    <span class="absolute inset-0 bg-black/25 group-hover:bg-black/35 transition"></span>
-                    <span class="absolute top-1 left-1 w-6 h-6 rounded-full bg-sky-600 text-white text-xs font-bold flex items-center justify-center border border-white shadow">${v.seq || ''}</span>
-                    <span class="absolute inset-0 flex items-center justify-center"><i class="fa-solid fa-circle-play text-white/90 text-2xl drop-shadow"></i></span>
-                    <span class="absolute bottom-0 inset-x-0 px-1.5 py-1 text-[10px] leading-tight text-white font-medium text-left bg-gradient-to-t from-black/70 to-transparent truncate">${escapeHtml(v.title || '')}</span>
-                </button>`;
+                const myVote = getMyVote(v.id);
+                const starsRow = [1, 2, 3, 4, 5].map(i =>
+                    `<i class="fa-solid fa-star ix-star cursor-pointer text-sm ${i <= myVote ? 'text-yellow-400' : 'text-slate-200'}" data-value="${i}"></i>`).join('');
+                return `<div class="rounded-xl overflow-hidden shadow-md bg-white">
+                    <button type="button" class="clip-index-cell relative block w-full group" style="aspect-ratio:16/11;${bg}" data-url="${escapeHtml(v.url)}" data-portrait="${v.portrait ? '1' : ''}" title="${escapeHtml(v.title || '')}">
+                        <span class="absolute inset-0 bg-black/25 group-hover:bg-black/35 transition"></span>
+                        <span class="absolute top-1 left-1 w-6 h-6 rounded-full bg-sky-600 text-white text-xs font-bold flex items-center justify-center border border-white shadow">${v.seq || ''}</span>
+                        <span class="absolute inset-0 flex items-center justify-center"><i class="fa-solid fa-circle-play text-white/90 text-2xl drop-shadow"></i></span>
+                        <span class="absolute bottom-0 inset-x-0 px-1.5 py-1 text-[10px] leading-tight text-white font-medium text-left bg-gradient-to-t from-black/70 to-transparent truncate">${escapeHtml(v.title || '')}</span>
+                    </button>
+                    <div class="clip-index-stars flex items-center justify-center gap-0.5 py-1.5" data-id="${escapeHtml(String(v.id))}" title="แตะดาวเพื่อโหวต">${starsRow}</div>
+                </div>`;
             }).join('');
         }
 
@@ -2050,29 +2093,7 @@
                 });
 
                 star.addEventListener('click', () => {
-                    if(!isVotingEnabled()) {
-                        notify('warning', 'ปิดระบบโหวตแล้ว ขณะนี้ไม่สามารถให้คะแนนได้');
-                        return;
-                    }
-
-                    const score = index + 1;
-                    const prev = getMyVote(video.id);
-                    if (score === prev) return; // กดดาวเดิมซ้ำ ไม่ต้องทำอะไร
-
-                    const isChange = prev > 0; // เคยโหวตแล้ว = เปลี่ยนคะแนน
-                    video.hasVoted = true;
-                    addToSet(VOTED_KEY, video.id);
-                    setMyVote(video.id, score); // จำคะแนนล่าสุดของเครื่องนี้
-
-                    paintStars(score);
-
-                    const display = document.getElementById(`score-display-${video.id}`);
-                    if (display) display.innerHTML = `<span class="text-green-600 font-semibold text-xs whitespace-nowrap">โหวตแล้ว <i class="fa-solid fa-check"></i> <span class="text-slate-400 font-normal">· แตะดาวเพื่อแก้</span></span>`;
-
-                    // ส่งคะแนนไปหลังบ้าน (นับเฉพาะคะแนนล่าสุดต่อเครื่อง)
-                    sendDataToSheet('ADD_VOTE', { id: video.id, score: score, device: deviceId() });
-
-                    notify('success', isChange ? ('แก้คะแนนเป็น ' + score + ' ดาวแล้ว') : 'บันทึกคะแนนโหวตสำเร็จ!');
+                    castVote(video.id, index + 1); // โหวต (ซิงค์ทั้งการ์ดและตารางผลงานทั้งหมด)
                 });
             });
 
