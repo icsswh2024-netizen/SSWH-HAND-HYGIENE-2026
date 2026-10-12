@@ -1325,7 +1325,7 @@
             const vids = [...videoMap.values()];
             const lines = vids.map((v, i) => {
                 const org = (v.organization || '').trim();
-                return `${i + 1}. ${v.title}${org ? ' — ' + org : ''}`;
+                return `${i + 1}. ${org || v.title}`; // แสดงชื่อหน่วยงานอย่างเดียว (ถ้าไม่มีค่อยใช้ชื่อผลงาน)
             });
             const header = '🎬 ผลงานประกวดคลิป "วันล้างมือโลก"\nโรงพยาบาลศรีสังวรสุโขทัย (IPC)';
             const listText = lines.length ? ('\n\n📋 ผลงานทั้งหมด ' + lines.length + ' คลิป:\n' + lines.join('\n')) : '';
