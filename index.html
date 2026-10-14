@@ -353,6 +353,9 @@
                 <button id="openEvalBtnTop" class="hidden bg-emerald-500 text-white border border-emerald-300/50 px-4 md:px-5 py-2 rounded-full shadow-lg hover:bg-emerald-600 transition font-display font-semibold text-sm flex items-center backdrop-blur">
                     <i class="fa-solid fa-clipboard-check mr-2"></i> แบบประเมิน
                 </button>
+                <button id="openCertBtn" class="hidden bg-amber-500 text-white border border-amber-300/50 px-4 md:px-5 py-2 rounded-full shadow-lg hover:bg-amber-600 transition font-display font-semibold text-sm flex items-center backdrop-blur">
+                    <i class="fa-solid fa-award mr-2"></i> ใบประกาศนียบัตร
+                </button>
             </div>
 
             <div class="text-center md:pt-6">
@@ -664,6 +667,15 @@
                         <button id="adminEvalToggle" class="text-base font-semibold px-5 py-2.5 rounded-lg transition"></button>
                     </div>
 
+                    <!-- ควบคุมใบประกาศนียบัตร -->
+                    <div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 mb-7">
+                        <div>
+                            <div class="font-semibold text-slate-700 text-base md:text-lg"><i class="fa-solid fa-award text-amber-500 mr-1.5"></i>ใบประกาศนียบัตร</div>
+                            <div class="text-sm text-slate-400 mt-0.5">ตั้งลิงก์ที่แท็บ Settings คีย์ <b>certUrl</b> ก่อนเปิด (เช่น ลิงก์ฟอร์ม/ไดรฟ์)</div>
+                        </div>
+                        <button id="adminCertToggle" class="text-base font-semibold px-5 py-2.5 rounded-lg transition"></button>
+                    </div>
+
                     <!-- แดชบอร์ดสรุปผล -->
                     <h4 class="font-display text-2xl md:text-3xl font-semibold text-gradient mb-5 flex items-center gap-2">
                         <i class="fa-solid fa-chart-line text-sky-500"></i>แดชบอร์ดสรุปผล
@@ -889,6 +901,16 @@
             applySubmissionsOpen();
             applyPrizesShown(); // ซ่อน/แสดงการ์ดรางวัล
             applyEvalShown();   // ซ่อน/แสดงแบบประเมิน
+            applyCertShown();   // ซ่อน/แสดงปุ่มใบประกาศนียบัตร
+        }
+
+        // แสดงปุ่มใบประกาศนียบัตรหรือไม่ (ค่าเริ่มต้น = ซ่อน)
+        function isCertShown() {
+            return String(siteSettings.showCert || 'FALSE').toUpperCase() === 'TRUE';
+        }
+        function applyCertShown() {
+            const btn = document.getElementById('openCertBtn');
+            if (btn) btn.classList.toggle('hidden', !isCertShown());
         }
 
         // เปิดรับผลงานอยู่ไหม? (ค่าตั้งต้น = เปิด)
@@ -1309,6 +1331,12 @@
         }
         document.getElementById('openEvalBtn').addEventListener('click', openEvalModal);
         document.getElementById('openEvalBtnTop').addEventListener('click', openEvalModal);
+        // ปุ่มใบประกาศนียบัตร -> เปิดลิงก์จาก Settings คีย์ certUrl
+        document.getElementById('openCertBtn').addEventListener('click', () => {
+            const url = (siteSettings.certUrl || '').trim();
+            if (url) { window.open(url, '_blank', 'noopener'); return; }
+            Swal.fire({ icon: 'info', title: 'ยังไม่ได้ตั้งลิงก์ใบประกาศ', text: 'แอดมินตั้งลิงก์ที่แท็บ Settings คีย์ certUrl ก่อนครับ', confirmButtonColor: '#d97706', customClass: { popup: 'swal-info', confirmButton: 'swal-confirm-btn' } });
+        });
         document.getElementById('evalClose').addEventListener('click', closeEvalModal);
         evalModal.addEventListener('click', (e) => { if (e.target === evalModal) closeEvalModal(); });
 
@@ -2178,6 +2206,7 @@
                     updateSubmissionsToggle();
                     updatePrizesToggle();
                     updateEvalToggle();
+                    updateCertToggle();
                 }
                 delete window[cb]; script.remove();
             };
@@ -2558,6 +2587,26 @@
             applyEvalShown();
             sendDataToSheet('SET_SETTING', { setting: 'showEval', value: next, key: getAdminKey() });
             notify('success', next === 'TRUE' ? 'เปิดแบบประเมินแล้ว' : 'ปิดแบบประเมินแล้ว');
+            setTimeout(fetchFromSheet, 1500);
+        });
+        function updateCertToggle() {
+            const btn = document.getElementById('adminCertToggle');
+            if (!btn) return;
+            if (isCertShown()) {
+                btn.innerHTML = '<i class="fa-solid fa-toggle-on mr-1"></i>เปิดอยู่ — กดเพื่อซ่อนใบประกาศ';
+                btn.className = 'text-sm font-semibold px-4 py-2 rounded-lg transition bg-amber-500 hover:bg-amber-600 text-white';
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-toggle-off mr-1"></i>ปิดอยู่ — กดเพื่อแสดงใบประกาศ';
+                btn.className = 'text-sm font-semibold px-4 py-2 rounded-lg transition bg-slate-300 hover:bg-slate-400 text-slate-700';
+            }
+        }
+        document.getElementById('adminCertToggle').addEventListener('click', () => {
+            const next = isCertShown() ? 'FALSE' : 'TRUE';
+            siteSettings.showCert = next;
+            updateCertToggle();
+            applyCertShown();
+            sendDataToSheet('SET_SETTING', { setting: 'showCert', value: next, key: getAdminKey() });
+            notify('success', next === 'TRUE' ? 'แสดงปุ่มใบประกาศแล้ว' : 'ซ่อนปุ่มใบประกาศแล้ว');
             setTimeout(fetchFromSheet, 1500);
         });
 
