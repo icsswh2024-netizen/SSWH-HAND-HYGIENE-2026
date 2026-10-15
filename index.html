@@ -782,20 +782,22 @@
             <div class="p-5 md:p-7 max-h-[78vh] overflow-y-auto">
                 <p class="text-sm text-slate-500 mb-3">ใช้พื้นหลังดีไซน์จริง · เลือกผู้เข้าแข่งขันจาก Submissions → เติมชื่อบนใบอัตโนมัติ · <b>ถ้าได้รางวัลจะได้ 2 ใบ</b> (ใบเข้าร่วม + ใบรางวัล คนละพื้นหลัง)</p>
                 <div class="mb-3">
-                    <label class="text-sm text-slate-600">เลือกผู้เข้าแข่งขัน (จากรายการ)</label>
+                    <label class="text-sm text-slate-600"><b>1.</b> เลือกผู้เข้าแข่งขัน (จากรายการ)</label>
                     <select id="certPick" class="ev-input"><option value="">— เลือกเพื่อเติมชื่อ/หน่วย/รางวัลอัตโนมัติ —</option></select>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div><label class="text-sm text-slate-600">ชื่อ–นามสกุล / ชื่อทีม</label><input id="certName" class="ev-input" placeholder="เว้นว่างได้ถ้าออกให้หน่วยงาน"></div>
+                    <div><label class="text-sm text-slate-600"><b>1.</b> ชื่อ–นามสกุล / ชื่อทีม</label><input id="certName" class="ev-input" placeholder="เว้นว่างได้ถ้าออกให้หน่วยงาน"></div>
                     <div><label class="text-sm text-slate-600">หน่วยงาน / สังกัด</label><input id="certOrg" class="ev-input" placeholder="เช่น หอผู้ป่วยอายุรกรรมหญิง"></div>
                 </div>
-                <div class="flex flex-wrap gap-2.5 mt-4">
+                <p class="text-sm font-semibold text-slate-600 mt-4 mb-1"><b>2.</b> ตรวจดูตัวอย่างใบเกียรติบัตร 👇</p>
+                <iframe id="certFrame" class="w-full rounded-xl border border-slate-200" style="height:62vh;background:#eef4fb"></iframe>
+                <p class="text-sm font-semibold text-slate-600 mt-4 mb-1"><b>3.</b> ถูกต้องแล้ว กดบันทึกลงเครื่อง</p>
+                <div class="flex flex-wrap gap-2.5">
                     <button id="certJpgBtn" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold px-6 py-2.5 rounded-xl shadow"><i class="fa-solid fa-image"></i>ดาวน์โหลด JPG</button>
                     <button id="certPdfBtn" class="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-display font-bold px-6 py-2.5 rounded-xl shadow"><i class="fa-solid fa-file-pdf"></i>ดาวน์โหลด PDF</button>
                 </div>
                 <p class="text-xs text-slate-400 mt-2">ไฟล์จะถูกบันทึกลงเครื่อง/อัลบั้มทันที (พื้นหลังติดไปด้วย) · ถ้าได้รางวัลจะได้ 2 ไฟล์</p>
                 <p id="certIosHint" class="text-xs text-amber-600 mt-1 hidden"><i class="fa-solid fa-circle-info mr-1"></i>บน iPhone/iPad: เมื่อกดปุ่มจะเด้งเมนูแชร์ ให้เลือก <b>"บันทึกรูปภาพ"</b> (JPG) หรือ <b>"บันทึกลงไฟล์"</b> (PDF)</p>
-                <iframe id="certFrame" class="w-full mt-4 rounded-xl border border-slate-200" style="height:62vh;background:#eef4fb"></iframe>
             </div>
         </div>
     </div>
