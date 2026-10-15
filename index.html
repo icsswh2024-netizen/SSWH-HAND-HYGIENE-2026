@@ -1448,10 +1448,11 @@
         // เกียรติบัตร 1 ใบ แบบใช้พื้นหลัง + วางชื่อผู้เข้าแข่งขัน + หน่วย ทับ (2 คอลัมน์เท่านั้น)
         function certOneHtml(bgUrl, nameLine, orgLine, awardLine) {
             const org = orgLine ? ('<div class="corg2">' + orgLine + '</div>') : '';
+            // ชื่อรางวัลวางเป็นบล็อกแยก (absolute) จะได้ไม่ชนคำว่า "ได้รับรางวัล" บนพื้นหลัง
             const aw = awardLine ? ('<div class="caward">' + awardLine + '</div>') : '';
             const cls = awardLine ? 'cert cert-award' : 'cert';
             return '<div class="' + cls + '" style="background-image:url(\'' + bgUrl + '\')">' +
-                '<div class="cname"><div class="cname-main">' + (nameLine || '...................................................') + '</div>' + org + aw + '</div></div>';
+                '<div class="cname"><div class="cname-main">' + (nameLine || '...................................................') + '</div>' + org + '</div>' + aw + '</div>';
         }
         function certBuild() {
             const name = (document.getElementById('certName').value || '').trim();
@@ -1478,12 +1479,11 @@
                 ".cert .cname{position:absolute;left:8%;right:8%;top:" + CERT_NAME_TOP + "%;height:" + CERT_NAME_H + "%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;text-shadow:0 1px 2px rgba(255,255,255,.6)}" +
                 ".cert .cname-main{font-family:" + fontStack + ";font-weight:700;font-size:42px;color:#0b5394;line-height:1.1;text-shadow:0 2px 4px rgba(255,255,255,.85),0 0 2px rgba(255,255,255,.9)}" +
                 ".cert .cname .corg2{font-family:" + fontStack + ";font-size:28px;font-weight:600;color:#1d4ed8;margin-top:8px}" +
-                ".cert .cname .caward{font-family:" + fontStack + ";font-size:34px;font-weight:800;margin-top:10px;color:#d4a017;text-shadow:0 1px 1px rgba(120,72,0,.35),0 2px 4px rgba(255,255,255,.6)}" +
-                // ใบรางวัล: บล็อกข้อความสูงขึ้นหน่อย ลดขนาด/ระยะห่างเพื่อไม่ชนข้อความพื้นหลัง
-                ".cert-award .cname{top:41%;height:11%}" +
-                ".cert-award .cname-main{font-size:34px;color:#1d4ed8}" +
-                ".cert-award .cname .corg2{font-size:22px;margin-top:4px}" +
-                ".cert-award .cname .caward{font-size:26px;margin-top:5px}";
+                // ชื่อรางวัล (บล็อกแยก absolute) วางในช่องว่างใต้คำว่า "ได้รับรางวัล" บนพื้นหลัง · กันข้อความชนกัน
+                ".cert .caward{position:absolute;left:8%;right:8%;top:58%;text-align:center;font-family:" + fontStack + ";font-size:30px;font-weight:800;color:#d4a017;text-shadow:0 1px 1px rgba(120,72,0,.35),0 2px 4px rgba(255,255,255,.7)}" +
+                // ใบรางวัล: ชื่อผู้รับเล็กลง สีฟ้า (ไม่มีหน่วยงาน)
+                ".cert-award .cname{top:40%;height:11%}" +
+                ".cert-award .cname-main{font-size:34px;color:#1d4ed8}";
         }
         function certDoc() {
             const P = certBuild();
