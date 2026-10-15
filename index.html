@@ -26,6 +26,9 @@
     <script defer src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <!-- สำหรับดาวน์โหลดเกียรติบัตรเป็น JPG/PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -810,10 +813,11 @@
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-2.5 mt-4">
-                    <button id="certGenBtn" class="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white font-display font-bold px-6 py-2.5 rounded-xl shadow"><i class="fa-solid fa-wand-magic-sparkles"></i>สร้างเกียรติบัตร</button>
-                    <button id="certPrintBtn" class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-display font-bold px-6 py-2.5 rounded-xl shadow"><i class="fa-solid fa-print"></i>บันทึก / พิมพ์ (PDF)</button>
+                    <button id="certGenBtn" class="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white font-display font-bold px-6 py-2.5 rounded-xl shadow"><i class="fa-solid fa-wand-magic-sparkles"></i>สร้าง/อัปเดต</button>
+                    <button id="certJpgBtn" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold px-6 py-2.5 rounded-xl shadow"><i class="fa-solid fa-image"></i>ดาวน์โหลด JPG</button>
+                    <button id="certPdfBtn" class="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-display font-bold px-6 py-2.5 rounded-xl shadow"><i class="fa-solid fa-file-pdf"></i>ดาวน์โหลด PDF</button>
                 </div>
-                <p class="text-xs text-slate-400 mt-2">ตอนพิมพ์ เลือกปลายทาง “บันทึกเป็น PDF” · กระดาษ A4 แนวนอน · ปิดหัว/ท้ายกระดาษ</p>
+                <p class="text-xs text-slate-400 mt-2">ไฟล์จะถูกบันทึกลงเครื่อง/อัลบั้มทันที (พื้นหลังติดไปด้วย) · ถ้าได้รางวัลจะได้ 2 ไฟล์</p>
                 <iframe id="certFrame" class="w-full mt-4 rounded-xl border border-slate-200" style="height:62vh;background:#eef4fb"></iframe>
             </div>
         </div>
@@ -1459,7 +1463,7 @@
             return '<div class="cert" style="background-image:url(\'' + bgUrl + '\')">' +
                 '<div class="cname"><div class="cname-main">' + (nameLine || '...................................................') + '</div>' + org + '</div></div>';
         }
-        function certDoc() {
+        function certBuild() {
             const name = (document.getElementById('certName').value || '').trim();
             const org = (document.getElementById('certOrg').value || '').trim();
             const type = document.getElementById('certType').value;
@@ -1471,27 +1475,92 @@
             // ทุกคน: ใบเข้าร่วม (พื้นหลัง certBg) · ได้รางวัล: เพิ่มใบรางวัล (พื้นหลัง certBgAward)
             let certs = certOneHtml(certBgUrl(), nameLine, orgLine);
             if (isPrize) certs += certOneHtml(certBgAwardUrl(), nameLine, orgLine);
-            // ฟอนต์ที่เลือก (ทั้งหมดเป็น Google Fonts โหลดอัตโนมัติ ไม่ต้องติดตั้ง)
+            return { certs: certs, bgs: isPrize ? [certBgUrl(), certBgAwardUrl()] : [certBgUrl()] };
+        }
+        const CERT_GF_HREF = 'https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&family=Kanit:wght@500;700&family=Prompt:wght@500;700&family=Mitr:wght@500;700&family=Chakra+Petch:wght@500;700&family=Bai+Jamjuree:wght@500;700&family=Mali:wght@500;700&family=Charmonman:wght@700&family=Charm:wght@700&display=swap';
+        function certFontStack() {
             const chosenFont = (document.getElementById('certFont') && document.getElementById('certFont').value) || "'Prompt'";
-            const fontStack = chosenFont + ",'Sarabun',Kanit,sans-serif";
-            const css = "@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&family=Kanit:wght@500;700&family=Prompt:wght@500;700&family=Mitr:wght@500;700&family=Chakra+Petch:wght@500;700&family=Bai+Jamjuree:wght@500;700&family=Mali:wght@500;700&family=Charmonman:wght@700&family=Charm:wght@700&display=swap');" +
-                "*{margin:0;box-sizing:border-box}body{font-family:Sarabun,Kanit,sans-serif;background:#eef4fb;padding:14px;display:flex;flex-direction:column;align-items:center;gap:20px}" +
-                ".cert{width:1123px;height:794px;position:relative;background:#fff center/cover no-repeat;transform-origin:top center;box-shadow:0 8px 24px rgba(2,32,54,.12)}" +
-                ".cname{position:absolute;left:8%;right:8%;top:" + CERT_NAME_TOP + "%;height:" + CERT_NAME_H + "%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;text-shadow:0 1px 2px rgba(255,255,255,.6)}" +
-                ".cname-main{font-family:" + fontStack + ";font-weight:700;font-size:46px;color:#0b3a66;line-height:1.15}" +
-                ".cname .corg2{font-family:" + fontStack + ";font-size:26px;font-weight:500;color:#2563a6;margin-top:6px}" +
-                "@media print{@page{size:A4 landscape;margin:0}body{background:#fff;padding:0;gap:0}.cert{transform:none!important;box-shadow:none;page-break-after:always;break-after:page}.cert:last-child{page-break-after:auto;break-after:auto}}";
+            return chosenFont + ",'Sarabun',Kanit,sans-serif";
+        }
+        // CSS หลักของเกียรติบัตร (ใช้ร่วมกันทั้งพรีวิวและตอนเรนเดอร์เป็นรูป)
+        function certCoreCss() {
+            const fontStack = certFontStack();
+            return ".cert{width:1123px;height:794px;position:relative;background:#fff center/cover no-repeat;box-sizing:border-box;overflow:hidden}" +
+                ".cert .cname{position:absolute;left:8%;right:8%;top:" + CERT_NAME_TOP + "%;height:" + CERT_NAME_H + "%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;text-shadow:0 1px 2px rgba(255,255,255,.6)}" +
+                ".cert .cname-main{font-family:" + fontStack + ";font-weight:700;font-size:46px;color:#0b3a66;line-height:1.15}" +
+                ".cert .cname .corg2{font-family:" + fontStack + ";font-size:26px;font-weight:500;color:#2563a6;margin-top:6px}";
+        }
+        function certDoc() {
+            const P = certBuild();
+            const css = "@import url('" + CERT_GF_HREF + "');*{margin:0;box-sizing:border-box}body{font-family:Sarabun,Kanit,sans-serif;background:#eef4fb;padding:14px;display:flex;flex-direction:column;align-items:center;gap:20px}" +
+                certCoreCss() + ".cert{transform-origin:top center;box-shadow:0 8px 24px rgba(2,32,54,.12)}";
             const fit = "(function(){function f(){var s=Math.min(document.body.clientWidth-28,1123)/1123;[].forEach.call(document.querySelectorAll('.cert'),function(c){if(s<1){c.style.transform='scale('+s+')';c.style.marginBottom=(794*(s-1))+'px';}else{c.style.transform='none';c.style.marginBottom='0';}});}f();window.addEventListener('resize',f);})();";
-            return '<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>' + css + '</style></head><body>' + certs + '<scr' + 'ipt>' + fit + '</scr' + 'ipt></body></html>';
+            return '<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>' + css + '</style></head><body>' + P.certs + '<scr' + 'ipt>' + fit + '</scr' + 'ipt></body></html>';
         }
         function renderCert() { document.getElementById('certFrame').srcdoc = certDoc(); }
-        function printCert() {
-            const fr = document.getElementById('certFrame');
-            renderCert();
-            setTimeout(() => { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (e) { notify('warning', 'พิมพ์ไม่สำเร็จ ลองใหม่อีกครั้ง'); } }, 500);
+
+        // ===== ดาวน์โหลดเกียรติบัตรเป็น JPG/PDF (เรนเดอร์เป็นรูป พื้นหลังติดไปด้วย) =====
+        function certSafeName() {
+            const n = (document.getElementById('certName').value || document.getElementById('certOrg').value || 'certificate').trim();
+            return n.replace(/[\\/:*?"<>|]+/g, '_').slice(0, 40) || 'certificate';
+        }
+        function preloadImg(url) {
+            return new Promise(res => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(true); im.onerror = () => res(false); im.src = url; });
+        }
+        async function certCanvases() {
+            if (!window.html2canvas) { notify('warning', 'ไลบรารียังโหลดไม่เสร็จ ลองใหม่อีกครั้ง'); return null; }
+            const P = certBuild();
+            // ฝังฟอนต์ในหน้าหลักครั้งเดียว
+            if (!document.getElementById('certGF')) {
+                const l = document.createElement('link'); l.id = 'certGF'; l.rel = 'stylesheet'; l.href = CERT_GF_HREF; document.head.appendChild(l);
+            }
+            // โฮสต์ซ่อนสำหรับเรนเดอร์
+            let host = document.getElementById('certCapHost');
+            if (!host) { host = document.createElement('div'); host.id = 'certCapHost'; host.style.cssText = 'position:fixed;left:-99999px;top:0;z-index:-1'; document.body.appendChild(host); }
+            host.innerHTML = '<style>' + certCoreCss() + '</style>' + P.certs;
+            // โหลดฟอนต์ + พื้นหลังให้เสร็จก่อนจับภาพ
+            try { await document.fonts.ready; } catch (e) {}
+            await Promise.all(P.bgs.map(preloadImg));
+            await new Promise(r => setTimeout(r, 300));
+            const certEls = [].slice.call(host.querySelectorAll('.cert'));
+            const canvases = [];
+            for (const el of certEls) {
+                const cv = await html2canvas(el, { useCORS: true, backgroundColor: '#ffffff', scale: 2, width: 1123, height: 794, logging: false });
+                canvases.push(cv);
+            }
+            return canvases;
+        }
+        function triggerDownload(dataUrl, filename) {
+            const a = document.createElement('a'); a.href = dataUrl; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+        }
+        async function downloadCertJPG() {
+            try {
+                const cvs = await certCanvases(); if (!cvs) return;
+                const base = certSafeName();
+                cvs.forEach((cv, i) => {
+                    const url = cv.toDataURL('image/jpeg', 0.95);
+                    triggerDownload(url, base + (cvs.length > 1 ? ('_' + (i === 0 ? 'เข้าร่วม' : 'รางวัล')) : '') + '.jpg');
+                });
+                notify('success', 'ดาวน์โหลด JPG แล้ว');
+            } catch (e) { certExportError(e); }
+        }
+        async function downloadCertPDF() {
+            try {
+                const cvs = await certCanvases(); if (!cvs) return;
+                const JS = (window.jspdf && window.jspdf.jsPDF); if (!JS) { notify('warning', 'ไลบรารี PDF ยังโหลดไม่เสร็จ'); return; }
+                const pdf = new JS({ orientation: 'landscape', unit: 'px', format: [1123, 794] });
+                cvs.forEach((cv, i) => { if (i) pdf.addPage([1123, 794], 'landscape'); pdf.addImage(cv.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 1123, 794); });
+                pdf.save(certSafeName() + '.pdf');
+                notify('success', 'ดาวน์โหลด PDF แล้ว');
+            } catch (e) { certExportError(e); }
+        }
+        function certExportError(e) {
+            console.error(e);
+            Swal.fire({ icon: 'error', title: 'บันทึกไฟล์ไม่สำเร็จ', html: 'อาจเกิดจากภาพพื้นหลังจาก Google Drive ไม่อนุญาตให้ดึงข้ามเว็บ (CORS)<br>แนะนำ: ส่งไฟล์พื้นหลังให้ฝังในเว็บโดยตรง จะบันทึกได้ชัวร์', confirmButtonColor: '#e11d48', customClass: { popup: 'swal-info', confirmButton: 'swal-confirm-btn' } });
         }
         document.getElementById('certGenBtn').addEventListener('click', renderCert);
-        document.getElementById('certPrintBtn').addEventListener('click', printCert);
+        document.getElementById('certJpgBtn').addEventListener('click', downloadCertJPG);
+        document.getElementById('certPdfBtn').addEventListener('click', downloadCertPDF);
         ['certName', 'certOrg'].forEach(id => document.getElementById(id).addEventListener('input', renderCert));
         document.getElementById('certType').addEventListener('change', renderCert);
         document.getElementById('certFont').addEventListener('change', renderCert);
