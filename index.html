@@ -1425,7 +1425,16 @@
 
         // ตำแหน่งชื่อผู้รับบนพื้นหลัง Canva (ปรับได้ · % จากด้านบน)
         const CERT_NAME_TOP = 35, CERT_NAME_H = 14; // ชื่ออยู่ช่องว่างกลางใบ
-        function certBgUrl() { try { return new URL('cert-bg.jpg', location.href).href; } catch (e) { return 'cert-bg.jpg'; } }
+        function certBgUrl() {
+            // ใช้ภาพพื้นหลังจาก Settings คีย์ certBg ก่อน (รองรับลิงก์ Google Drive) ไม่งั้นใช้ไฟล์ในเว็บ
+            const custom = (siteSettings.certBg || '').trim();
+            if (custom) {
+                const m = custom.match(/drive\.google\.com\/file\/d\/([^/]+)/) || custom.match(/[?&]id=([^&]+)/);
+                if (m) return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w2000'; // Drive -> ภาพตรง ความละเอียดสูง
+                return custom; // ลิงก์รูปตรง
+            }
+            try { return new URL('cert-bg.jpg', location.href).href; } catch (e) { return 'cert-bg.jpg'; }
+        }
         // เกียรติบัตร 1 ใบ แบบใช้พื้นหลัง Canva + วางชื่อ (และรางวัลถ้ามี) ทับ
         function certOneHtml(mainLine, awardLine) {
             const award = awardLine ? ('<div class="caward">' + awardLine + '</div>') : '';
