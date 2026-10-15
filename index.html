@@ -1166,9 +1166,76 @@
                 title: `<span style="font-family:Kanit,sans-serif">${titleText || '🏆 ผลการโหวต'}</span>`,
                 html: `<div style="max-height:66vh;overflow:auto;margin-top:4px">${top.length ? resultsNoteHtml() : ''}${trophies}${rows}${!top.length ? '<p style="color:#94a3b8">ยังไม่มีข้อมูล</p>' : ''}</div>`,
                 width: 820,
+                showDenyButton: top.length > 0,
+                denyButtonText: '<i class="fa-solid fa-share-nodes"></i> สร้างภาพสรุป (A4)',
+                denyButtonColor: '#0ea5e9',
                 confirmButtonText: 'ปิด',
                 confirmButtonColor: '#2563eb',
                 customClass: { popup: 'swal-success', confirmButton: 'swal-confirm-btn' }
+            }).then(r => { if (r.isDenied) openResultsSummary(vids); });
+        }
+        // ===== ภาพสรุปผลโหวต A4 แนวนอน (บันทึก JPG/PDF) =====
+        function resultsSummaryHtml(vids) {
+            const top = vids.slice(0, 4);
+            const cards = top.map((v, i) => {
+                const t = TROPHY_THEMES[i + 1] || TROPHY_THEMES[4];
+                const sum = totalStars(v);
+                return `
+                <div style="flex:1;background:${t.bg};border:3px solid ${t.border};border-radius:18px;padding:16px 10px;text-align:center;box-shadow:0 8px 18px ${t.shadow}">
+                    <i class="fa-solid fa-thumbs-up" style="font-size:54px;background:linear-gradient(135deg,#fff4bf,#f7d560 30%,#d99412 65%,#8a5f10);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 4px rgba(80,55,0,.4));transform:rotate(-8deg)"></i>
+                    <div style="display:inline-block;margin-top:8px;padding:5px 16px;border-radius:999px;background:${t.ribbon};color:#fff;font-weight:800;font-size:16px;text-shadow:0 1px 2px rgba(0,0,0,.3)">${t.label}</div>
+                    <div style="margin-top:8px;font-weight:700;font-size:15px;color:#1e293b;line-height:1.3;min-height:58px">${escapeHtml(v.title || '(ไม่มีชื่อ)')}</div>
+                    <div style="font-size:13px;color:#475569">${escapeHtml(v.organization || '')}</div>
+                    <div style="margin-top:8px;display:inline-block;background:#fff;border:2px solid ${t.border};color:${t.accent};font-weight:800;font-size:17px;padding:3px 16px;border-radius:999px">⭐ ${sum}</div>
+                </div>`;
+            }).join('');
+            const note = (siteSettings.resultNote || 'ขอแสดงความยินดีกับทุกท่านที่ได้รับรางวัล และขอขอบคุณทุกผลงานที่ได้เข้าร่วม');
+            return `<div id="summaryA4" style="width:1123px;height:794px;background:linear-gradient(160deg,#f0f9ff,#e0f2fe);box-sizing:border-box;padding:40px 44px;font-family:Kanit,sans-serif;position:relative;overflow:hidden">
+                <div style="text-align:center">
+                    <div style="font-size:34px;font-weight:800;color:#0b5394">🏆 ผลการโหวต — วันล้างมือโลก</div>
+                    <div style="font-size:18px;color:#1d4ed8;font-weight:600;margin-top:2px">Global Handwashing Day Video Contest · โรงพยาบาลศรีสังวรสุโขทัย</div>
+                </div>
+                <div style="margin:18px auto 0;max-width:960px;background:rgba(255,251,235,.9);border:1px solid #fcd34d;border-radius:14px;padding:12px 18px;text-align:center;color:#92400e;font-size:15px;line-height:1.5">${note}</div>
+                <div style="display:flex;gap:16px;margin-top:22px;align-items:stretch">${cards}</div>
+                <div style="position:absolute;left:44px;right:44px;bottom:26px;text-align:center;color:#64748b;font-size:14px">ตัดสินจากผลรวมดาวสูงสุด · ${new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+            </div>`;
+        }
+        async function resultsSummaryCanvas(vids) {
+            if (!window.html2canvas) { notify('warning', 'ไลบรารียังโหลดไม่เสร็จ ลองใหม่'); return null; }
+            let host = document.getElementById('certCapHost');
+            if (!host) { host = document.createElement('div'); host.id = 'certCapHost'; host.style.cssText = 'position:fixed;left:-99999px;top:0;z-index:-1'; document.body.appendChild(host); }
+            host.innerHTML = resultsSummaryHtml(vids);
+            try { await document.fonts.ready; } catch (e) {}
+            await new Promise(r => setTimeout(r, 250));
+            return await html2canvas(host.querySelector('#summaryA4'), { backgroundColor: '#ffffff', scale: 2, width: 1123, height: 794, logging: false });
+        }
+        async function openResultsSummary(vids) {
+            const cv = await resultsSummaryCanvas(vids); if (!cv) return;
+            const img = cv.toDataURL('image/jpeg', 0.95);
+            Swal.fire({
+                title: '<span style="font-family:Kanit,sans-serif">📸 ภาพสรุปผลโหวต (A4)</span>',
+                html: `<img src="${img}" style="width:100%;border-radius:10px;border:1px solid #e2e8f0">
+                    <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:14px">
+                        <button type="button" id="sumJpg" style="background:#059669;color:#fff;font-family:Kanit,sans-serif;font-weight:700;border:none;padding:10px 22px;border-radius:12px;font-size:15px"><i class="fa-solid fa-image"></i> บันทึก JPG</button>
+                        <button type="button" id="sumPdf" style="background:#e11d48;color:#fff;font-family:Kanit,sans-serif;font-weight:700;border:none;padding:10px 22px;border-radius:12px;font-size:15px"><i class="fa-solid fa-file-pdf"></i> บันทึก PDF</button>
+                    </div>`,
+                width: 820,
+                showConfirmButton: false,
+                showCloseButton: true,
+                customClass: { popup: 'swal-success' },
+                didOpen: () => {
+                    document.getElementById('sumJpg').onclick = async () => {
+                        await saveFiles([{ blob: dataUrlToBlob(img), name: 'ผลโหวต-วันล้างมือโลก.jpg' }], 'บันทึก JPG แล้ว');
+                    };
+                    document.getElementById('sumPdf').onclick = async () => {
+                        const JS = (window.jspdf && window.jspdf.jsPDF); if (!JS) { notify('warning', 'ไลบรารี PDF ยังโหลดไม่เสร็จ'); return; }
+                        const pdf = new JS({ orientation: 'landscape', unit: 'px', format: [1123, 794] });
+                        pdf.addImage(img, 'JPEG', 0, 0, 1123, 794);
+                        const name = 'ผลโหวต-วันล้างมือโลก.pdf';
+                        if (isIOS) { await saveFiles([{ blob: pdf.output('blob'), name: name }], 'บันทึก PDF แล้ว'); }
+                        else { pdf.save(name); notify('success', 'บันทึก PDF แล้ว'); }
+                    };
+                }
             });
         }
 
