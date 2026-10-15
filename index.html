@@ -1171,6 +1171,41 @@
                 title: `<span style="font-family:Kanit,sans-serif">${titleText || '🏆 ผลการโหวต'}</span>`,
                 html: `<div style="max-height:62vh;overflow:auto;margin-top:4px">${trophies}${rows}${!top.length ? '<p style="color:#94a3b8">ยังไม่มีข้อมูล</p>' : ''}</div>`,
                 width: 560,
+                showDenyButton: top.length > 0,
+                denyButtonText: '🎬 ดูผลงานผู้ได้รางวัล',
+                denyButtonColor: '#0ea5e9',
+                confirmButtonText: 'ปิด',
+                confirmButtonColor: '#2563eb',
+                customClass: { popup: 'swal-success', confirmButton: 'swal-confirm-btn' }
+            }).then(r => { if (r.isDenied) openWinnersGallery(top); });
+        }
+        // แกลเลอรีผลงานผู้ได้รางวัล (เล่นคลิปได้ เหมือนหน้าแกลเลอรี) เฉพาะผู้ชนะ
+        function openWinnersGallery(winners) {
+            const cards = (winners || []).map((v, i) => {
+                const rank = i + 1;
+                const t = TROPHY_THEMES[rank] || TROPHY_THEMES[4];
+                const sum = totalStars(v);
+                return `
+                <div style="background:#fff;border:2px solid ${t.border}55;border-radius:18px;overflow:hidden;box-shadow:0 8px 20px ${t.shadow};display:flex;flex-direction:column">
+                    <div style="background:${t.ribbon};color:#fff;font-family:Kanit,sans-serif;font-weight:800;font-size:15px;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;text-shadow:0 1px 2px rgba(0,0,0,.3)">
+                        <span>👍 ${t.label}</span><span style="background:#ffffff33;padding:2px 10px;border-radius:999px;font-size:13px">⭐ ${sum}</span>
+                    </div>
+                    <div style="padding:12px 14px 6px">
+                        <div style="font-family:Kanit,sans-serif;font-weight:700;font-size:15px;color:#1e293b;line-height:1.3">${escapeHtml(v.title || '(ไม่มีชื่อ)')}</div>
+                        ${v.organization ? `<div style="font-size:12px;color:#64748b;margin-top:2px"><i class="fa-solid fa-building"></i> ${escapeHtml(v.organization)}</div>` : ''}
+                    </div>
+                    <div style="padding:6px 14px 14px">
+                        <div class="mobile-landscape-frame">${playerHtml(v)}</div>
+                        <div style="text-align:center;margin-top:8px">
+                            <a href="${escapeHtml(v.url)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:#dc2626;color:#fff;font-family:Kanit,sans-serif;font-weight:700;font-size:13px;padding:8px 18px;border-radius:999px;text-decoration:none"><i class="fa-solid fa-circle-play"></i> เปิดดูแบบเต็ม</a>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+            Swal.fire({
+                title: '<span style="font-family:Kanit,sans-serif">🎬 ผลงานผู้ได้รางวัล</span>',
+                html: `<div style="max-height:70vh;overflow:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:4px">${cards || '<p style="color:#94a3b8">ยังไม่มีข้อมูล</p>'}</div>`,
+                width: 760,
                 confirmButtonText: 'ปิด',
                 confirmButtonColor: '#2563eb',
                 customClass: { popup: 'swal-success', confirmButton: 'swal-confirm-btn' }
