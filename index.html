@@ -769,6 +769,40 @@
         </div>
     </div>
 
+    <!-- โมดัลออกเกียรติบัตร (ฝังในเว็บ ไม่เปิดหน้าใหม่) -->
+    <div id="certModal" class="fixed inset-0 z-[95] hidden bg-black/50 items-start justify-center overflow-y-auto p-3 md:p-6">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl my-4 overflow-hidden">
+            <div class="brand-gradient text-white px-6 py-4 flex items-center justify-between">
+                <h3 class="font-display text-lg md:text-xl font-semibold"><i class="fa-solid fa-award mr-2"></i>ออกเกียรติบัตร — วันล้างมือโลก</h3>
+                <button id="certClose" class="text-white/90 hover:text-white text-3xl leading-none">&times;</button>
+            </div>
+            <div class="p-5 md:p-7 max-h-[78vh] overflow-y-auto">
+                <p class="text-sm text-slate-500 mb-3">กรอกข้อมูลแล้วกด “สร้าง” · ใส่ได้ทั้งชื่อ+หน่วยงาน หรือหน่วยงานอย่างเดียว · ถ้าเลือกรางวัลจะได้ 2 ใบ (ใบเข้าร่วม + ใบรางวัล)</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div><label class="text-sm text-slate-600">ชื่อ–นามสกุล / ชื่อทีม</label><input id="certName" class="ev-input" placeholder="เว้นว่างได้ถ้าออกให้หน่วยงาน"></div>
+                    <div><label class="text-sm text-slate-600">หน่วยงาน / สังกัด</label><input id="certOrg" class="ev-input" placeholder="เช่น หอผู้ป่วยอายุรกรรมหญิง"></div>
+                    <div><label class="text-sm text-slate-600">ประเภท</label>
+                        <select id="certType" class="ev-input">
+                            <option value="ได้เข้าร่วมส่งผลงานเข้าประกวด">ผู้เข้าประกวด</option>
+                            <option value="ได้รับรางวัลชนะเลิศ">รางวัลชนะเลิศ</option>
+                            <option value="ได้รับรางวัลรองชนะเลิศ อันดับ 1">รองชนะเลิศ อันดับ 1</option>
+                            <option value="ได้รับรางวัลรองชนะเลิศ อันดับ 2">รองชนะเลิศ อันดับ 2</option>
+                            <option value="ได้รับรางวัลชมเชย">รางวัลชมเชย</option>
+                            <option value="ได้ร่วมกิจกรรมและโหวตผลงาน">ผู้ร่วมกิจกรรม/โหวต</option>
+                        </select>
+                    </div>
+                    <div><label class="text-sm text-slate-600">วันที่ (บนเกียรติบัตร)</label><input id="certDate" class="ev-input" value="ให้ไว้ ณ วันที่ ๑๕ ตุลาคม ๒๕๖๙"></div>
+                </div>
+                <div class="flex flex-wrap gap-2.5 mt-4">
+                    <button id="certGenBtn" class="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white font-display font-bold px-6 py-2.5 rounded-xl shadow"><i class="fa-solid fa-wand-magic-sparkles"></i>สร้างเกียรติบัตร</button>
+                    <button id="certPrintBtn" class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-display font-bold px-6 py-2.5 rounded-xl shadow"><i class="fa-solid fa-print"></i>บันทึก / พิมพ์ (PDF)</button>
+                </div>
+                <p class="text-xs text-slate-400 mt-2">ตอนพิมพ์ เลือกปลายทาง “บันทึกเป็น PDF” · กระดาษ A4 แนวนอน · ปิดหัว/ท้ายกระดาษ</p>
+                <iframe id="certFrame" class="w-full mt-4 rounded-xl border border-slate-200" style="height:62vh;background:#eef4fb"></iframe>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ==========================================
         // ส่วนตั้งค่าเชื่อมต่อ GOOGLE APPS SCRIPT
@@ -1345,9 +1379,80 @@
         document.getElementById('openEvalBtnTop').addEventListener('click', openEvalModal);
         // ปุ่มใบประกาศนียบัตร -> เปิดลิงก์จาก Settings คีย์ certUrl
         document.getElementById('openCertBtn').addEventListener('click', () => {
-            const url = (siteSettings.certUrl || '').trim() || 'certificate.html'; // ปริยาย = หน้าออกเกียรติบัตรในเว็บ
-            window.open(url, '_blank', 'noopener');
+            // ถ้าแอดมินตั้งลิงก์ภายนอก (certUrl) ให้เปิดลิงก์นั้น; ไม่งั้นเปิดโมดัลออกเกียรติบัตรในเว็บ
+            const url = (siteSettings.certUrl || '').trim();
+            if (url) { window.open(url, '_blank', 'noopener'); return; }
+            openCertModal();
         });
+
+        // ===== เกียรติบัตร (ฝังในเว็บ ผ่าน iframe) =====
+        const certModal = document.getElementById('certModal');
+        function openCertModal() {
+            certModal.classList.remove('hidden'); certModal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+            renderCert();
+        }
+        function closeCertModal() { certModal.classList.add('hidden'); certModal.classList.remove('flex'); document.body.style.overflow = ''; }
+        document.getElementById('certClose').addEventListener('click', closeCertModal);
+        certModal.addEventListener('click', (e) => { if (e.target === certModal) closeCertModal(); });
+
+        function certOneHtml(mainLine, subLine, descLead, date) {
+            return '<div class="cert"><div class="watermark">🧼</div><div class="frame"></div>' +
+                '<span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>' +
+                '<div class="cert-inner"><div class="org-line">โรงพยาบาลศรีสังวรสุโขทัย</div>' +
+                '<div class="org-sub">งานป้องกันและควบคุมการติดเชื้อ (IPC)</div>' +
+                '<div class="seal">🖐️</div><div class="title">เกียรติบัตร</div>' +
+                '<div class="title-sub">Certificate of Achievement</div>' +
+                '<div class="ribbon">ขอมอบเกียรติบัตรฉบับนี้ไว้เพื่อแสดงว่า</div>' +
+                '<div class="cname">' + (mainLine || '...................................................') + '</div>' +
+                '<div class="corg">' + (subLine || '') + '</div>' +
+                '<div class="cdesc">' + descLead + ' <b>กิจกรรมประกวดคลิปวิดีโอ “วันล้างมือโลก”</b> (Global Handwashing Day)<br>รณรงค์การล้างมือ ๗ ขั้นตอน อย่างถูกวิธี</div>' +
+                '</div><div class="date-badge">' + (date || 'ให้ไว้ ณ วันที่ ๑๕ ตุลาคม ๒๕๖๙') + '</div>' +
+                '<div class="foot"><div class="sign"><div class="ln"></div><div class="role">ประธานคณะกรรมการ IPC<small>โรงพยาบาลศรีสังวรสุโขทัย</small></div></div>' +
+                '<div class="sign"><div class="ln"></div><div class="role">ผู้อำนวยการโรงพยาบาล<small>โรงพยาบาลศรีสังวรสุโขทัย</small></div></div></div></div>';
+        }
+        function certDoc() {
+            const name = (document.getElementById('certName').value || '').trim();
+            const org = (document.getElementById('certOrg').value || '').trim();
+            const type = document.getElementById('certType').value;
+            const date = (document.getElementById('certDate').value || '').trim();
+            let mainLine, subLine;
+            if (name) { mainLine = escapeHtml(name); subLine = org ? ('สังกัด ' + escapeHtml(org)) : ''; }
+            else { mainLine = escapeHtml(org) || '...................................................'; subLine = ''; }
+            const isPrize = /^ได้รับรางวัล/.test(type);
+            let certs = isPrize
+                ? (certOneHtml(mainLine, subLine, 'ได้เข้าร่วมส่งผลงานเข้าประกวด', date) + certOneHtml(mainLine, subLine, escapeHtml(type), date))
+                : certOneHtml(mainLine, subLine, escapeHtml(type), date);
+            const css = "@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&family=Sarabun:wght@400;600;700&display=swap');" +
+                "*{margin:0;box-sizing:border-box}body{font-family:Kanit,sans-serif;background:#eef4fb;color:#1e293b;padding:14px;display:flex;flex-direction:column;align-items:center;gap:20px}" +
+                ".cert{width:1123px;height:794px;position:relative;background:#fff;transform-origin:top center;background-image:radial-gradient(circle at 15% 15%,rgba(14,165,233,.06),transparent 45%),radial-gradient(circle at 85% 85%,rgba(199,154,59,.08),transparent 45%)}" +
+                ".frame{position:absolute;inset:26px;border:3px solid #c79a3b;border-radius:6px}.frame::before{content:'';position:absolute;inset:8px;border:1px solid #e6c874;border-radius:3px}" +
+                ".corner{position:absolute;width:46px;height:46px;border:4px solid #0f3d63;z-index:2}.corner.tl{top:16px;left:16px;border-right:0;border-bottom:0}.corner.tr{top:16px;right:16px;border-left:0;border-bottom:0}.corner.bl{bottom:16px;left:16px;border-right:0;border-top:0}.corner.br{bottom:16px;right:16px;border-left:0;border-top:0}" +
+                ".cert-inner{position:absolute;inset:60px;display:flex;flex-direction:column;align-items:center;text-align:center}" +
+                ".org-line{font-size:22px;font-weight:700;color:#0f3d63;margin-top:6px}.org-sub{font-size:14px;color:#64748b}" +
+                ".seal{width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#0369a1);display:flex;align-items:center;justify-content:center;color:#fff;font-size:34px;margin:14px 0 6px;box-shadow:0 6px 14px rgba(3,105,161,.3)}" +
+                ".title{font-size:50px;font-weight:800;letter-spacing:1px;color:#c79a3b;line-height:1.05}.title-sub{font-size:16px;color:#64748b;margin-top:2px;letter-spacing:2px;text-transform:uppercase}" +
+                ".ribbon{margin:16px 0 8px;font-size:16px;color:#475569}" +
+                ".cname{font-family:Sarabun,Kanit,sans-serif;font-size:40px;font-weight:700;color:#0f3d63;border-bottom:2px dashed #e6c874;padding:2px 40px 8px;min-width:420px}" +
+                ".corg{font-size:18px;color:#334155;margin-top:12px}.cdesc{font-size:16px;color:#475569;line-height:1.7;max-width:760px;margin-top:14px}.cdesc b{color:#0ea5e9}" +
+                ".foot{position:absolute;left:60px;right:60px;bottom:44px;display:flex;justify-content:space-between;align-items:flex-end}.sign{width:300px;text-align:center}.sign .ln{border-top:1.5px solid #94a3b8;margin:0 20px 6px;padding-top:6px}.sign .role{font-size:14px;color:#475569;font-weight:600}.sign .role small{display:block;font-weight:400;color:#94a3b8}" +
+                ".date-badge{position:absolute;left:50%;bottom:40px;transform:translateX(-50%);font-size:14px;color:#64748b}" +
+                ".watermark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:260px;opacity:.04;pointer-events:none;z-index:0}" +
+                "@media print{@page{size:A4 landscape;margin:0}body{background:#fff;padding:0;gap:0}.cert{transform:none!important;page-break-after:always;break-after:page}.cert:last-child{page-break-after:auto;break-after:auto}}";
+            const fit = "(function(){function f(){var s=Math.min(document.body.clientWidth-28,1123)/1123;[].forEach.call(document.querySelectorAll('.cert'),function(c){if(s<1){c.style.transform='scale('+s+')';c.style.marginBottom=(794*(s-1))+'px';}else{c.style.transform='none';c.style.marginBottom='0';}});}f();window.addEventListener('resize',f);})();";
+            return '<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>' + css + '</style></head><body>' + certs + '<scr' + 'ipt>' + fit + '</scr' + 'ipt></body></html>';
+        }
+        function renderCert() { document.getElementById('certFrame').srcdoc = certDoc(); }
+        function printCert() {
+            const fr = document.getElementById('certFrame');
+            renderCert();
+            setTimeout(() => { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (e) { notify('warning', 'พิมพ์ไม่สำเร็จ ลองใหม่อีกครั้ง'); } }, 500);
+        }
+        document.getElementById('certGenBtn').addEventListener('click', renderCert);
+        document.getElementById('certPrintBtn').addEventListener('click', printCert);
+        ['certName', 'certOrg', 'certDate'].forEach(id => document.getElementById(id).addEventListener('input', renderCert));
+        document.getElementById('certType').addEventListener('change', renderCert);
+
         document.getElementById('evalClose').addEventListener('click', closeEvalModal);
         evalModal.addEventListener('click', (e) => { if (e.target === evalModal) closeEvalModal(); });
 
@@ -2538,8 +2643,9 @@
         });
         document.getElementById('adminPreviewResultsBtn').addEventListener('click', previewResults);
         document.getElementById('adminPreviewCertBtn').addEventListener('click', () => {
-            const url = (siteSettings.certUrl || '').trim() || 'certificate.html';
-            window.open(url, '_blank', 'noopener');
+            const url = (siteSettings.certUrl || '').trim();
+            if (url) { window.open(url, '_blank', 'noopener'); return; }
+            openCertModal();
         });
 
         // ===== ปิด/เปิดการรับผลงาน =====
