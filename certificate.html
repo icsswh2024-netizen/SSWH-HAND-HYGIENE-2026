@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เกียรติบัตร — วันล้างมือโลก รพ.ศรีสังวรสุโขทัย</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gold:#c79a3b; --gold-light:#e6c874; --navy:#0f3d63; --sky:#0ea5e9; --ink:#1e293b;
+    --bg:#eef4fb;
+  }
+  *{margin:0;box-sizing:border-box}
+  body{font-family:Kanit,sans-serif;background:var(--bg);color:var(--ink);padding:18px;display:flex;flex-direction:column;align-items:center;gap:18px}
+
+  /* ---- ฟอร์มกรอกข้อมูล ---- */
+  .panel{width:100%;max-width:1000px;background:#fff;border:1px solid #dbe7f3;border-radius:18px;box-shadow:0 10px 30px rgba(15,61,99,.08);padding:20px 22px}
+  .panel h1{font-size:20px;color:var(--navy);display:flex;align-items:center;gap:8px;margin-bottom:4px}
+  .panel p.note{font-size:13px;color:#64748b;margin-bottom:14px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:640px){.grid{grid-template-columns:1fr}}
+  label{font-size:13px;color:#475569;display:block;margin-bottom:4px}
+  input,select{width:100%;font-family:Kanit,sans-serif;font-size:15px;color:var(--ink);border:1px solid #cbd5e1;border-radius:10px;padding:10px 12px;background:#f8fafc}
+  input:focus,select:focus{outline:none;border-color:var(--sky);box-shadow:0 0 0 3px rgba(14,165,233,.15);background:#fff}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .btn{font-family:Kanit,sans-serif;font-weight:700;font-size:15px;border:0;border-radius:12px;padding:12px 22px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:transform .1s, box-shadow .2s}
+  .btn:active{transform:scale(.97)}
+  .btn-primary{background:linear-gradient(135deg,var(--sky),#0369a1);color:#fff;box-shadow:0 6px 16px rgba(3,105,161,.3)}
+  .btn-gold{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:#3b2c08;box-shadow:0 6px 16px rgba(199,154,59,.3)}
+  .hint{font-size:12.5px;color:#94a3b8;margin-top:10px}
+
+  /* ---- เกียรติบัตร (A4 แนวนอน) ---- */
+  .cert-wrap{width:100%;max-width:1000px;overflow:auto}
+  .cert{
+    width:1123px;height:794px;position:relative;background:#fff;margin:0 auto;
+    background-image:radial-gradient(circle at 15% 15%, rgba(14,165,233,.06), transparent 45%),radial-gradient(circle at 85% 85%, rgba(199,154,59,.08), transparent 45%);
+    transform-origin:top center;
+  }
+  .frame{position:absolute;inset:26px;border:3px solid var(--gold);border-radius:6px}
+  .frame::before{content:"";position:absolute;inset:8px;border:1px solid var(--gold-light);border-radius:3px}
+  .corner{position:absolute;width:46px;height:46px;border:4px solid var(--navy);z-index:2}
+  .corner.tl{top:16px;left:16px;border-right:0;border-bottom:0;border-top-left-radius:8px}
+  .corner.tr{top:16px;right:16px;border-left:0;border-bottom:0;border-top-right-radius:8px}
+  .corner.bl{bottom:16px;left:16px;border-right:0;border-top:0;border-bottom-left-radius:8px}
+  .corner.br{bottom:16px;right:16px;border-left:0;border-top:0;border-bottom-right-radius:8px}
+
+  .cert-inner{position:absolute;inset:60px;display:flex;flex-direction:column;align-items:center;text-align:center}
+  .org-line{font-size:22px;font-weight:700;color:var(--navy);margin-top:6px}
+  .org-sub{font-size:14px;color:#64748b;letter-spacing:.5px}
+  .seal{width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,var(--sky),#0369a1);display:flex;align-items:center;justify-content:center;color:#fff;font-size:34px;margin:14px 0 6px;box-shadow:0 6px 14px rgba(3,105,161,.3)}
+  .title{font-family:Kanit;font-size:50px;font-weight:800;letter-spacing:1px;color:var(--gold);text-shadow:0 1px 0 rgba(0,0,0,.05);line-height:1.05}
+  .title-sub{font-size:16px;color:#64748b;margin-top:2px;letter-spacing:2px;text-transform:uppercase}
+  .ribbon{margin:16px 0 8px;font-size:16px;color:#475569}
+  .name{font-family:Sarabun,Kanit,sans-serif;font-size:40px;font-weight:700;color:var(--navy);border-bottom:2px dashed var(--gold-light);padding:2px 40px 8px;min-width:420px}
+  .org{font-size:18px;color:#334155;margin-top:12px}
+  .desc{font-size:16px;color:#475569;line-height:1.7;max-width:760px;margin-top:14px}
+  .desc b{color:var(--sky)}
+  .foot{position:absolute;left:60px;right:60px;bottom:44px;display:flex;justify-content:space-between;align-items:flex-end}
+  .sign{width:300px;text-align:center}
+  .sign .ln{border-top:1.5px solid #94a3b8;margin:0 20px 6px;padding-top:6px}
+  .sign .role{font-size:14px;color:#475569;font-weight:600}
+  .sign .role small{display:block;font-weight:400;color:#94a3b8}
+  .date-badge{position:absolute;left:50%;bottom:40px;transform:translateX(-50%);font-size:14px;color:#64748b}
+  .watermark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:260px;opacity:.04;pointer-events:none;z-index:0}
+
+  @media print{
+    @page{size:A4 landscape;margin:0}
+    body{background:#fff;padding:0;gap:0}
+    .panel,.hint,.noprint{display:none !important}
+    .cert-wrap{max-width:none;overflow:visible}
+    .cert{transform:none !important;box-shadow:none;margin:0}
+  }
+</style>
+</head>
+<body>
+
+  <div class="panel noprint">
+    <h1>🏅 ออกเกียรติบัตร — วันล้างมือโลก</h1>
+    <p class="note">กรอกข้อมูลแล้วกด “สร้างเกียรติบัตร” จากนั้นกด “บันทึก / พิมพ์ (PDF)” เพื่อบันทึกเป็นไฟล์</p>
+    <div class="grid">
+      <div>
+        <label>ชื่อ–นามสกุล / ชื่อทีม</label>
+        <input id="fName" placeholder="เช่น นางสาวใจดี รักสะอาด">
+      </div>
+      <div>
+        <label>หน่วยงาน / สังกัด</label>
+        <input id="fOrg" placeholder="เช่น หอผู้ป่วยอายุรกรรมหญิง">
+      </div>
+      <div>
+        <label>ประเภท</label>
+        <select id="fType">
+          <option value="ได้เข้าร่วมส่งผลงานเข้าประกวด">ผู้เข้าประกวด</option>
+          <option value="ได้รับรางวัลชนะเลิศ">รางวัลชนะเลิศ</option>
+          <option value="ได้รับรางวัลรองชนะเลิศ อันดับ 1">รองชนะเลิศ อันดับ 1</option>
+          <option value="ได้รับรางวัลรองชนะเลิศ อันดับ 2">รองชนะเลิศ อันดับ 2</option>
+          <option value="ได้รับรางวัลชมเชย">รางวัลชมเชย</option>
+          <option value="ได้ร่วมกิจกรรมและโหวตผลงาน">ผู้ร่วมกิจกรรม/โหวต</option>
+        </select>
+      </div>
+      <div>
+        <label>วันที่ (บนเกียรติบัตร)</label>
+        <input id="fDate" value="ให้ไว้ ณ วันที่ ๑๕ ตุลาคม ๒๕๖๙">
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" id="btnGen"><span>✨</span> สร้างเกียรติบัตร</button>
+      <button class="btn btn-gold" id="btnPrint"><span>🖨️</span> บันทึก / พิมพ์ (PDF)</button>
+    </div>
+    <div class="hint">เคล็ดลับ: ตอนพิมพ์ เลือกปลายทางเป็น “บันทึกเป็น PDF” และกระดาษ A4 แนวนอน · ปิด “ส่วนหัว/ท้ายกระดาษ”</div>
+  </div>
+
+  <div class="cert-wrap">
+    <div class="cert" id="cert">
+      <div class="watermark">🧼</div>
+      <div class="frame"></div>
+      <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+      <div class="cert-inner">
+        <div class="org-line">โรงพยาบาลศรีสังวรสุโขทัย</div>
+        <div class="org-sub">งานป้องกันและควบคุมการติดเชื้อ (IPC)</div>
+        <div class="seal">🖐️</div>
+        <div class="title">เกียรติบัตร</div>
+        <div class="title-sub">Certificate of Achievement</div>
+        <div class="ribbon">ขอมอบเกียรติบัตรฉบับนี้ไว้เพื่อแสดงว่า</div>
+        <div class="name" id="cName">...................................................</div>
+        <div class="org" id="cOrg"></div>
+        <div class="desc" id="cDesc"></div>
+      </div>
+      <div class="date-badge" id="cDate">ให้ไว้ ณ วันที่ ๑๕ ตุลาคม ๒๕๖๙</div>
+      <div class="foot">
+        <div class="sign">
+          <div class="ln"></div>
+          <div class="role">ประธานคณะกรรมการ IPC<small>โรงพยาบาลศรีสังวรสุโขทัย</small></div>
+        </div>
+        <div class="sign">
+          <div class="ln"></div>
+          <div class="role">ผู้อำนวยการโรงพยาบาล<small>โรงพยาบาลศรีสังวรสุโขทัย</small></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  var $ = function(id){ return document.getElementById(id); };
+  function esc(s){ return String(s==null?'':s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
+
+  function render(){
+    var name = ($('fName').value || '').trim();
+    var org  = ($('fOrg').value || '').trim();
+    var type = $('fType').value;
+    var date = ($('fDate').value || '').trim();
+    $('cName').textContent = name || '...................................................';
+    $('cOrg').textContent  = org ? ('สังกัด ' + org) : '';
+    $('cDesc').innerHTML = esc(type) +
+      ' <b>กิจกรรมประกวดคลิปวิดีโอ “วันล้างมือโลก”</b> (Global Handwashing Day)<br>' +
+      'รณรงค์การล้างมือ ๗ ขั้นตอน อย่างถูกวิธี';
+    if (date) $('cDate').textContent = date;
+  }
+
+  // รองรับ prefill ผ่าน query: ?name=...&org=...&type=...
+  (function prefill(){
+    try{
+      var p = new URLSearchParams(location.search);
+      if(p.get('name')) $('fName').value = p.get('name');
+      if(p.get('org'))  $('fOrg').value  = p.get('org');
+      if(p.get('type')){ // จับคู่ข้อความถ้าตรง
+        var opt = [...$('fType').options].find(function(o){return o.value===p.get('type')||o.textContent===p.get('type');});
+        if(opt) $('fType').value = opt.value;
+      }
+      if(p.get('date')) $('fDate').value = p.get('date');
+    }catch(e){}
+    fitCert(); render();
+  })();
+
+  // ย่อเกียรติบัตรให้พอดีจอ (เฉพาะแสดงผล ไม่กระทบตอนพิมพ์)
+  function fitCert(){
+    var cert = $('cert');
+    var avail = Math.min(document.querySelector('.cert-wrap').clientWidth, 1123);
+    var scale = avail / 1123;
+    if (scale < 1){ cert.style.transform = 'scale(' + scale + ')'; cert.parentElement.style.height = (794*scale)+'px'; }
+    else { cert.style.transform = 'none'; cert.parentElement.style.height = 'auto'; }
+  }
+  window.addEventListener('resize', fitCert);
+
+  $('btnGen').addEventListener('click', render);
+  ['fName','fOrg','fDate'].forEach(function(id){ $(id).addEventListener('input', render); });
+  $('fType').addEventListener('change', render);
+  $('btnPrint').addEventListener('click', function(){ render(); window.print(); });
+</script>
+</body>
+</html>

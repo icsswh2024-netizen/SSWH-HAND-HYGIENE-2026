@@ -1345,9 +1345,8 @@
         document.getElementById('openEvalBtnTop').addEventListener('click', openEvalModal);
         // ปุ่มใบประกาศนียบัตร -> เปิดลิงก์จาก Settings คีย์ certUrl
         document.getElementById('openCertBtn').addEventListener('click', () => {
-            const url = (siteSettings.certUrl || '').trim();
-            if (url) { window.open(url, '_blank', 'noopener'); return; }
-            Swal.fire({ icon: 'info', title: 'ยังไม่ได้ตั้งลิงก์ใบประกาศ', text: 'แอดมินตั้งลิงก์ที่แท็บ Settings คีย์ certUrl ก่อนครับ', confirmButtonColor: '#d97706', customClass: { popup: 'swal-info', confirmButton: 'swal-confirm-btn' } });
+            const url = (siteSettings.certUrl || '').trim() || 'certificate.html'; // ปริยาย = หน้าออกเกียรติบัตรในเว็บ
+            window.open(url, '_blank', 'noopener');
         });
         document.getElementById('evalClose').addEventListener('click', closeEvalModal);
         evalModal.addEventListener('click', (e) => { if (e.target === evalModal) closeEvalModal(); });
@@ -2539,9 +2538,8 @@
         });
         document.getElementById('adminPreviewResultsBtn').addEventListener('click', previewResults);
         document.getElementById('adminPreviewCertBtn').addEventListener('click', () => {
-            const url = (siteSettings.certUrl || '').trim();
-            if (url) { window.open(url, '_blank', 'noopener'); return; }
-            Swal.fire({ icon: 'info', title: 'ยังไม่ได้ตั้งลิงก์ใบประกาศ', text: 'ตั้งลิงก์ที่แท็บ Settings คีย์ certUrl ก่อนครับ', confirmButtonColor: '#6366f1', customClass: { popup: 'swal-info', confirmButton: 'swal-confirm-btn' } });
+            const url = (siteSettings.certUrl || '').trim() || 'certificate.html';
+            window.open(url, '_blank', 'noopener');
         });
 
         // ===== ปิด/เปิดการรับผลงาน =====
