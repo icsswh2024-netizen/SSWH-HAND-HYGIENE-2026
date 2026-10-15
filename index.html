@@ -1094,24 +1094,32 @@
             if (!adminManage || !adminManage.length) { notify('info', 'ยังไม่มีข้อมูล หรือยังไม่ได้โหลดเมนูแอดมิน'); return; }
             showResultsList(adminManage, '👁️ พรีวิวผลโหวต (เฉพาะแอดมิน)');
         }
-        // การ์ดถ้วยรางวัลจำลอง (นิ้วโป้งทอง บนฐานดำ + ป้ายรางวัล) สำหรับผู้ชนะ 3 อันดับแรก
+        // ธีมสีรางวัลตามแบนเนอร์: 1=ส้มทอง 2=ฟ้า 3=เขียว ชมเชย=ชมพูม่วง
+        const TROPHY_THEMES = {
+            1: { label: 'รางวัลที่ 1', bg: 'linear-gradient(160deg,#fffaf0,#ffe9b0)', border: '#f6c338', ribbon: 'linear-gradient(180deg,#fbbf24,#d97706)', accent: '#b45309', thumb: 'linear-gradient(145deg,#fff6c9,#f6c838 38%,#d99412 70%,#8a5a06)', shadow: 'rgba(217,151,18,.35)' },
+            2: { label: 'รางวัลที่ 2', bg: 'linear-gradient(160deg,#f0f9ff,#c7e8ff)', border: '#60a5fa', ribbon: 'linear-gradient(180deg,#3b82f6,#1d4ed8)', accent: '#1d4ed8', thumb: 'linear-gradient(145deg,#ffffff,#cbd5e1 42%,#94a3b8 72%,#475569)', shadow: 'rgba(37,99,235,.30)' },
+            3: { label: 'รางวัลที่ 3', bg: 'linear-gradient(160deg,#f0fdf4,#c4f0d2)', border: '#4ade80', ribbon: 'linear-gradient(180deg,#22c55e,#15803d)', accent: '#15803d', thumb: 'linear-gradient(145deg,#fff6c9,#f6c838 38%,#d99412 70%,#8a5a06)', shadow: 'rgba(22,163,74,.30)' },
+            4: { label: 'รางวัลชมเชย', bg: 'linear-gradient(160deg,#fdf2ff,#f6d3fb)', border: '#e879f9', ribbon: 'linear-gradient(180deg,#d946ef,#a21caf)', accent: '#a21caf', thumb: 'linear-gradient(145deg,#fff6c9,#f6c838 38%,#d99412 70%,#8a5a06)', shadow: 'rgba(192,38,211,.28)' }
+        };
+        // การ์ดถ้วยรางวัลจำลอง (นิ้วโป้งทอง + มงกุฎ + ริบบิ้น) ธีมสีตามอันดับ
         function trophyCardHtml(v, rank) {
             const sum = totalStars(v);
             const votes = Number(v.votes) || 0;
-            const accent = rank === 1 ? '#f59e0b' : rank === 2 ? '#64748b' : rank === 3 ? '#b45309' : '#0ea5e9';
-            const ring = rank === 1 ? 'rgba(245,158,11,.35)' : rank === 2 ? 'rgba(100,116,139,.30)' : rank === 3 ? 'rgba(180,83,9,.30)' : 'rgba(14,165,233,.28)';
+            const t = TROPHY_THEMES[rank] || TROPHY_THEMES[4];
             return `
-            <div style="flex:1;min-width:150px;max-width:220px;background:linear-gradient(180deg,#ffffff,#f8fbff);border:1px solid #e8eef6;border-radius:18px;padding:14px 12px 16px;text-align:center;box-shadow:0 10px 24px ${ring}">
-                <div style="position:relative;height:118px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">
-                    <i class="fa-solid fa-thumbs-up" style="font-size:62px;line-height:1;background:linear-gradient(145deg,#fff6c9,#f6c838 38%,#d99412 70%,#8a5a06);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 6px rgba(120,80,0,.45));transform:rotate(-6deg)"></i>
-                    <div style="width:16px;height:14px;background:linear-gradient(90deg,#b9810f,#f3cb57,#b9810f);border-radius:0 0 3px 3px;margin-top:-2px"></div>
-                    <div style="width:70px;height:34px;background:linear-gradient(180deg,#2b2b2b,#0c0c0c);border-radius:5px;position:relative;box-shadow:0 4px 8px rgba(0,0,0,.3)">
-                        <div style="position:absolute;left:5px;right:5px;top:5px;bottom:5px;border-radius:3px;background:linear-gradient(135deg,#7dd3fc,#bae6fd);display:flex;align-items:center;justify-content:center;font-family:Kanit,sans-serif;font-weight:800;font-size:11px;color:#0c4a6e">รางวัลที่ ${rank}</div>
+            <div style="flex:1;min-width:158px;max-width:230px;background:${t.bg};border:2px solid ${t.border}66;border-radius:20px;padding:12px 12px 16px;text-align:center;box-shadow:0 12px 26px ${t.shadow};position:relative;overflow:hidden">
+                <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 18%,rgba(255,255,255,.75),transparent 55%);pointer-events:none"></div>
+                <div style="position:relative">
+                    <div style="font-size:22px;margin-bottom:-6px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2))">👑</div>
+                    <div style="height:72px;display:flex;align-items:flex-end;justify-content:center;gap:2px">
+                        <i class="fa-solid fa-thumbs-up" style="font-size:58px;line-height:1;background:${t.thumb};-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 6px rgba(80,55,0,.4));transform:rotate(-6deg)"></i>
                     </div>
+                    <div style="display:inline-block;margin-top:6px;padding:5px 18px;border-radius:999px;background:${t.ribbon};color:#fff;font-family:Kanit,sans-serif;font-weight:800;font-size:13px;letter-spacing:.3px;box-shadow:0 3px 8px ${t.shadow};text-shadow:0 1px 2px rgba(0,0,0,.25)">${t.label}</div>
+                    <div style="margin-top:6px;color:#fbbf24;font-size:13px;letter-spacing:2px;text-shadow:0 1px 1px rgba(0,0,0,.15)">★ ★ ★</div>
+                    <div style="margin-top:8px;font-family:Kanit,sans-serif;font-weight:700;font-size:14px;color:#1e293b;line-height:1.25;min-height:36px;display:flex;align-items:center;justify-content:center">${escapeHtml(v.title || '(ไม่มีชื่อ)')}</div>
+                    <div style="font-size:12px;color:#475569;margin-top:2px;line-height:1.2">${escapeHtml(v.organization || '')}</div>
+                    <div style="margin-top:9px;display:inline-block;background:#ffffffcc;border:1px solid ${t.border}66;color:${t.accent};font-weight:800;font-size:14px;padding:3px 14px;border-radius:999px">⭐ ${sum} · ${votes} โหวต</div>
                 </div>
-                <div style="margin-top:12px;font-family:Kanit,sans-serif;font-weight:700;font-size:14px;color:#1e293b;line-height:1.25;min-height:36px;display:flex;align-items:center;justify-content:center">${escapeHtml(v.title || '(ไม่มีชื่อ)')}</div>
-                <div style="font-size:12px;color:#64748b;margin-top:2px;line-height:1.2">${escapeHtml(v.organization || '')}</div>
-                <div style="margin-top:8px;display:inline-block;background:${accent}1a;color:${accent};font-weight:800;font-size:14px;padding:3px 12px;border-radius:999px">⭐ ${sum} · ${votes} โหวต</div>
             </div>`;
         }
         function showResultsList(src, titleText) {
