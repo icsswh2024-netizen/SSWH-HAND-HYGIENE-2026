@@ -464,6 +464,10 @@
             </div>
             <h3 class="font-display text-2xl font-semibold text-rose-600 mb-2">ปิดรับผลงานแล้ว</h3>
             <p class="text-slate-500 text-sm md:text-base">ขอบคุณทุกท่านที่ร่วมส่งผลงานเข้าประกวด<br>ขณะนี้หมดเขตรับผลงานแล้ว — ยังสามารถรับชมคลิป โหวต และคอมเมนต์ได้ตามปกติ</p>
+            <div class="mt-6 flex flex-wrap gap-3 justify-center">
+                <button id="closedResultsBtn" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-display font-bold px-6 py-3 rounded-xl shadow-lg shadow-blue-500/30 transition"><i class="fa-solid fa-chart-column"></i>ดูผลโหวต</button>
+                <button id="closedEvalBtn" class="hidden inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold px-6 py-3 rounded-xl shadow-lg shadow-emerald-500/30 transition"><i class="fa-solid fa-clipboard-check"></i>แบบประเมินกิจกรรม</button>
+            </div>
         </section>
 
         <!-- Prizes Section -->
@@ -990,6 +994,8 @@
             if (el) el.classList.toggle('hidden', !show);
             const topBtn = document.getElementById('openEvalBtnTop');
             if (topBtn) topBtn.classList.toggle('hidden', !show);
+            const closedBtn = document.getElementById('closedEvalBtn');
+            if (closedBtn) closedBtn.classList.toggle('hidden', !show);
         }
 
         // ข้อความกติกาเริ่มต้น (แอดมินแก้ได้ที่แท็บ Settings คีย์ rulesFull — ใส่ HTML ได้)
@@ -1447,6 +1453,9 @@
         }
         document.getElementById('openEvalBtn').addEventListener('click', openEvalModal);
         document.getElementById('openEvalBtnTop').addEventListener('click', openEvalModal);
+        // ปุ่มในกล่อง "ปิดรับผลงานแล้ว"
+        document.getElementById('closedResultsBtn').addEventListener('click', () => document.getElementById('viewResultsBtn').click());
+        document.getElementById('closedEvalBtn').addEventListener('click', openEvalModal);
         // ปุ่มใบประกาศนียบัตร -> เปิดลิงก์จาก Settings คีย์ certUrl
         document.getElementById('openCertBtn').addEventListener('click', () => {
             // ถ้าแอดมินตั้งลิงก์ภายนอก (certUrl) ให้เปิดลิงก์นั้น; ไม่งั้นเปิดโมดัลออกเกียรติบัตรในเว็บ
