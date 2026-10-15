@@ -777,7 +777,7 @@
                 <button id="certClose" class="text-white/90 hover:text-white text-3xl leading-none">&times;</button>
             </div>
             <div class="p-5 md:p-7 max-h-[78vh] overflow-y-auto">
-                <p class="text-sm text-slate-500 mb-3">ใช้พื้นหลังดีไซน์จริง (Canva) · เลือกผู้เข้าแข่งขันจาก Submissions → เติมชื่อ/หน่วยบนใบให้อัตโนมัติ แล้วพิมพ์/บันทึก PDF</p>
+                <p class="text-sm text-slate-500 mb-3">ใช้พื้นหลังดีไซน์จริง · เลือกผู้เข้าแข่งขันจาก Submissions → เติมชื่อบนใบอัตโนมัติ · <b>ถ้าได้รางวัลจะได้ 2 ใบ</b> (ใบเข้าร่วม + ใบรางวัล คนละพื้นหลัง)</p>
                 <div class="mb-3">
                     <label class="text-sm text-slate-600">เลือกผู้เข้าแข่งขัน (จากรายการ)</label>
                     <select id="certPick" class="ev-input"><option value="">— เลือกเพื่อเติมชื่อ/หน่วย/รางวัลอัตโนมัติ —</option></select>
@@ -1425,20 +1425,23 @@
 
         // ตำแหน่งชื่อผู้รับบนพื้นหลัง Canva (ปรับได้ · % จากด้านบน)
         const CERT_NAME_TOP = 35, CERT_NAME_H = 14; // ชื่ออยู่ช่องว่างกลางใบ
-        function certBgUrl() {
-            // ใช้ภาพพื้นหลังจาก Settings คีย์ certBg ก่อน (รองรับลิงก์ Google Drive) ไม่งั้นใช้ไฟล์ในเว็บ
-            const custom = (siteSettings.certBg || '').trim();
+        // แปลงลิงก์ Drive/รูปตรง เป็นภาพพื้นหลัง
+        function certBgFrom(val) {
+            const custom = (val || '').trim();
             if (custom) {
                 const m = custom.match(/drive\.google\.com\/file\/d\/([^/]+)/) || custom.match(/[?&]id=([^&]+)/);
-                if (m) return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w2000'; // Drive -> ภาพตรง ความละเอียดสูง
-                return custom; // ลิงก์รูปตรง
+                if (m) return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w2000';
+                return custom;
             }
             try { return new URL('cert-bg.jpg', location.href).href; } catch (e) { return 'cert-bg.jpg'; }
         }
-        // เกียรติบัตร 1 ใบ แบบใช้พื้นหลัง Canva + วางชื่อ (และรางวัลถ้ามี) ทับ
-        function certOneHtml(mainLine, awardLine) {
+        // พื้นหลังใบเข้าร่วม (certBg) และใบรางวัล (certBgAward · ไม่ตั้ง = ใช้ตัวเดียวกับใบเข้าร่วม)
+        function certBgUrl() { return certBgFrom(siteSettings.certBg); }
+        function certBgAwardUrl() { return certBgFrom(siteSettings.certBgAward || siteSettings.certBg); }
+        // เกียรติบัตร 1 ใบ แบบใช้พื้นหลัง + วางชื่อ (และรางวัลถ้ามี) ทับ
+        function certOneHtml(bgUrl, mainLine, awardLine) {
             const award = awardLine ? ('<div class="caward">' + awardLine + '</div>') : '';
-            return '<div class="cert">' +
+            return '<div class="cert" style="background-image:url(\'' + bgUrl + '\')">' +
                 '<div class="cname">' + (mainLine || '...................................................') + '</div>' + award + '</div>';
         }
         function certDoc() {
@@ -1450,12 +1453,12 @@
             if (name) { mainLine = escapeHtml(name) + (org ? '  <span class="corg">(' + escapeHtml(org) + ')</span>' : ''); }
             else { mainLine = escapeHtml(org) || '...................................................'; }
             const isPrize = /^ได้รับรางวัล/.test(type);
-            const awardLine = isPrize ? escapeHtml(type) : '';
-            const certs = certOneHtml(mainLine, awardLine);
-            const bg = certBgUrl();
+            // ทุกคน: ใบเข้าร่วม (พื้นหลัง certBg) · ได้รางวัล: เพิ่มใบรางวัล (พื้นหลัง certBgAward)
+            let certs = certOneHtml(certBgUrl(), mainLine, '');
+            if (isPrize) certs += certOneHtml(certBgAwardUrl(), mainLine, escapeHtml(type));
             const css = "@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&family=Kanit:wght@500;700&display=swap');" +
                 "*{margin:0;box-sizing:border-box}body{font-family:Sarabun,Kanit,sans-serif;background:#eef4fb;padding:14px;display:flex;flex-direction:column;align-items:center;gap:20px}" +
-                ".cert{width:1123px;height:794px;position:relative;background:#fff url('" + bg + "') center/cover no-repeat;transform-origin:top center;box-shadow:0 8px 24px rgba(2,32,54,.12)}" +
+                ".cert{width:1123px;height:794px;position:relative;background:#fff center/cover no-repeat;transform-origin:top center;box-shadow:0 8px 24px rgba(2,32,54,.12)}" +
                 ".cname{position:absolute;left:8%;right:8%;top:" + CERT_NAME_TOP + "%;height:" + CERT_NAME_H + "%;display:flex;align-items:center;justify-content:center;text-align:center;font-family:Sarabun,Kanit,sans-serif;font-weight:800;font-size:44px;color:#0b3a66;line-height:1.15;text-shadow:0 1px 2px rgba(255,255,255,.6)}" +
                 ".cname .corg{font-size:26px;font-weight:600;color:#2563a6}" +
                 ".caward{position:absolute;left:8%;right:8%;top:" + (CERT_NAME_TOP + CERT_NAME_H) + "%;text-align:center;font-family:Kanit,sans-serif;font-weight:700;font-size:24px;color:#c79a3b;text-shadow:0 1px 2px rgba(255,255,255,.6)}" +
