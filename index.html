@@ -637,7 +637,10 @@
                             <div class="font-semibold text-slate-700 text-base md:text-lg"><i class="fa-solid fa-star text-amber-400 mr-1.5"></i>ระบบโหวต</div>
                             <div class="text-sm text-slate-400 mt-0.5">ปิดโหวตได้ โดยที่ผู้ชมยังดูคลิป/คอมเมนต์ได้ปกติ</div>
                         </div>
-                        <button id="adminVotingToggle" class="text-base font-semibold px-5 py-2.5 rounded-lg transition"></button>
+                        <div class="flex flex-col items-end gap-2">
+                            <button id="adminVotingToggle" class="text-base font-semibold px-5 py-2.5 rounded-lg transition"></button>
+                            <button id="adminPreviewResultsBtn" class="text-sm font-semibold px-4 py-2 rounded-lg transition bg-indigo-500 hover:bg-indigo-600 text-white"><i class="fa-regular fa-eye mr-1"></i>พรีวิวผลโหวต (เฉพาะแอดมิน)</button>
+                        </div>
                     </div>
 
                     <!-- ควบคุมการรับผลงาน -->
@@ -1048,9 +1051,15 @@
             return Math.round((Number(v.avgScore) || 0) * (Number(v.votes) || 0));
         }
 
-        // แสดงผลการโหวตเป็นตารางอันดับ (เรียงตามผลรวมดาว -> เฉลี่ย -> จำนวนโหวต)
-        function showResults() {
-            const vids = [...videoMap.values()].slice().sort((a, b) =>
+        // แสดงผลการโหวตเป็นตารางอันดับ (เรียงตามผลรวมดาว -> จำนวนโหวต)
+        function showResults() { showResultsList([...videoMap.values()], '🏆 ผลการโหวต'); }
+        // พรีวิวสำหรับแอดมิน — ใช้ข้อมูล manage (มีคะแนนจริงแม้ยังเปิดโหวต)
+        function previewResults() {
+            if (!adminManage || !adminManage.length) { notify('info', 'ยังไม่มีข้อมูล หรือยังไม่ได้โหลดเมนูแอดมิน'); return; }
+            showResultsList(adminManage, '👁️ พรีวิวผลโหวต (เฉพาะแอดมิน)');
+        }
+        function showResultsList(src, titleText) {
+            const vids = (src || []).slice().sort((a, b) =>
                 totalStars(b) - totalStars(a) ||
                 (Number(b.votes) || 0) - (Number(a.votes) || 0)
             );
@@ -1073,7 +1082,7 @@
                 </div>`;
             }).join('');
             Swal.fire({
-                title: '<span style="font-family:Kanit,sans-serif">🏆 ผลการโหวต</span>',
+                title: `<span style="font-family:Kanit,sans-serif">${titleText || '🏆 ผลการโหวต'}</span>`,
                 html: `<div style="max-height:60vh;overflow:auto;margin-top:4px">${rows || '<p style="color:#94a3b8">ยังไม่มีข้อมูล</p>'}</div>`,
                 width: 480,
                 confirmButtonText: 'ปิด',
@@ -1544,6 +1553,7 @@
 
         // เก็บออบเจกต์วิดีโอที่ผูกกับการ์ด (id -> video) เพื่ออัปเดตในที่โดยไม่สร้างการ์ดใหม่
         const videoMap = new Map();
+        let adminManage = []; // ข้อมูลคลิปทั้งหมดฝั่งแอดมิน (มีคะแนนจริง) สำหรับพรีวิวผลโหวต
         let serverTotalStars = null; // ผลรวมดาวทั้งหมดจากเซิร์ฟเวอร์ (เปิดเผยได้แม้ยังเปิดโหวต)
 
         // Format number with thousands separator
@@ -2199,6 +2209,7 @@
                     notify('warning', 'รหัสแอดมินไม่ถูกต้อง');
                 } else {
                     if (data.settings) applySettings(data.settings);
+                    adminManage = Array.isArray(data.manage) ? data.manage : []; // เก็บไว้สำหรับพรีวิวผลโหวต
                     renderDashboard(data.manage);
                     renderEvalDashboard(data.evalSummary);
                     renderManage(data.manage);
@@ -2523,6 +2534,7 @@
             notify('success', next === 'TRUE' ? 'เปิดระบบโหวตแล้ว' : 'ปิดระบบโหวตแล้ว (ผู้ชมยังดูได้ปกติ)');
             setTimeout(fetchFromSheet, 1500);
         });
+        document.getElementById('adminPreviewResultsBtn').addEventListener('click', previewResults);
 
         // ===== ปิด/เปิดการรับผลงาน =====
         function updateSubmissionsToggle() {
