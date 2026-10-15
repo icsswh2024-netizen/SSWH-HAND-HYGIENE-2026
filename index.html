@@ -777,7 +777,11 @@
                 <button id="certClose" class="text-white/90 hover:text-white text-3xl leading-none">&times;</button>
             </div>
             <div class="p-5 md:p-7 max-h-[78vh] overflow-y-auto">
-                <p class="text-sm text-slate-500 mb-3">กรอกข้อมูลแล้วกด “สร้าง” · ใส่ได้ทั้งชื่อ+หน่วยงาน หรือหน่วยงานอย่างเดียว · ถ้าเลือกรางวัลจะได้ 2 ใบ (ใบเข้าร่วม + ใบรางวัล)</p>
+                <p class="text-sm text-slate-500 mb-3">เลือกจากรายชื่อผู้เข้าแข่งขัน (จาก Submissions) หรือพิมพ์เอง · ถ้าเลือกรางวัลจะได้ 2 ใบ (ใบเข้าร่วม + ใบรางวัล)</p>
+                <div class="mb-3">
+                    <label class="text-sm text-slate-600">เลือกผู้เข้าแข่งขัน (จากรายการ)</label>
+                    <select id="certPick" class="ev-input"><option value="">— เลือกเพื่อเติมชื่อ/หน่วย/รางวัลอัตโนมัติ —</option></select>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div><label class="text-sm text-slate-600">ชื่อ–นามสกุล / ชื่อทีม</label><input id="certName" class="ev-input" placeholder="เว้นว่างได้ถ้าออกให้หน่วยงาน"></div>
                     <div><label class="text-sm text-slate-600">หน่วยงาน / สังกัด</label><input id="certOrg" class="ev-input" placeholder="เช่น หอผู้ป่วยอายุรกรรมหญิง"></div>
@@ -1390,8 +1394,31 @@
         function openCertModal() {
             certModal.classList.remove('hidden'); certModal.classList.add('flex');
             document.body.style.overflow = 'hidden';
+            populateCertPick();
             renderCert();
         }
+        // เติมรายชื่อผู้เข้าแข่งขันจาก Submissions (เรียงตามเลขกำกับ)
+        function populateCertPick() {
+            const sel = document.getElementById('certPick');
+            if (!sel) return;
+            const vids = [...videoMap.values()].sort((a, b) => (a.seq || 0) - (b.seq || 0));
+            sel.innerHTML = '<option value="">— เลือกเพื่อเติมชื่อ/หน่วย/รางวัลอัตโนมัติ —</option>' +
+                vids.map(v => `<option value="${escapeHtml(String(v.id))}">${v.seq}. ${escapeHtml(v.title || '')}${v.organization ? ' — ' + escapeHtml(v.organization) : ''}</option>`).join('');
+        }
+        document.getElementById('certPick').addEventListener('change', function () {
+            const v = videoMap.get(String(this.value));
+            if (!v) return;
+            document.getElementById('certName').value = v.title || '';
+            document.getElementById('certOrg').value = v.organization || '';
+            // รางวัลจากชีต (ถ้ามีคอลัมน์ รางวัล) -> เลือกประเภทให้ตรง
+            const award = (v.award || '').trim();
+            const typeSel = document.getElementById('certType');
+            if (award) {
+                const opt = [].slice.call(typeSel.options).find(o => o.value === award || o.textContent === award || o.value.indexOf(award) > -1 || award.indexOf(o.textContent) > -1);
+                typeSel.value = opt ? opt.value : typeSel.value;
+            }
+            renderCert();
+        });
         function closeCertModal() { certModal.classList.add('hidden'); certModal.classList.remove('flex'); document.body.style.overflow = ''; }
         document.getElementById('certClose').addEventListener('click', closeCertModal);
         certModal.addEventListener('click', (e) => { if (e.target === certModal) closeCertModal(); });
@@ -1837,6 +1864,7 @@
             // อัปเดตผลโหวต (เผยเมื่อปิดโหวตแล้ว)
             video.votes = incoming.votes;
             video.avgScore = incoming.avgScore;
+            if ('award' in incoming) video.award = incoming.award || ''; // รางวัล (สำหรับเกียรติบัตร)
 
             // ยอดวิว (ให้ค่าจากเซิร์ฟเวอร์เป็นหลัก แต่ไม่ลดต่ำกว่าที่แสดงอยู่ เพื่อไม่ให้กระพริบหลังเพิ่งนับเอง)
             if (typeof incoming.views === 'number') {
@@ -1899,6 +1927,7 @@
                         title: d.title,
                         author: d.title,
                         organization: d.organization,
+                        award: d.award || '',
                         url: d.url,
                         views: Number(d.views) || 0,
                         comments: Array.isArray(d.comments) ? d.comments : [],

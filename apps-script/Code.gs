@@ -37,7 +37,7 @@ const VISIBLE_STATUS = ['approved', 'active'];
 // ====== รันครั้งเดียวเพื่อสร้างแท็บ + หัวตาราง + ค่าตั้งต้น ======
 function setup() {
   const ss = SpreadsheetApp.openById(SHEET_ID);
-  ensureSheet(ss, TAB_SUBMISSIONS, ['Timestamp', 'VideoID', 'ชื่อผลงาน/ผู้เข้าแข่งขัน', 'หน่วยงาน', 'ลิงก์วิดีโอ (URL MP4)', 'Status']);
+  ensureSheet(ss, TAB_SUBMISSIONS, ['Timestamp', 'VideoID', 'ชื่อผลงาน/ผู้เข้าแข่งขัน', 'หน่วยงาน', 'ลิงก์วิดีโอ (URL MP4)', 'Status', 'รางวัล']);
   ensureSheet(ss, TAB_VIEWS,    ['Timestamp', 'VideoID', 'DeviceID']);
   ensureSheet(ss, TAB_VOTES,    ['Timestamp', 'VideoID', 'Score', 'DeviceID']);
   ensureSheet(ss, TAB_COMMENTS, ['Timestamp', 'VideoID', 'ผู้แสดงความเห็น', 'ข้อความ', 'DeviceID', 'CommentID', 'ReplyTo']);
@@ -283,6 +283,7 @@ function doGet(e) {
         title: String(r[2]),
         organization: String(r[3]),
         url: String(r[4]),
+        award: String(r[6] || ''), // คอลัมน์ G = รางวัล (ถ้ามี) สำหรับออกเกียรติบัตร
         views: viewCount[id] || 0,
         comments: commentMap[id] || [],
         votes: votingOff ? vc : null,
