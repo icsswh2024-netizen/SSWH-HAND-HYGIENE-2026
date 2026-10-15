@@ -532,8 +532,8 @@
             <div id="clipIndexGrid" class="grid grid-cols-3 gap-2.5 md:gap-3"></div>
         </section>
 
-        <!-- การ์ดคำแนะนำ: วิธีโหวต & วิธีคิดคะแนน -->
-        <section class="mb-9">
+        <!-- การ์ดคำแนะนำ: วิธีโหวต & วิธีคิดคะแนน (ซ่อน) -->
+        <section class="mb-9 hidden">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="relative overflow-hidden bg-gradient-to-br from-white via-amber-50 to-yellow-50 rounded-3xl shadow-lg shadow-amber-100/60 p-6 border border-amber-100">
                     <span class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-amber-400 to-yellow-500"></span>
@@ -1957,8 +1957,9 @@
             const grid = document.getElementById('clipIndexGrid');
             if (!sec || !grid) return;
             const vids = [...videoMap.values()].sort((a, b) => (a.seq || 0) - (b.seq || 0));
-            if (!vids.length) { sec.classList.add('hidden'); return; }
-            sec.classList.remove('hidden');
+            // ซ่อนตาราง "ผลงานทั้งหมด" ตามที่ร้องขอ (ยังสร้าง grid ไว้เพื่อให้ซิงค์ดาวทำงานปกติ)
+            sec.classList.add('hidden');
+            if (!vids.length) { return; }
             grid.innerHTML = vids.map(v => {
                 const poster = posterUrl(v.url);
                 const bg = poster
