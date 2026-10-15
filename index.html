@@ -1417,7 +1417,7 @@
         certModal.addEventListener('click', (e) => { if (e.target === certModal) closeCertModal(); });
 
         // ตำแหน่งชื่อผู้รับบนพื้นหลัง Canva (ปรับได้ · % จากด้านบน)
-        const CERT_NAME_TOP = 35, CERT_NAME_H = 14; // ชื่ออยู่ช่องว่างกลางใบ
+        const CERT_NAME_TOP = 39, CERT_NAME_H = 13; // ชื่ออยู่กลางช่องว่าง (ใต้ "ขอรับรองว่า")
         // แปลงลิงก์ Drive/รูปตรง เป็นภาพพื้นหลัง
         function certBgFrom(val) {
             const custom = (val || '').trim();
@@ -1461,8 +1461,8 @@
             const fontStack = certFontStack();
             return ".cert{width:1123px;height:794px;position:relative;background:#fff center/cover no-repeat;box-sizing:border-box;overflow:hidden}" +
                 ".cert .cname{position:absolute;left:8%;right:8%;top:" + CERT_NAME_TOP + "%;height:" + CERT_NAME_H + "%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;text-shadow:0 1px 2px rgba(255,255,255,.6)}" +
-                ".cert .cname-main{font-family:" + fontStack + ";font-weight:700;font-size:46px;color:#0b3a66;line-height:1.15}" +
-                ".cert .cname .corg2{font-family:" + fontStack + ";font-size:26px;font-weight:500;color:#2563a6;margin-top:6px}";
+                ".cert .cname-main{font-family:" + fontStack + ";font-weight:700;font-size:52px;color:#0b3a66;line-height:1.1}" +
+                ".cert .cname .corg2{font-family:" + fontStack + ";font-size:28px;font-weight:500;color:#2563a6;margin-top:8px}";
         }
         function certDoc() {
             const P = certBuild();
