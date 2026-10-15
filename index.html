@@ -1092,6 +1092,13 @@
             <div style="flex:1 1 ${includeClip ? '260px' : '162px'};min-width:${includeClip ? '240px' : '162px'};max-width:${includeClip ? '330px' : '230px'};background:${t.bg};border:2px solid ${t.border}66;border-radius:20px;padding:14px 12px 16px;text-align:center;box-shadow:0 12px 26px ${t.shadow};position:relative;overflow:hidden">
                 <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 15%,rgba(255,255,255,.7),transparent 55%);pointer-events:none"></div>
                 <div style="position:relative">
+                    ${includeClip ? `
+                    <div style="margin-bottom:14px">
+                        <div class="mobile-landscape-frame">${playerHtml(v)}</div>
+                        <div style="text-align:center;margin-top:8px">
+                            <a href="${escapeHtml(v.url)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:#dc2626;color:#fff;font-family:Kanit,sans-serif;font-weight:700;font-size:13px;padding:8px 18px;border-radius:999px;text-decoration:none"><i class="fa-solid fa-circle-play"></i> เปิดดูแบบเต็ม</a>
+                        </div>
+                    </div>` : ''}
                     <!-- โล่จริง: นิ้วโป้งทองเงาวาว -->
                     <div style="position:relative;display:inline-block;height:68px;line-height:68px">
                         <i class="fa-solid fa-thumbs-up" style="font-size:60px;background:linear-gradient(135deg,#fff4bf 0%,#f7d560 22%,#e0a92a 46%,#b9810f 60%,#f3cf6a 78%,#8a5f10 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 5px 5px rgba(60,40,0,.45)) drop-shadow(0 1px 1px rgba(120,80,0,.6));transform:rotate(-8deg)"></i>
@@ -1124,13 +1131,6 @@
                     <div style="margin-top:6px;font-family:Kanit,sans-serif;font-weight:700;font-size:14px;color:#1e293b;line-height:1.25;min-height:36px;display:flex;align-items:center;justify-content:center">${escapeHtml(v.title || '(ไม่มีชื่อ)')}</div>
                     <div style="font-size:12px;color:#475569;margin-top:2px;line-height:1.2">${escapeHtml(v.organization || '')}</div>
                     <div style="margin-top:9px;display:inline-block;background:#ffffffcc;border:1px solid ${t.border}66;color:${t.accent};font-weight:800;font-size:15px;padding:3px 16px;border-radius:999px">⭐ ${sum}</div>
-                    ${includeClip ? `
-                    <div style="margin-top:12px">
-                        <div class="mobile-landscape-frame">${playerHtml(v)}</div>
-                        <div style="text-align:center;margin-top:8px">
-                            <a href="${escapeHtml(v.url)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:#dc2626;color:#fff;font-family:Kanit,sans-serif;font-weight:700;font-size:13px;padding:8px 18px;border-radius:999px;text-decoration:none"><i class="fa-solid fa-circle-play"></i> เปิดดูแบบเต็ม</a>
-                        </div>
-                    </div>` : ''}
                 </div>
             </div>`;
         }
