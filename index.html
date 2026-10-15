@@ -795,6 +795,11 @@
                 </div>
                 <p class="text-xs text-slate-400 mt-2">ไฟล์จะถูกบันทึกลงเครื่อง/อัลบั้มทันที (พื้นหลังติดไปด้วย) · ถ้าได้รางวัลจะได้ 2 ไฟล์</p>
                 <p id="certIosHint" class="text-xs text-amber-600 mt-1 hidden"><i class="fa-solid fa-circle-info mr-1"></i>บน iPhone/iPad: เมื่อกดปุ่มจะเด้งเมนูแชร์ ให้เลือก <b>"บันทึกรูปภาพ"</b> (JPG) หรือ <b>"บันทึกลงไฟล์"</b> (PDF)</p>
+                <div id="certInappWarn" class="hidden mt-2 rounded-xl border border-rose-300 bg-rose-50 p-3 text-xs text-rose-700">
+                    <div class="font-bold mb-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i>คุณกำลังเปิดในแอป <span id="certInappName">LINE/Facebook</span></div>
+                    <div>แอปนี้มักบันทึกไฟล์ไม่ได้ · กรุณากดเมนู <b>⋯</b> มุมขวาบน แล้วเลือก <b>"เปิดในเบราว์เซอร์"</b> (Safari/Chrome) ก่อน แล้วค่อยดาวน์โหลด</div>
+                    <button id="certCopyLinkBtn" type="button" class="mt-2 inline-flex items-center gap-1 rounded-lg bg-rose-600 px-3 py-1.5 font-semibold text-white"><i class="fa-solid fa-link"></i> คัดลอกลิงก์เว็บ</button>
+                </div>
                 <iframe id="certFrame" class="w-full mt-4 rounded-xl border border-slate-200" style="height:62vh;background:#eef4fb"></iframe>
             </div>
         </div>
@@ -1390,6 +1395,12 @@
             populateCertPick();
             renderCert();
             const ih = document.getElementById('certIosHint'); if (ih && isIOS) ih.classList.remove('hidden');
+            const inApp = detectInApp();
+            const wb = document.getElementById('certInappWarn');
+            if (wb) {
+                if (inApp) { document.getElementById('certInappName').textContent = inApp; wb.classList.remove('hidden'); if (ih) ih.classList.add('hidden'); }
+                else wb.classList.add('hidden');
+            }
         }
         // เติมรายชื่อผู้เข้าแข่งขันจาก Submissions (เรียงตามเลขกำกับ)
         function populateCertPick() {
@@ -1527,6 +1538,15 @@
             return canvases;
         }
         const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (/Mac/.test(navigator.platform) && navigator.maxTouchPoints > 1);
+        // ตรวจจับ in-app browser (LINE/Facebook/Messenger/Instagram) ที่มักบันทึกไฟล์ไม่ได้
+        function detectInApp() {
+            const ua = navigator.userAgent || '';
+            if (/\bLine\//i.test(ua)) return 'LINE';
+            if (/FBAN|FBAV|FB_IAB/i.test(ua)) return 'Facebook';
+            if (/Messenger/i.test(ua)) return 'Messenger';
+            if (/Instagram/i.test(ua)) return 'Instagram';
+            return '';
+        }
         function triggerDownload(dataUrl, filename) {
             const a = document.createElement('a'); a.href = dataUrl; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
         }
@@ -1583,6 +1603,14 @@
         }
         document.getElementById('certJpgBtn').addEventListener('click', downloadCertJPG);
         document.getElementById('certPdfBtn').addEventListener('click', downloadCertPDF);
+        (function () {
+            const cb = document.getElementById('certCopyLinkBtn');
+            if (cb) cb.addEventListener('click', async function () {
+                const url = location.href.split('#')[0];
+                try { await navigator.clipboard.writeText(url); notify('success', 'คัดลอกลิงก์แล้ว · ไปวางในเบราว์เซอร์ Safari/Chrome'); }
+                catch (e) { Swal.fire({ icon: 'info', title: 'ลิงก์เว็บ', html: '<div style="word-break:break-all;font-size:13px">' + url + '</div>', confirmButtonColor: '#0ea5e9' }); }
+            });
+        })();
         ['certName', 'certOrg'].forEach(id => document.getElementById(id).addEventListener('input', renderCert));
 
         document.getElementById('evalClose').addEventListener('click', closeEvalModal);
