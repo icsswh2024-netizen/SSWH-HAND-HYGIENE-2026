@@ -777,7 +777,7 @@
                 <button id="certClose" class="text-white/90 hover:text-white text-3xl leading-none">&times;</button>
             </div>
             <div class="p-5 md:p-7 max-h-[78vh] overflow-y-auto">
-                <p class="text-sm text-slate-500 mb-3">เลือกจากรายชื่อผู้เข้าแข่งขัน (จาก Submissions) หรือพิมพ์เอง · ถ้าเลือกรางวัลจะได้ 2 ใบ (ใบเข้าร่วม + ใบรางวัล)</p>
+                <p class="text-sm text-slate-500 mb-3">ใช้พื้นหลังดีไซน์จริง (Canva) · เลือกผู้เข้าแข่งขันจาก Submissions → เติมชื่อ/หน่วยบนใบให้อัตโนมัติ แล้วพิมพ์/บันทึก PDF</p>
                 <div class="mb-3">
                     <label class="text-sm text-slate-600">เลือกผู้เข้าแข่งขัน (จากรายการ)</label>
                     <select id="certPick" class="ev-input"><option value="">— เลือกเพื่อเติมชื่อ/หน่วย/รางวัลอัตโนมัติ —</option></select>
@@ -1423,49 +1423,34 @@
         document.getElementById('certClose').addEventListener('click', closeCertModal);
         certModal.addEventListener('click', (e) => { if (e.target === certModal) closeCertModal(); });
 
-        function certOneHtml(mainLine, subLine, descLead, date) {
-            return '<div class="cert"><div class="watermark">🧼</div><div class="frame"></div>' +
-                '<span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>' +
-                '<div class="cert-inner"><div class="org-line">โรงพยาบาลศรีสังวรสุโขทัย</div>' +
-                '<div class="org-sub">งานป้องกันและควบคุมการติดเชื้อ (IPC)</div>' +
-                '<div class="seal">🖐️</div><div class="title">เกียรติบัตร</div>' +
-                '<div class="title-sub">Certificate of Achievement</div>' +
-                '<div class="ribbon">ขอมอบเกียรติบัตรฉบับนี้ไว้เพื่อแสดงว่า</div>' +
-                '<div class="cname">' + (mainLine || '...................................................') + '</div>' +
-                '<div class="corg">' + (subLine || '') + '</div>' +
-                '<div class="cdesc">' + descLead + ' <b>กิจกรรมประกวดคลิปวิดีโอ “วันล้างมือโลก”</b> (Global Handwashing Day)<br>รณรงค์การล้างมือ ๗ ขั้นตอน อย่างถูกวิธี</div>' +
-                '</div><div class="date-badge">' + (date || 'ให้ไว้ ณ วันที่ ๑๕ ตุลาคม ๒๕๖๙') + '</div>' +
-                '<div class="foot"><div class="sign"><div class="ln"></div><div class="role">ประธานคณะกรรมการ IPC<small>โรงพยาบาลศรีสังวรสุโขทัย</small></div></div>' +
-                '<div class="sign"><div class="ln"></div><div class="role">ผู้อำนวยการโรงพยาบาล<small>โรงพยาบาลศรีสังวรสุโขทัย</small></div></div></div></div>';
+        // ตำแหน่งชื่อผู้รับบนพื้นหลัง Canva (ปรับได้ · % จากด้านบน)
+        const CERT_NAME_TOP = 35, CERT_NAME_H = 14; // ชื่ออยู่ช่องว่างกลางใบ
+        function certBgUrl() { try { return new URL('cert-bg.jpg', location.href).href; } catch (e) { return 'cert-bg.jpg'; } }
+        // เกียรติบัตร 1 ใบ แบบใช้พื้นหลัง Canva + วางชื่อ (และรางวัลถ้ามี) ทับ
+        function certOneHtml(mainLine, awardLine) {
+            const award = awardLine ? ('<div class="caward">' + awardLine + '</div>') : '';
+            return '<div class="cert">' +
+                '<div class="cname">' + (mainLine || '...................................................') + '</div>' + award + '</div>';
         }
         function certDoc() {
             const name = (document.getElementById('certName').value || '').trim();
             const org = (document.getElementById('certOrg').value || '').trim();
             const type = document.getElementById('certType').value;
-            const date = (document.getElementById('certDate').value || '').trim();
-            let mainLine, subLine;
-            if (name) { mainLine = escapeHtml(name); subLine = org ? ('สังกัด ' + escapeHtml(org)) : ''; }
-            else { mainLine = escapeHtml(org) || '...................................................'; subLine = ''; }
+            // ชื่อหลัก: มีชื่อ -> "ชื่อ (หน่วยงาน)" / ไม่มีชื่อ -> หน่วยงาน
+            let mainLine;
+            if (name) { mainLine = escapeHtml(name) + (org ? '  <span class="corg">(' + escapeHtml(org) + ')</span>' : ''); }
+            else { mainLine = escapeHtml(org) || '...................................................'; }
             const isPrize = /^ได้รับรางวัล/.test(type);
-            let certs = isPrize
-                ? (certOneHtml(mainLine, subLine, 'ได้เข้าร่วมส่งผลงานเข้าประกวด', date) + certOneHtml(mainLine, subLine, escapeHtml(type), date))
-                : certOneHtml(mainLine, subLine, escapeHtml(type), date);
-            const css = "@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&family=Sarabun:wght@400;600;700&display=swap');" +
-                "*{margin:0;box-sizing:border-box}body{font-family:Kanit,sans-serif;background:#eef4fb;color:#1e293b;padding:14px;display:flex;flex-direction:column;align-items:center;gap:20px}" +
-                ".cert{width:1123px;height:794px;position:relative;background:#fff;transform-origin:top center;background-image:radial-gradient(circle at 15% 15%,rgba(14,165,233,.06),transparent 45%),radial-gradient(circle at 85% 85%,rgba(199,154,59,.08),transparent 45%)}" +
-                ".frame{position:absolute;inset:26px;border:3px solid #c79a3b;border-radius:6px}.frame::before{content:'';position:absolute;inset:8px;border:1px solid #e6c874;border-radius:3px}" +
-                ".corner{position:absolute;width:46px;height:46px;border:4px solid #0f3d63;z-index:2}.corner.tl{top:16px;left:16px;border-right:0;border-bottom:0}.corner.tr{top:16px;right:16px;border-left:0;border-bottom:0}.corner.bl{bottom:16px;left:16px;border-right:0;border-top:0}.corner.br{bottom:16px;right:16px;border-left:0;border-top:0}" +
-                ".cert-inner{position:absolute;inset:60px;display:flex;flex-direction:column;align-items:center;text-align:center}" +
-                ".org-line{font-size:22px;font-weight:700;color:#0f3d63;margin-top:6px}.org-sub{font-size:14px;color:#64748b}" +
-                ".seal{width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#0369a1);display:flex;align-items:center;justify-content:center;color:#fff;font-size:34px;margin:14px 0 6px;box-shadow:0 6px 14px rgba(3,105,161,.3)}" +
-                ".title{font-size:50px;font-weight:800;letter-spacing:1px;color:#c79a3b;line-height:1.05}.title-sub{font-size:16px;color:#64748b;margin-top:2px;letter-spacing:2px;text-transform:uppercase}" +
-                ".ribbon{margin:16px 0 8px;font-size:16px;color:#475569}" +
-                ".cname{font-family:Sarabun,Kanit,sans-serif;font-size:40px;font-weight:700;color:#0f3d63;border-bottom:2px dashed #e6c874;padding:2px 40px 8px;min-width:420px}" +
-                ".corg{font-size:18px;color:#334155;margin-top:12px}.cdesc{font-size:16px;color:#475569;line-height:1.7;max-width:760px;margin-top:14px}.cdesc b{color:#0ea5e9}" +
-                ".foot{position:absolute;left:60px;right:60px;bottom:44px;display:flex;justify-content:space-between;align-items:flex-end}.sign{width:300px;text-align:center}.sign .ln{border-top:1.5px solid #94a3b8;margin:0 20px 6px;padding-top:6px}.sign .role{font-size:14px;color:#475569;font-weight:600}.sign .role small{display:block;font-weight:400;color:#94a3b8}" +
-                ".date-badge{position:absolute;left:50%;bottom:40px;transform:translateX(-50%);font-size:14px;color:#64748b}" +
-                ".watermark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:260px;opacity:.04;pointer-events:none;z-index:0}" +
-                "@media print{@page{size:A4 landscape;margin:0}body{background:#fff;padding:0;gap:0}.cert{transform:none!important;page-break-after:always;break-after:page}.cert:last-child{page-break-after:auto;break-after:auto}}";
+            const awardLine = isPrize ? escapeHtml(type) : '';
+            const certs = certOneHtml(mainLine, awardLine);
+            const bg = certBgUrl();
+            const css = "@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&family=Kanit:wght@500;700&display=swap');" +
+                "*{margin:0;box-sizing:border-box}body{font-family:Sarabun,Kanit,sans-serif;background:#eef4fb;padding:14px;display:flex;flex-direction:column;align-items:center;gap:20px}" +
+                ".cert{width:1123px;height:794px;position:relative;background:#fff url('" + bg + "') center/cover no-repeat;transform-origin:top center;box-shadow:0 8px 24px rgba(2,32,54,.12)}" +
+                ".cname{position:absolute;left:8%;right:8%;top:" + CERT_NAME_TOP + "%;height:" + CERT_NAME_H + "%;display:flex;align-items:center;justify-content:center;text-align:center;font-family:Sarabun,Kanit,sans-serif;font-weight:800;font-size:44px;color:#0b3a66;line-height:1.15;text-shadow:0 1px 2px rgba(255,255,255,.6)}" +
+                ".cname .corg{font-size:26px;font-weight:600;color:#2563a6}" +
+                ".caward{position:absolute;left:8%;right:8%;top:" + (CERT_NAME_TOP + CERT_NAME_H) + "%;text-align:center;font-family:Kanit,sans-serif;font-weight:700;font-size:24px;color:#c79a3b;text-shadow:0 1px 2px rgba(255,255,255,.6)}" +
+                "@media print{@page{size:A4 landscape;margin:0}body{background:#fff;padding:0;gap:0}.cert{transform:none!important;box-shadow:none;page-break-after:always;break-after:page}.cert:last-child{page-break-after:auto;break-after:auto}}";
             const fit = "(function(){function f(){var s=Math.min(document.body.clientWidth-28,1123)/1123;[].forEach.call(document.querySelectorAll('.cert'),function(c){if(s<1){c.style.transform='scale('+s+')';c.style.marginBottom=(794*(s-1))+'px';}else{c.style.transform='none';c.style.marginBottom='0';}});}f();window.addEventListener('resize',f);})();";
             return '<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>' + css + '</style></head><body>' + certs + '<scr' + 'ipt>' + fit + '</scr' + 'ipt></body></html>';
         }
