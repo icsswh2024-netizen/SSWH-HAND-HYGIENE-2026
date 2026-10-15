@@ -116,6 +116,7 @@ const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_WEB_APP_ID/ex
 | `footerLogo` | ลิงก์โลโก้ในฟุตเตอร์ (อันซ้าย) · รองรับลิงก์รูปตรง และ Google Drive · เว้นว่าง = ไม่แสดง |
 | `footerLogo2` | ลิงก์โลโก้ในฟุตเตอร์ (อันขวา ถ้าต้องการโลโก้คู่) · เว้นว่าง = ไม่แสดง |
 | `resultTitle` / `resultMessage` | หัวข้อ/ข้อความของป๊อปอัปปุ่ม "ผล Vote" |
+| `resultNote` | โน้ตแสดงความยินดี/พิธีมอบรางวัล แสดงบนหัวผลการโหวต (ใส่ HTML/`<br>` ได้) · เว้นว่าง = ใช้ข้อความค่าเริ่มต้น |
 
 ---
 

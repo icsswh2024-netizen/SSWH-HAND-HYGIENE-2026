@@ -1140,6 +1140,11 @@
                 </div>
             </div>`;
         }
+        // โน้ตแสดงความยินดี/พิธีมอบรางวัล บนหัวผลการโหวต (แอดมินแก้ได้ที่ Settings คีย์ resultNote)
+        function resultsNoteHtml() {
+            const note = siteSettings.resultNote || 'ขอแสดงความยินดีกับทุกท่านที่ได้รับรางวัล และขอขอบคุณทุกผลงานที่ได้เข้าร่วม<br>สำหรับผู้ได้รับรางวัลจะมีพิธีมอบรางวัลภายหลังกิจกรรมวันพยาบาล วันที่ 16 ตุลาคม 2569 เวลาประมาณ 15.00 น. ณ ห้องประชุมพงษ์ศักดิ์ เทียมสอาด<br>ขอขอบคุณครับ/ค่ะ 🙏';
+            return '<div style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1px solid #fcd34d;border-radius:16px;padding:14px 16px;margin-bottom:16px;text-align:center;font-family:Kanit,sans-serif;color:#92400e;font-size:14px;line-height:1.55;box-shadow:0 6px 16px rgba(217,151,18,.15)"><i class="fa-solid fa-award" style="color:#d97706;font-size:18px"></i><div style="margin-top:6px">' + note + '</div></div>';
+        }
         function showResultsList(src, titleText) {
             const vids = (src || []).slice().sort((a, b) =>
                 totalStars(b) - totalStars(a) ||
@@ -1164,7 +1169,7 @@
             }).join('');
             Swal.fire({
                 title: `<span style="font-family:Kanit,sans-serif">${titleText || '🏆 ผลการโหวต'}</span>`,
-                html: `<div style="max-height:66vh;overflow:auto;margin-top:4px">${trophies}${rows}${!top.length ? '<p style="color:#94a3b8">ยังไม่มีข้อมูล</p>' : ''}</div>`,
+                html: `<div style="max-height:66vh;overflow:auto;margin-top:4px">${top.length ? resultsNoteHtml() : ''}${trophies}${rows}${!top.length ? '<p style="color:#94a3b8">ยังไม่มีข้อมูล</p>' : ''}</div>`,
                 width: 820,
                 confirmButtonText: 'ปิด',
                 confirmButtonColor: '#2563eb',
