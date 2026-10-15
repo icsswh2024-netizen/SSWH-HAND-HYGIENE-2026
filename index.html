@@ -1107,16 +1107,32 @@
             const votes = Number(v.votes) || 0;
             const t = TROPHY_THEMES[rank] || TROPHY_THEMES[4];
             return `
-            <div style="flex:1;min-width:158px;max-width:230px;background:${t.bg};border:2px solid ${t.border}66;border-radius:20px;padding:12px 12px 16px;text-align:center;box-shadow:0 12px 26px ${t.shadow};position:relative;overflow:hidden">
-                <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 18%,rgba(255,255,255,.75),transparent 55%);pointer-events:none"></div>
+            <div style="flex:1;min-width:162px;max-width:230px;background:${t.bg};border:2px solid ${t.border}66;border-radius:20px;padding:14px 12px 16px;text-align:center;box-shadow:0 12px 26px ${t.shadow};position:relative;overflow:hidden">
+                <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 15%,rgba(255,255,255,.7),transparent 55%);pointer-events:none"></div>
                 <div style="position:relative">
-                    <div style="font-size:22px;margin-bottom:-6px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2))">👑</div>
-                    <div style="height:72px;display:flex;align-items:flex-end;justify-content:center;gap:2px">
-                        <i class="fa-solid fa-thumbs-up" style="font-size:58px;line-height:1;background:${t.thumb};-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 6px rgba(80,55,0,.4));transform:rotate(-6deg)"></i>
+                    <!-- โล่จริง: นิ้วโป้งทองเงาวาว -->
+                    <div style="position:relative;display:inline-block;height:68px;line-height:68px">
+                        <i class="fa-solid fa-thumbs-up" style="font-size:60px;background:linear-gradient(135deg,#fff4bf 0%,#f7d560 22%,#e0a92a 46%,#b9810f 60%,#f3cf6a 78%,#8a5f10 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 5px 5px rgba(60,40,0,.45)) drop-shadow(0 1px 1px rgba(120,80,0,.6));transform:rotate(-8deg)"></i>
+                        <i class="fa-solid fa-thumbs-up" style="position:absolute;left:0;top:0;font-size:60px;background:linear-gradient(118deg,transparent 40%,rgba(255,255,255,.9) 49%,transparent 57%);-webkit-background-clip:text;background-clip:text;color:transparent;transform:rotate(-8deg)"></i>
                     </div>
-                    <div style="display:inline-block;margin-top:6px;padding:5px 18px;border-radius:999px;background:${t.ribbon};color:#fff;font-family:Kanit,sans-serif;font-weight:800;font-size:13px;letter-spacing:.3px;box-shadow:0 3px 8px ${t.shadow};text-shadow:0 1px 2px rgba(0,0,0,.25)">${t.label}</div>
-                    <div style="margin-top:6px;color:#fbbf24;font-size:13px;letter-spacing:2px;text-shadow:0 1px 1px rgba(0,0,0,.15)">★ ★ ★</div>
-                    <div style="margin-top:8px;font-family:Kanit,sans-serif;font-weight:700;font-size:14px;color:#1e293b;line-height:1.25;min-height:36px;display:flex;align-items:center;justify-content:center">${escapeHtml(v.title || '(ไม่มีชื่อ)')}</div>
+                    <!-- คอทองมีสัน -->
+                    <div style="width:30px;height:17px;margin:-4px auto 0;background:linear-gradient(180deg,#fde68a,#e0a92a 52%,#9a6a12);border-radius:3px 3px 5px 5px;box-shadow:inset 0 -2px 2px rgba(0,0,0,.3),inset 0 2px 1px rgba(255,255,255,.6)"></div>
+                    <!-- ฐานดำ + ป้ายธีมสี -->
+                    <div style="width:98px;height:50px;margin:0 auto;background:linear-gradient(180deg,#3a3a3a,#131313);border-radius:4px;border-top:2px solid #505050;position:relative;box-shadow:0 5px 10px rgba(0,0,0,.35)">
+                        <div style="position:absolute;left:6px;right:6px;top:6px;bottom:6px;border-radius:3px;background:${t.ribbon};overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.45)">
+                            <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.5),transparent 52%)"></div>
+                            <div style="position:relative;height:100%;display:flex;align-items:center;justify-content:center;font-family:Kanit,sans-serif;font-weight:800;font-size:13px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4)">${t.label}</div>
+                        </div>
+                    </div>
+                    <!-- ชายฐานทรงสอบ -->
+                    <div style="width:116px;height:14px;margin:0 auto;background:linear-gradient(180deg,#1c1c1c,#000);clip-path:polygon(7% 0,93% 0,100% 100%,0 100%);box-shadow:0 5px 7px rgba(0,0,0,.3)"></div>
+                    <!-- กล่องอะคริลิกใส -->
+                    <div style="width:94px;height:40px;margin:1px auto 0;border:1.5px solid rgba(255,255,255,.6);border-top:none;border-radius:0 0 4px 4px;background:linear-gradient(120deg,rgba(226,240,253,.3),rgba(255,255,255,.05) 45%,rgba(226,240,253,.22));box-shadow:inset 0 0 12px rgba(255,255,255,.3);position:relative">
+                        <div style="position:absolute;left:22%;top:0;bottom:0;width:9%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent)"></div>
+                        <div style="position:absolute;left:62%;top:0;bottom:0;width:5%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent)"></div>
+                    </div>
+                    <div style="margin-top:10px;color:#fbbf24;font-size:13px;letter-spacing:2px;text-shadow:0 1px 1px rgba(0,0,0,.15)">★ ★ ★</div>
+                    <div style="margin-top:6px;font-family:Kanit,sans-serif;font-weight:700;font-size:14px;color:#1e293b;line-height:1.25;min-height:36px;display:flex;align-items:center;justify-content:center">${escapeHtml(v.title || '(ไม่มีชื่อ)')}</div>
                     <div style="font-size:12px;color:#475569;margin-top:2px;line-height:1.2">${escapeHtml(v.organization || '')}</div>
                     <div style="margin-top:9px;display:inline-block;background:#ffffffcc;border:1px solid ${t.border}66;color:${t.accent};font-weight:800;font-size:15px;padding:3px 16px;border-radius:999px">⭐ ${sum}</div>
                 </div>
