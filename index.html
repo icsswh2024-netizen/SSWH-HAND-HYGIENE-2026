@@ -473,7 +473,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
                 <!-- ชนะเลิศ -->
-                <div class="prize-card relative rounded-3xl p-6 pt-7 text-center overflow-hidden" style="background:linear-gradient(150deg,#fffdf5 0%,#fef3c7 55%,#fcd34d 100%);box-shadow:0 18px 38px rgba(217,119,6,.22)">
+                <div class="prize-card prize-winner relative rounded-3xl p-6 pt-7 text-center overflow-hidden cursor-pointer" data-rank="1" style="background:linear-gradient(150deg,#fffdf5 0%,#fef3c7 55%,#fcd34d 100%);box-shadow:0 18px 38px rgba(217,119,6,.22)">
                     <div class="prize-shine"></div>
                     <i class="fa-solid fa-trophy absolute -bottom-4 -left-3 text-8xl" style="color:rgba(180,83,9,.10)"></i>
                     <div class="relative">
@@ -485,7 +485,7 @@
                 </div>
 
                 <!-- รองชนะเลิศอันดับ 1 -->
-                <div class="prize-card relative rounded-3xl p-6 pt-7 text-center overflow-hidden" style="background:linear-gradient(150deg,#ffffff 0%,#f1f5f9 55%,#cbd5e1 100%);box-shadow:0 18px 38px rgba(100,116,139,.20)">
+                <div class="prize-card prize-winner relative rounded-3xl p-6 pt-7 text-center overflow-hidden cursor-pointer" data-rank="2" style="background:linear-gradient(150deg,#ffffff 0%,#f1f5f9 55%,#cbd5e1 100%);box-shadow:0 18px 38px rgba(100,116,139,.20)">
                     <div class="prize-shine"></div>
                     <i class="fa-solid fa-trophy absolute -bottom-4 -left-3 text-8xl" style="color:rgba(71,85,105,.10)"></i>
                     <div class="relative">
@@ -497,7 +497,7 @@
                 </div>
 
                 <!-- รองชนะเลิศอันดับ 2 -->
-                <div class="prize-card relative rounded-3xl p-6 pt-7 text-center overflow-hidden" style="background:linear-gradient(150deg,#fff7ed 0%,#ffedd5 55%,#fdba74 100%);box-shadow:0 18px 38px rgba(194,65,12,.20)">
+                <div class="prize-card prize-winner relative rounded-3xl p-6 pt-7 text-center overflow-hidden cursor-pointer" data-rank="3" style="background:linear-gradient(150deg,#fff7ed 0%,#ffedd5 55%,#fdba74 100%);box-shadow:0 18px 38px rgba(194,65,12,.20)">
                     <div class="prize-shine"></div>
                     <i class="fa-solid fa-trophy absolute -bottom-4 -left-3 text-8xl" style="color:rgba(154,52,18,.10)"></i>
                     <div class="relative">
@@ -509,7 +509,7 @@
                 </div>
 
                 <!-- ชมเชย -->
-                <div class="prize-card relative rounded-3xl p-6 pt-7 text-center overflow-hidden" style="background:linear-gradient(150deg,#f0fdff 0%,#cffafe 55%,#67e8f9 100%);box-shadow:0 18px 38px rgba(8,145,178,.20)">
+                <div class="prize-card prize-winner relative rounded-3xl p-6 pt-7 text-center overflow-hidden cursor-pointer" data-rank="4" style="background:linear-gradient(150deg,#f0fdff 0%,#cffafe 55%,#67e8f9 100%);box-shadow:0 18px 38px rgba(8,145,178,.20)">
                     <div class="prize-shine"></div>
                     <i class="fa-solid fa-award absolute -bottom-4 -left-3 text-8xl" style="color:rgba(14,116,144,.10)"></i>
                     <div class="relative">
@@ -1176,6 +1176,42 @@
                 customClass: { popup: 'swal-success', confirmButton: 'swal-confirm-btn' }
             });
         }
+
+        // ชี้/แตะการ์ดรางวัล -> เปิดคลิปของผู้ได้รางวัลอันดับนั้น
+        function rankedVids() {
+            return [...videoMap.values()].slice().sort((a, b) =>
+                totalStars(b) - totalStars(a) || (Number(b.votes) || 0) - (Number(a.votes) || 0));
+        }
+        function openPrizeWinner(rank) {
+            const v = rankedVids()[rank - 1];
+            const t = TROPHY_THEMES[rank] || TROPHY_THEMES[4];
+            if (!v || !totalStars(v)) {
+                Swal.fire({ icon: 'info', title: t.label, text: 'ยังไม่มีข้อมูลผู้ได้รางวัล (รอโหลดผลโหวต)', confirmButtonColor: '#2563eb', confirmButtonText: 'ปิด', customClass: { popup: 'swal-info', confirmButton: 'swal-confirm-btn' } });
+                return;
+            }
+            Swal.fire({
+                title: `<span style="font-family:Kanit,sans-serif">👍 ${t.label}</span>`,
+                html: `<div style="display:flex;justify-content:center;margin-top:4px">${trophyCardHtml(v, rank, true)}</div>`,
+                width: 420,
+                confirmButtonText: 'ปิด',
+                confirmButtonColor: '#2563eb',
+                customClass: { popup: 'swal-success', confirmButton: 'swal-confirm-btn' }
+            });
+        }
+        (function bindPrizeWinners() {
+            const canHover = window.matchMedia && window.matchMedia('(hover:hover)').matches;
+            document.querySelectorAll('.prize-winner').forEach(card => {
+                const rank = parseInt(card.dataset.rank, 10);
+                // ป้ายบอกใบ้
+                const hint = document.createElement('div');
+                hint.className = 'relative mt-3 text-xs font-semibold';
+                hint.style.cssText = 'color:rgba(30,41,59,.55)';
+                hint.innerHTML = '<i class="fa-solid fa-circle-play mr-1"></i>' + (canHover ? 'ชี้/คลิกเพื่อดูคลิปผู้ชนะ' : 'แตะเพื่อดูคลิปผู้ชนะ');
+                card.appendChild(hint);
+                card.addEventListener('click', () => openPrizeWinner(rank));
+                if (canHover) card.addEventListener('mouseenter', () => { if (!Swal.isVisible()) openPrizeWinner(rank); });
+            });
+        })();
 
         // ข้อมูลตัวอย่าง (ใช้เฉพาะโหมดสาธิต เมื่อยังไม่ได้ตั้งค่า URL ของ Google Apps Script)
         const MOCK_DATA = [
