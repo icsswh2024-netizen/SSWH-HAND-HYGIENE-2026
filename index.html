@@ -1435,16 +1435,15 @@
             sendDataToSheet('ADD_EVAL', payload);
             setDone2(EVAL_DONE_KEY);
             closeEvalModal();
-            // ปิดโหวตแล้ว -> ทำประเมินเสร็จ ปลดล็อกให้ดูผลโหวตต่อได้ทันที
-            const unlocked = !isVotingEnabled();
+            // ทำประเมินเสร็จ -> ปลดล็อกดูผลโหวตได้ทันที (เครื่องนี้)
             Swal.fire({
                 icon: 'success',
                 title: 'ส่งแบบประเมินสำเร็จ!',
-                text: unlocked ? 'ขอบคุณครับ 🙏 ปลดล็อกดูผลโหวตแล้ว' : 'ขอบคุณที่ร่วมประเมินกิจกรรม 🙏',
-                confirmButtonText: unlocked ? 'ดูผลโหวต' : 'ตกลง',
+                text: 'ขอบคุณครับ 🙏 ปลดล็อกดูผลโหวตแล้ว',
+                confirmButtonText: 'ดูผลโหวต',
                 confirmButtonColor: '#059669',
                 customClass: { popup: 'swal-info', confirmButton: 'swal-confirm-btn' }
-            }).then(() => { if (unlocked) showResults(); });
+            }).then(() => showResults());
         }
         document.getElementById('openEvalBtn').addEventListener('click', openEvalModal);
         document.getElementById('openEvalBtnTop').addEventListener('click', openEvalModal);
