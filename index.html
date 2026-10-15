@@ -1474,8 +1474,14 @@
             const n = (document.getElementById('certName').value || document.getElementById('certOrg').value || 'certificate').trim();
             return n.replace(/[\\/:*?"<>|]+/g, '_').slice(0, 40) || 'certificate';
         }
-        function preloadImg(url) {
-            return new Promise(res => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(true); im.onerror = () => res(false); im.src = url; });
+        // ดึงรูปเป็น base64 data URI (ฝังในหน้า) เพื่อให้ html2canvas จับภาพพื้นหลังได้แม้ข้ามโดเมน
+        async function toDataUrl(url) {
+            try {
+                const r = await fetch(url, { mode: 'cors' });
+                if (!r.ok) return null;
+                const blob = await r.blob();
+                return await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(blob); });
+            } catch (e) { return null; }
         }
         async function certCanvases() {
             if (!window.html2canvas) { notify('warning', 'ไลบรารียังโหลดไม่เสร็จ ลองใหม่อีกครั้ง'); return null; }
@@ -1484,13 +1490,19 @@
             if (!document.getElementById('certGF')) {
                 const l = document.createElement('link'); l.id = 'certGF'; l.rel = 'stylesheet'; l.href = CERT_GF_HREF; document.head.appendChild(l);
             }
+            // ฝังพื้นหลังเป็น base64 data URI กัน html2canvas ดึงรูปข้ามโดเมนไม่ได้ (CORS)
+            let certsHtml = P.certs;
+            const uniq = P.bgs.filter((u, i) => P.bgs.indexOf(u) === i);
+            for (const u of uniq) {
+                const data = await toDataUrl(u);
+                if (data) certsHtml = certsHtml.split(u).join(data);
+            }
             // โฮสต์ซ่อนสำหรับเรนเดอร์
             let host = document.getElementById('certCapHost');
             if (!host) { host = document.createElement('div'); host.id = 'certCapHost'; host.style.cssText = 'position:fixed;left:-99999px;top:0;z-index:-1'; document.body.appendChild(host); }
-            host.innerHTML = '<style>' + certCoreCss() + '</style>' + P.certs;
-            // โหลดฟอนต์ + พื้นหลังให้เสร็จก่อนจับภาพ
+            host.innerHTML = '<style>' + certCoreCss() + '</style>' + certsHtml;
+            // โหลดฟอนต์ให้เสร็จก่อนจับภาพ
             try { await document.fonts.ready; } catch (e) {}
-            await Promise.all(P.bgs.map(preloadImg));
             await new Promise(r => setTimeout(r, 300));
             const certEls = [].slice.call(host.querySelectorAll('.cert'));
             const canvases = [];
