@@ -1396,16 +1396,20 @@
             if (!sel) return;
             const vids = [...videoMap.values()].sort((a, b) => (a.seq || 0) - (b.seq || 0));
             sel.innerHTML = '<option value="">— เลือกเพื่อเติมชื่อ/หน่วย/รางวัลอัตโนมัติ —</option>' +
-                vids.map(v => `<option value="${escapeHtml(String(v.id))}">${v.seq}. ${escapeHtml(v.title || '')}${v.organization ? ' — ' + escapeHtml(v.organization) : ''}</option>`).join('');
+                vids.map(v => {
+                    const nm = (v.certName || v.title || '').trim();   // ชื่อ: คอลัมน์ G (ไม่มีใช้ C)
+                    const og = (v.certOrg || v.organization || '').trim(); // หน่วย: คอลัมน์ H (ไม่มีใช้ D)
+                    return `<option value="${escapeHtml(String(v.id))}">${v.seq}. ${escapeHtml(nm)}${og ? ' — ' + escapeHtml(og) : ''}</option>`;
+                }).join('');
         }
         let certPickedAward = ''; // รางวัลของคนที่เลือก (จากคอลัมน์ G) — มี = 2 แผ่น
         document.getElementById('certPick').addEventListener('change', function () {
             const v = videoMap.get(String(this.value));
             if (!v) { certPickedAward = ''; return; }
-            // ดึงเฉพาะ 2 คอลัมน์แสดงบนใบ: ผู้เข้าแข่งขัน (title) และ หน่วย (organization)
-            document.getElementById('certName').value = v.title || '';
-            document.getElementById('certOrg').value = v.organization || '';
-            // ตัดสินจำนวนแผ่นอัตโนมัติจากคอลัมน์ "รางวัล" (G): มีรางวัล = 2 แผ่น, ไม่มี = 1 แผ่น
+            // เติมจากคอลัมน์ G (ชื่อ) / H (หน่วยงาน) · ไม่มีค่อยใช้ C/D เดิม
+            document.getElementById('certName').value = (v.certName || v.title || '');
+            document.getElementById('certOrg').value = (v.certOrg || v.organization || '');
+            // ตัดสินจำนวนแผ่นอัตโนมัติจากคอลัมน์ I "รางวัล": มีรางวัล = 2 แผ่น, ไม่มี = 1 แผ่น
             certPickedAward = (v.award || '').trim();
             renderCert();
         });
@@ -1930,6 +1934,8 @@
             video.votes = incoming.votes;
             video.avgScore = incoming.avgScore;
             if ('award' in incoming) video.award = incoming.award || ''; // รางวัล (สำหรับเกียรติบัตร)
+            if ('certName' in incoming) video.certName = incoming.certName || '';
+            if ('certOrg' in incoming) video.certOrg = incoming.certOrg || '';
 
             // ยอดวิว (ให้ค่าจากเซิร์ฟเวอร์เป็นหลัก แต่ไม่ลดต่ำกว่าที่แสดงอยู่ เพื่อไม่ให้กระพริบหลังเพิ่งนับเอง)
             if (typeof incoming.views === 'number') {
@@ -1992,6 +1998,8 @@
                         title: d.title,
                         author: d.title,
                         organization: d.organization,
+                        certName: d.certName || '',
+                        certOrg: d.certOrg || '',
                         award: d.award || '',
                         url: d.url,
                         views: Number(d.views) || 0,
