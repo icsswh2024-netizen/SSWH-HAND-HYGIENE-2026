@@ -1050,36 +1050,23 @@
             });
         });
 
-        // ปุ่ม "ผล Vote"
+        // ปุ่ม "ผล Vote" — แสดงผลโหวตจริงได้เลย (ยังคงเงื่อนไขทำแบบประเมินก่อน ถ้าเปิดใช้งาน)
         document.getElementById('viewResultsBtn').addEventListener('click', () => {
-            // ปิดโหวตแล้ว -> แสดงผลอันดับ / ยังเปิดอยู่ -> แจ้งยังดูไม่ได้
-            if (!isVotingEnabled()) {
-                // เงื่อนไข: ต้องทำแบบประเมินกิจกรรมก่อน ถึงจะดูผลโหวตได้
-                // (บังคับเฉพาะเมื่อเปิดใช้งานแบบประเมินอยู่ · 1 เครื่องทำ 1 ครั้ง)
-                if (isEvalShown() && !hasInSet2(EVAL_DONE_KEY)) {
-                    Swal.fire({
-                        icon: 'info',
-                        title: 'กรุณาทำแบบประเมินก่อน',
-                        html: 'ดูผลโหวตได้หลัง<b>ทำแบบประเมินกิจกรรมเสร็จแล้ว</b><br>ใช้เวลาไม่ถึง 2 นาที 🙏',
-                        showCancelButton: true,
-                        confirmButtonText: '<i class="fa-solid fa-clipboard-check"></i> ทำแบบประเมินเลย',
-                        cancelButtonText: 'ยังก่อน',
-                        confirmButtonColor: '#059669',
-                        customClass: { popup: 'swal-info', confirmButton: 'swal-confirm-btn' }
-                    }).then(res => { if (res.isConfirmed) openEvalModal(); });
-                    return;
-                }
-                showResults();
-            } else {
+            // เงื่อนไข: ต้องทำแบบประเมินกิจกรรมก่อน ถึงจะดูผลโหวตได้ (เฉพาะเมื่อเปิดใช้งานแบบประเมิน · 1 เครื่อง/1 ครั้ง)
+            if (isEvalShown() && !hasInSet2(EVAL_DONE_KEY)) {
                 Swal.fire({
                     icon: 'info',
-                    title: siteSettings.resultTitle || 'ยังไม่สามารถดูได้',
-                    text: siteSettings.resultMessage || 'ผลคะแนนโหวตจะสามารถดูได้เมื่อแอดมินทำการปิดระบบโหวตแล้วเท่านั้นครับ',
-                    confirmButtonColor: '#2563eb',
-                    confirmButtonText: 'รับทราบ',
+                    title: 'กรุณาทำแบบประเมินก่อน',
+                    html: 'ดูผลโหวตได้หลัง<b>ทำแบบประเมินกิจกรรมเสร็จแล้ว</b><br>ใช้เวลาไม่ถึง 2 นาที 🙏',
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="fa-solid fa-clipboard-check"></i> ทำแบบประเมินเลย',
+                    cancelButtonText: 'ยังก่อน',
+                    confirmButtonColor: '#059669',
                     customClass: { popup: 'swal-info', confirmButton: 'swal-confirm-btn' }
-                });
+                }).then(res => { if (res.isConfirmed) openEvalModal(); });
+                return;
             }
+            showResults();
         });
 
         // ผลรวมดาว = คะแนนเฉลี่ย × จำนวนโหวต (= ผลรวมคะแนนดาวจากโหวตล่าสุดของทุกเครื่อง)

@@ -272,7 +272,7 @@ function doGet(e) {
   const votingOff = String(settings.votingEnabled || 'TRUE').toUpperCase() === 'FALSE';
 
   // แสดงเฉพาะคลิปที่แอดมินอนุมัติแล้ว (Status = approved/active)
-  // เปิดเผย "ผลโหวต" ให้ผู้ชมเฉพาะเมื่อปิดโหวตแล้วเท่านั้น (ระหว่างโหวตยังซ่อนไว้)
+  // เปิดเผย "ผลโหวตจริง" ให้ผู้ชมได้เลย (ไม่ซ่อนระหว่างเปิดโหวต)
   const videos = subs
     .filter(r => VISIBLE_STATUS.indexOf(String(r[5] || '').toLowerCase()) !== -1)
     .map(r => {
@@ -289,8 +289,8 @@ function doGet(e) {
         award: String(r[8] || ''),
         views: viewCount[id] || 0,
         comments: commentMap[id] || [],
-        votes: votingOff ? vc : null,
-        avgScore: votingOff ? (vc ? scoreSum[id] / vc : 0) : null
+        votes: vc,
+        avgScore: vc ? scoreSum[id] / vc : 0
       };
     });
 
