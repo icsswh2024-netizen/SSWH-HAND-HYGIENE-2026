@@ -1210,8 +1210,10 @@
             return await html2canvas(host.querySelector('#summaryA4'), { backgroundColor: '#ffffff', scale: 2, width: 1123, height: 794, logging: false });
         }
         async function openResultsSummary(vids) {
-            const cv = await resultsSummaryCanvas(vids); if (!cv) return;
+            showLoading('กำลังสร้างภาพสรุป…');
+            const cv = await resultsSummaryCanvas(vids); if (!cv) { Swal.close(); return; }
             const img = cv.toDataURL('image/jpeg', 0.95);
+            Swal.close();
             Swal.fire({
                 title: '<span style="font-family:Kanit,sans-serif">📸 ภาพสรุปผลโหวต (A4)</span>',
                 html: `<img src="${img}" style="width:100%;border-radius:10px;border:1px solid #e2e8f0">
@@ -1730,24 +1732,31 @@
             notify('success', successMsg);
         }
         // ดาวน์โหลดใบประกาศเฉพาะใบ (idx) เป็น JPG หรือ PDF
+        function showLoading(msg) {
+            Swal.fire({ title: msg || 'กำลังสร้างไฟล์…', html: 'รอสักครู่ 🙏', allowOutsideClick: false, allowEscapeKey: false, didOpen: () => Swal.showLoading(), customClass: { popup: 'swal-info' } });
+        }
         async function downloadCertOne(idx, type) {
             try {
                 const items = certItems();
                 const item = items[idx]; if (!item) return;
-                const cv = await certCanvasFor(item); if (!cv) return;
+                showLoading('กำลังสร้างใบประกาศ…');
+                const cv = await certCanvasFor(item); if (!cv) { Swal.close(); return; }
                 const base = certSafeName() + (items.length > 1 ? ('_' + item.file) : '');
+                let out;
                 if (type === 'pdf') {
-                    const JS = (window.jspdf && window.jspdf.jsPDF); if (!JS) { notify('warning', 'ไลบรารี PDF ยังโหลดไม่เสร็จ'); return; }
+                    const JS = (window.jspdf && window.jspdf.jsPDF); if (!JS) { Swal.close(); notify('warning', 'ไลบรารี PDF ยังโหลดไม่เสร็จ'); return; }
                     const pdf = new JS({ orientation: 'landscape', unit: 'px', format: [1123, 794] });
                     pdf.addImage(cv.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 1123, 794);
                     const name = base + '.pdf';
+                    Swal.close();
                     if (isIOS) { await saveFiles([{ blob: pdf.output('blob'), name: name }], 'ดาวน์โหลด PDF แล้ว'); }
                     else { pdf.save(name); notify('success', 'ดาวน์โหลด PDF แล้ว'); }
                 } else {
                     const blob = dataUrlToBlob(cv.toDataURL('image/jpeg', 0.95));
+                    Swal.close();
                     await saveFiles([{ blob: blob, name: base + '.jpg' }], 'ดาวน์โหลด JPG แล้ว');
                 }
-            } catch (e) { certExportError(e); }
+            } catch (e) { Swal.close(); certExportError(e); }
         }
         function certExportError(e) {
             console.error(e);
