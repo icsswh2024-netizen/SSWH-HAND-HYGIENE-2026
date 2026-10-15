@@ -64,12 +64,15 @@
   .date-badge{position:absolute;left:50%;bottom:40px;transform:translateX(-50%);font-size:14px;color:#64748b}
   .watermark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:260px;opacity:.04;pointer-events:none;z-index:0}
 
+  #certs{display:flex;flex-direction:column;align-items:center;gap:22px;width:100%}
   @media print{
     @page{size:A4 landscape;margin:0}
     body{background:#fff;padding:0;gap:0}
     .panel,.hint,.noprint{display:none !important}
     .cert-wrap{max-width:none;overflow:visible}
-    .cert{transform:none !important;box-shadow:none;margin:0}
+    #certs{gap:0}
+    .cert{transform:none !important;box-shadow:none;margin:0;page-break-after:always;break-after:page}
+    .cert:last-child{page-break-after:auto;break-after:auto}
   }
 </style>
 </head>
@@ -111,50 +114,64 @@
   </div>
 
   <div class="cert-wrap">
-    <div class="cert" id="cert">
-      <div class="watermark">🧼</div>
-      <div class="frame"></div>
-      <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
-      <div class="cert-inner">
-        <div class="org-line">โรงพยาบาลศรีสังวรสุโขทัย</div>
-        <div class="org-sub">งานป้องกันและควบคุมการติดเชื้อ (IPC)</div>
-        <div class="seal">🖐️</div>
-        <div class="title">เกียรติบัตร</div>
-        <div class="title-sub">Certificate of Achievement</div>
-        <div class="ribbon">ขอมอบเกียรติบัตรฉบับนี้ไว้เพื่อแสดงว่า</div>
-        <div class="name" id="cName">...................................................</div>
-        <div class="org" id="cOrg"></div>
-        <div class="desc" id="cDesc"></div>
-      </div>
-      <div class="date-badge" id="cDate">ให้ไว้ ณ วันที่ ๑๕ ตุลาคม ๒๕๖๙</div>
-      <div class="foot">
-        <div class="sign">
-          <div class="ln"></div>
-          <div class="role">ประธานคณะกรรมการ IPC<small>โรงพยาบาลศรีสังวรสุโขทัย</small></div>
-        </div>
-        <div class="sign">
-          <div class="ln"></div>
-          <div class="role">ผู้อำนวยการโรงพยาบาล<small>โรงพยาบาลศรีสังวรสุโขทัย</small></div>
-        </div>
-      </div>
-    </div>
+    <div id="certs"></div>
   </div>
 
 <script>
   var $ = function(id){ return document.getElementById(id); };
   function esc(s){ return String(s==null?'':s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
 
+  // สร้าง HTML เกียรติบัตร 1 ใบ
+  // mainLine = ชื่อผู้รับ (ชื่อคน หรือหน่วยงาน), subLine = บรรทัดรอง (เช่น สังกัด...), descLead = ข้อความ "ได้..."
+  function buildCert(mainLine, subLine, descLead, date){
+    return '' +
+    '<div class="cert">' +
+      '<div class="watermark">🧼</div>' +
+      '<div class="frame"></div>' +
+      '<span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>' +
+      '<div class="cert-inner">' +
+        '<div class="org-line">โรงพยาบาลศรีสังวรสุโขทัย</div>' +
+        '<div class="org-sub">งานป้องกันและควบคุมการติดเชื้อ (IPC)</div>' +
+        '<div class="seal">🖐️</div>' +
+        '<div class="title">เกียรติบัตร</div>' +
+        '<div class="title-sub">Certificate of Achievement</div>' +
+        '<div class="ribbon">ขอมอบเกียรติบัตรฉบับนี้ไว้เพื่อแสดงว่า</div>' +
+        '<div class="name">' + (mainLine || '...................................................') + '</div>' +
+        '<div class="org">' + (subLine || '') + '</div>' +
+        '<div class="desc">' + descLead +
+          ' <b>กิจกรรมประกวดคลิปวิดีโอ “วันล้างมือโลก”</b> (Global Handwashing Day)<br>' +
+          'รณรงค์การล้างมือ ๗ ขั้นตอน อย่างถูกวิธี</div>' +
+      '</div>' +
+      '<div class="date-badge">' + (date || 'ให้ไว้ ณ วันที่ ๑๕ ตุลาคม ๒๕๖๙') + '</div>' +
+      '<div class="foot">' +
+        '<div class="sign"><div class="ln"></div><div class="role">ประธานคณะกรรมการ IPC<small>โรงพยาบาลศรีสังวรสุโขทัย</small></div></div>' +
+        '<div class="sign"><div class="ln"></div><div class="role">ผู้อำนวยการโรงพยาบาล<small>โรงพยาบาลศรีสังวรสุโขทัย</small></div></div>' +
+      '</div>' +
+    '</div>';
+  }
+
   function render(){
     var name = ($('fName').value || '').trim();
     var org  = ($('fOrg').value || '').trim();
     var type = $('fType').value;
     var date = ($('fDate').value || '').trim();
-    $('cName').textContent = name || '...................................................';
-    $('cOrg').textContent  = org ? ('สังกัด ' + org) : '';
-    $('cDesc').innerHTML = esc(type) +
-      ' <b>กิจกรรมประกวดคลิปวิดีโอ “วันล้างมือโลก”</b> (Global Handwashing Day)<br>' +
-      'รณรงค์การล้างมือ ๗ ขั้นตอน อย่างถูกวิธี';
-    if (date) $('cDate').textContent = date;
+
+    // ผู้รับ: มีชื่อ -> ชื่อเป็นหลัก + "สังกัด ..." / ไม่มีชื่อ -> ใช้หน่วยงานเป็นหลัก
+    var mainLine, subLine;
+    if (name) { mainLine = esc(name); subLine = org ? ('สังกัด ' + esc(org)) : ''; }
+    else { mainLine = esc(org) || '...................................................'; subLine = ''; }
+
+    var isPrize = /^ได้รับรางวัล/.test(type);
+    var certs = [];
+    if (isPrize) {
+      // รางวัล -> ออก 2 ใบ: ใบเข้าร่วม + ใบรางวัล
+      certs.push(buildCert(mainLine, subLine, 'ได้เข้าร่วมส่งผลงานเข้าประกวด', date));
+      certs.push(buildCert(mainLine, subLine, esc(type), date));
+    } else {
+      certs.push(buildCert(mainLine, subLine, esc(type), date));
+    }
+    $('certs').innerHTML = certs.join('');
+    fitCert();
   }
 
   // รองรับ prefill ผ่าน query: ?name=...&org=...&type=...
@@ -163,29 +180,30 @@
       var p = new URLSearchParams(location.search);
       if(p.get('name')) $('fName').value = p.get('name');
       if(p.get('org'))  $('fOrg').value  = p.get('org');
-      if(p.get('type')){ // จับคู่ข้อความถ้าตรง
-        var opt = [...$('fType').options].find(function(o){return o.value===p.get('type')||o.textContent===p.get('type');});
+      if(p.get('type')){
+        var opt = [].slice.call($('fType').options).find(function(o){return o.value===p.get('type')||o.textContent===p.get('type');});
         if(opt) $('fType').value = opt.value;
       }
       if(p.get('date')) $('fDate').value = p.get('date');
     }catch(e){}
-    fitCert(); render();
+    render();
   })();
 
-  // ย่อเกียรติบัตรให้พอดีจอ (เฉพาะแสดงผล ไม่กระทบตอนพิมพ์)
+  // ย่อเกียรติบัตรทุกใบให้พอดีจอ (เฉพาะแสดงผล ไม่กระทบตอนพิมพ์)
   function fitCert(){
-    var cert = $('cert');
     var avail = Math.min(document.querySelector('.cert-wrap').clientWidth, 1123);
     var scale = avail / 1123;
-    if (scale < 1){ cert.style.transform = 'scale(' + scale + ')'; cert.parentElement.style.height = (794*scale)+'px'; }
-    else { cert.style.transform = 'none'; cert.parentElement.style.height = 'auto'; }
+    [].slice.call(document.querySelectorAll('#certs .cert')).forEach(function(cert){
+      if (scale < 1){ cert.style.transform = 'scale(' + scale + ')'; cert.style.marginBottom = (794*(scale-1)) + 'px'; }
+      else { cert.style.transform = 'none'; cert.style.marginBottom = '0'; }
+    });
   }
   window.addEventListener('resize', fitCert);
 
   $('btnGen').addEventListener('click', render);
   ['fName','fOrg','fDate'].forEach(function(id){ $(id).addEventListener('input', render); });
   $('fType').addEventListener('change', render);
-  $('btnPrint').addEventListener('click', function(){ render(); window.print(); });
+  $('btnPrint').addEventListener('click', function(){ render(); setTimeout(function(){ window.print(); }, 100); });
 </script>
 </body>
 </html>
