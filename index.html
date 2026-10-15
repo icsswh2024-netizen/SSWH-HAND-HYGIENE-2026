@@ -1118,7 +1118,7 @@
                     <div style="margin-top:6px;color:#fbbf24;font-size:13px;letter-spacing:2px;text-shadow:0 1px 1px rgba(0,0,0,.15)">★ ★ ★</div>
                     <div style="margin-top:8px;font-family:Kanit,sans-serif;font-weight:700;font-size:14px;color:#1e293b;line-height:1.25;min-height:36px;display:flex;align-items:center;justify-content:center">${escapeHtml(v.title || '(ไม่มีชื่อ)')}</div>
                     <div style="font-size:12px;color:#475569;margin-top:2px;line-height:1.2">${escapeHtml(v.organization || '')}</div>
-                    <div style="margin-top:9px;display:inline-block;background:#ffffffcc;border:1px solid ${t.border}66;color:${t.accent};font-weight:800;font-size:14px;padding:3px 14px;border-radius:999px">⭐ ${sum} · ${votes} โหวต</div>
+                    <div style="margin-top:9px;display:inline-block;background:#ffffffcc;border:1px solid ${t.border}66;color:${t.accent};font-weight:800;font-size:15px;padding:3px 16px;border-radius:999px">⭐ ${sum}</div>
                 </div>
             </div>`;
         }
@@ -1133,7 +1133,6 @@
                 ? `<div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:${rest.length ? '16px' : '0'}">${top.map((v, i) => trophyCardHtml(v, i + 1)).join('')}</div>`
                 : '';
             const rows = rest.map((v, i) => {
-                const avg = v.avgScore ? (Math.round(v.avgScore * 10) / 10) : 0;
                 const sum = totalStars(v);
                 return `
                 <div style="display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid #f1f5f9;text-align:left">
@@ -1142,10 +1141,7 @@
                         <div style="font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(v.title || '(ไม่มีชื่อ)')}</div>
                         <div style="font-size:12px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(v.organization || '')}</div>
                     </div>
-                    <div style="text-align:right;white-space:nowrap">
-                        <div style="color:#f59e0b;font-weight:800;font-size:16px">⭐ ${sum}</div>
-                        <div style="font-size:11px;color:#94a3b8">เฉลี่ย ${avg} · ${Number(v.votes) || 0} โหวต</div>
-                    </div>
+                    <div style="text-align:right;white-space:nowrap;color:#f59e0b;font-weight:800;font-size:16px">⭐ ${sum}</div>
                 </div>`;
             }).join('');
             Swal.fire({
