@@ -1452,7 +1452,7 @@
             const isPrize = !!certPickedAward; // มีรางวัลในคอลัมน์ G = 2 แผ่น
             // ทุกคน: ใบเข้าร่วม (พื้นหลัง certBg) · ได้รางวัล: เพิ่มใบรางวัล (พื้นหลัง certBgAward) + ชื่อรางวัลสีทอง
             let certs = certOneHtml(certBgUrl(), nameLine, orgLine, '');
-            if (isPrize) certs += certOneHtml(certBgAwardUrl(), nameLine, orgLine, escapeHtml(certPickedAward));
+            if (isPrize) certs += certOneHtml(certBgAwardUrl(), nameLine, '', escapeHtml(certPickedAward));
             return { certs: certs, bgs: isPrize ? [certBgUrl(), certBgAwardUrl()] : [certBgUrl()] };
         }
         const CERT_GF_HREF = 'https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&family=Kanit:wght@500;700&family=Prompt:wght@500;700&family=Mitr:wght@500;700&family=Chakra+Petch:wght@500;700&family=Bai+Jamjuree:wght@500;700&family=Mali:wght@500;700&family=Charmonman:wght@700&family=Charm:wght@700&display=swap';
@@ -1470,7 +1470,7 @@
                 ".cert .cname .caward{font-family:" + fontStack + ";font-size:34px;font-weight:800;margin-top:10px;color:#d4a017;text-shadow:0 1px 1px rgba(120,72,0,.35),0 2px 4px rgba(255,255,255,.6)}" +
                 // ใบรางวัล: บล็อกข้อความสูงขึ้นหน่อย ลดขนาด/ระยะห่างเพื่อไม่ชนข้อความพื้นหลัง
                 ".cert-award .cname{top:41%;height:11%}" +
-                ".cert-award .cname-main{font-size:34px}" +
+                ".cert-award .cname-main{font-size:34px;color:#1d4ed8}" +
                 ".cert-award .cname .corg2{font-size:22px;margin-top:4px}" +
                 ".cert-award .cname .caward{font-size:26px;margin-top:5px}";
         }
