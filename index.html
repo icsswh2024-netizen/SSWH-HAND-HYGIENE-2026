@@ -794,6 +794,7 @@
                     <button id="certPdfBtn" class="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-display font-bold px-6 py-2.5 rounded-xl shadow"><i class="fa-solid fa-file-pdf"></i>ดาวน์โหลด PDF</button>
                 </div>
                 <p class="text-xs text-slate-400 mt-2">ไฟล์จะถูกบันทึกลงเครื่อง/อัลบั้มทันที (พื้นหลังติดไปด้วย) · ถ้าได้รางวัลจะได้ 2 ไฟล์</p>
+                <p id="certIosHint" class="text-xs text-amber-600 mt-1 hidden"><i class="fa-solid fa-circle-info mr-1"></i>บน iPhone/iPad: เมื่อกดปุ่มจะเด้งเมนูแชร์ ให้เลือก <b>"บันทึกรูปภาพ"</b> (JPG) หรือ <b>"บันทึกลงไฟล์"</b> (PDF)</p>
                 <iframe id="certFrame" class="w-full mt-4 rounded-xl border border-slate-200" style="height:62vh;background:#eef4fb"></iframe>
             </div>
         </div>
@@ -1388,6 +1389,7 @@
             document.body.style.overflow = 'hidden';
             populateCertPick();
             renderCert();
+            const ih = document.getElementById('certIosHint'); if (ih && isIOS) ih.classList.remove('hidden');
         }
         // เติมรายชื่อผู้เข้าแข่งขันจาก Submissions (เรียงตามเลขกำกับ)
         function populateCertPick() {
@@ -1524,18 +1526,44 @@
             }
             return canvases;
         }
+        const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (/Mac/.test(navigator.platform) && navigator.maxTouchPoints > 1);
         function triggerDownload(dataUrl, filename) {
             const a = document.createElement('a'); a.href = dataUrl; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+        }
+        function dataUrlToBlob(dataUrl) {
+            const parts = dataUrl.split(','), mime = parts[0].match(/:(.*?);/)[1], bin = atob(parts[1]);
+            const arr = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+            return new Blob([arr], { type: mime });
+        }
+        // บันทึกไฟล์ให้รองรับ iOS/iPadOS: ใช้เมนูแชร์ (บันทึกรูปภาพ/บันทึกลงไฟล์) แทน <a download> ที่ซาฟารีไม่รองรับ
+        async function saveFiles(files, successMsg) {
+            // files: [{blob, name}]
+            if (isIOS && navigator.canShare) {
+                try {
+                    const fobjs = files.map(f => new File([f.blob], f.name, { type: f.blob.type }));
+                    if (navigator.canShare({ files: fobjs })) {
+                        await navigator.share({ files: fobjs, title: 'เกียรติบัตร วันล้างมือโลก' });
+                        return;
+                    }
+                } catch (e) { if (e && e.name === 'AbortError') return; /* ยกเลิกเอง */ }
+            }
+            // อุปกรณ์อื่น หรือแชร์ไม่ได้ -> ดาวน์โหลดปกติ
+            files.forEach(f => {
+                const url = URL.createObjectURL(f.blob);
+                triggerDownload(url, f.name);
+                setTimeout(() => URL.revokeObjectURL(url), 4000);
+            });
+            notify('success', successMsg);
         }
         async function downloadCertJPG() {
             try {
                 const cvs = await certCanvases(); if (!cvs) return;
                 const base = certSafeName();
-                cvs.forEach((cv, i) => {
-                    const url = cv.toDataURL('image/jpeg', 0.95);
-                    triggerDownload(url, base + (cvs.length > 1 ? ('_' + (i === 0 ? 'เข้าร่วม' : 'รางวัล')) : '') + '.jpg');
-                });
-                notify('success', 'ดาวน์โหลด JPG แล้ว');
+                const files = cvs.map((cv, i) => ({
+                    blob: dataUrlToBlob(cv.toDataURL('image/jpeg', 0.95)),
+                    name: base + (cvs.length > 1 ? ('_' + (i === 0 ? 'เข้าร่วม' : 'รางวัล')) : '') + '.jpg'
+                }));
+                await saveFiles(files, 'ดาวน์โหลด JPG แล้ว');
             } catch (e) { certExportError(e); }
         }
         async function downloadCertPDF() {
@@ -1544,8 +1572,9 @@
                 const JS = (window.jspdf && window.jspdf.jsPDF); if (!JS) { notify('warning', 'ไลบรารี PDF ยังโหลดไม่เสร็จ'); return; }
                 const pdf = new JS({ orientation: 'landscape', unit: 'px', format: [1123, 794] });
                 cvs.forEach((cv, i) => { if (i) pdf.addPage([1123, 794], 'landscape'); pdf.addImage(cv.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 1123, 794); });
-                pdf.save(certSafeName() + '.pdf');
-                notify('success', 'ดาวน์โหลด PDF แล้ว');
+                const name = certSafeName() + '.pdf';
+                if (isIOS) { await saveFiles([{ blob: pdf.output('blob'), name: name }], 'ดาวน์โหลด PDF แล้ว'); }
+                else { pdf.save(name); notify('success', 'ดาวน์โหลด PDF แล้ว'); }
             } catch (e) { certExportError(e); }
         }
         function certExportError(e) {
