@@ -1408,9 +1408,18 @@
         document.getElementById('certPick').addEventListener('change', function () {
             const v = videoMap.get(String(this.value));
             if (!v) return;
-            // ดึงเฉพาะ 2 คอลัมน์: ผู้เข้าแข่งขัน (title) และ หน่วย (organization)
+            // ดึงเฉพาะ 2 คอลัมน์แสดงบนใบ: ผู้เข้าแข่งขัน (title) และ หน่วย (organization)
             document.getElementById('certName').value = v.title || '';
             document.getElementById('certOrg').value = v.organization || '';
+            // ตัดสินจำนวนแผ่นอัตโนมัติจากคอลัมน์ "รางวัล" (G): มีรางวัล = 2 แผ่น, ไม่มี = 1 แผ่น
+            const award = (v.award || '').trim();
+            const typeSel = document.getElementById('certType');
+            if (award) {
+                const opt = [].slice.call(typeSel.options).find(o => o.value === award || o.textContent === award || o.value.indexOf(award) > -1 || award.indexOf(o.textContent) > -1);
+                typeSel.value = opt ? opt.value : 'ได้รับรางวัลชนะเลิศ'; // มีรางวัล -> โหมด 2 แผ่น
+            } else {
+                typeSel.value = 'ได้เข้าร่วมส่งผลงานเข้าประกวด'; // ไม่มีรางวัล -> 1 แผ่น
+            }
             renderCert();
         });
         function closeCertModal() { certModal.classList.add('hidden'); certModal.classList.remove('flex'); document.body.style.overflow = ''; }
