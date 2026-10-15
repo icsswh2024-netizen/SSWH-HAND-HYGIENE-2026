@@ -1433,10 +1433,11 @@
         function certBgUrl() { return certBgFrom(siteSettings.certBg); }
         function certBgAwardUrl() { return certBgFrom(siteSettings.certBgAward || siteSettings.certBg); }
         // เกียรติบัตร 1 ใบ แบบใช้พื้นหลัง + วางชื่อผู้เข้าแข่งขัน + หน่วย ทับ (2 คอลัมน์เท่านั้น)
-        function certOneHtml(bgUrl, nameLine, orgLine) {
+        function certOneHtml(bgUrl, nameLine, orgLine, awardLine) {
             const org = orgLine ? ('<div class="corg2">' + orgLine + '</div>') : '';
+            const aw = awardLine ? ('<div class="caward">' + awardLine + '</div>') : '';
             return '<div class="cert" style="background-image:url(\'' + bgUrl + '\')">' +
-                '<div class="cname"><div class="cname-main">' + (nameLine || '...................................................') + '</div>' + org + '</div></div>';
+                '<div class="cname"><div class="cname-main">' + (nameLine || '...................................................') + '</div>' + org + aw + '</div></div>';
         }
         function certBuild() {
             const name = (document.getElementById('certName').value || '').trim();
@@ -1446,9 +1447,9 @@
             if (name) { nameLine = escapeHtml(name); orgLine = org ? escapeHtml(org) : ''; }
             else { nameLine = escapeHtml(org) || '...................................................'; orgLine = ''; }
             const isPrize = !!certPickedAward; // มีรางวัลในคอลัมน์ G = 2 แผ่น
-            // ทุกคน: ใบเข้าร่วม (พื้นหลัง certBg) · ได้รางวัล: เพิ่มใบรางวัล (พื้นหลัง certBgAward)
-            let certs = certOneHtml(certBgUrl(), nameLine, orgLine);
-            if (isPrize) certs += certOneHtml(certBgAwardUrl(), nameLine, orgLine);
+            // ทุกคน: ใบเข้าร่วม (พื้นหลัง certBg) · ได้รางวัล: เพิ่มใบรางวัล (พื้นหลัง certBgAward) + ชื่อรางวัลสีทอง
+            let certs = certOneHtml(certBgUrl(), nameLine, orgLine, '');
+            if (isPrize) certs += certOneHtml(certBgAwardUrl(), nameLine, orgLine, escapeHtml(certPickedAward));
             return { certs: certs, bgs: isPrize ? [certBgUrl(), certBgAwardUrl()] : [certBgUrl()] };
         }
         const CERT_GF_HREF = 'https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&family=Kanit:wght@500;700&family=Prompt:wght@500;700&family=Mitr:wght@500;700&family=Chakra+Petch:wght@500;700&family=Bai+Jamjuree:wght@500;700&family=Mali:wght@500;700&family=Charmonman:wght@700&family=Charm:wght@700&display=swap';
@@ -1461,8 +1462,9 @@
             const fontStack = certFontStack();
             return ".cert{width:1123px;height:794px;position:relative;background:#fff center/cover no-repeat;box-sizing:border-box;overflow:hidden}" +
                 ".cert .cname{position:absolute;left:8%;right:8%;top:" + CERT_NAME_TOP + "%;height:" + CERT_NAME_H + "%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;text-shadow:0 1px 2px rgba(255,255,255,.6)}" +
-                ".cert .cname-main{font-family:" + fontStack + ";font-weight:700;font-size:52px;color:#0b3a66;line-height:1.1}" +
-                ".cert .cname .corg2{font-family:" + fontStack + ";font-size:28px;font-weight:500;color:#2563a6;margin-top:8px}";
+                ".cert .cname-main{font-family:" + fontStack + ";font-weight:700;font-size:52px;color:#08306b;line-height:1.1;text-shadow:0 2px 4px rgba(255,255,255,.85),0 0 2px rgba(255,255,255,.9)}" +
+                ".cert .cname .corg2{font-family:" + fontStack + ";font-size:28px;font-weight:600;color:#1d4ed8;margin-top:8px}" +
+                ".cert .cname .caward{font-family:" + fontStack + ";font-size:34px;font-weight:800;margin-top:10px;color:#d4a017;text-shadow:0 1px 1px rgba(120,72,0,.35),0 2px 4px rgba(255,255,255,.6)}";
         }
         function certDoc() {
             const P = certBuild();
