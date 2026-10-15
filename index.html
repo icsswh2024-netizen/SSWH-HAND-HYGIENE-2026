@@ -1423,7 +1423,8 @@
             const custom = (val || '').trim();
             if (custom) {
                 const m = custom.match(/drive\.google\.com\/file\/d\/([^/]+)/) || custom.match(/[?&]id=([^&]+)/);
-                if (m) return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w2000';
+                // ใช้ lh3 (Google image CDN): รองรับ CORS + ย่อขนาด ~1600px -> ดาวน์โหลดเป็นไฟล์ได้ พื้นหลังติด
+                if (m) return 'https://lh3.googleusercontent.com/d/' + m[1] + '=w1600';
                 return custom;
             }
             try { return new URL('cert-bg.jpg', location.href).href; } catch (e) { return 'cert-bg.jpg'; }
