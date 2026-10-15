@@ -790,7 +790,6 @@
                     <div><label class="text-sm text-slate-600">หน่วยงาน / สังกัด</label><input id="certOrg" class="ev-input" placeholder="เช่น หอผู้ป่วยอายุรกรรมหญิง"></div>
                 </div>
                 <div class="flex flex-wrap gap-2.5 mt-4">
-                    <button id="certGenBtn" class="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white font-display font-bold px-6 py-2.5 rounded-xl shadow"><i class="fa-solid fa-wand-magic-sparkles"></i>สร้าง/อัปเดต</button>
                     <button id="certJpgBtn" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold px-6 py-2.5 rounded-xl shadow"><i class="fa-solid fa-image"></i>ดาวน์โหลด JPG</button>
                     <button id="certPdfBtn" class="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-display font-bold px-6 py-2.5 rounded-xl shadow"><i class="fa-solid fa-file-pdf"></i>ดาวน์โหลด PDF</button>
                 </div>
@@ -1544,7 +1543,6 @@
             console.error(e);
             Swal.fire({ icon: 'error', title: 'บันทึกไฟล์ไม่สำเร็จ', html: 'อาจเกิดจากภาพพื้นหลังจาก Google Drive ไม่อนุญาตให้ดึงข้ามเว็บ (CORS)<br>แนะนำ: ส่งไฟล์พื้นหลังให้ฝังในเว็บโดยตรง จะบันทึกได้ชัวร์', confirmButtonColor: '#e11d48', customClass: { popup: 'swal-info', confirmButton: 'swal-confirm-btn' } });
         }
-        document.getElementById('certGenBtn').addEventListener('click', renderCert);
         document.getElementById('certJpgBtn').addEventListener('click', downloadCertJPG);
         document.getElementById('certPdfBtn').addEventListener('click', downloadCertPDF);
         ['certName', 'certOrg'].forEach(id => document.getElementById(id).addEventListener('input', renderCert));
