@@ -788,14 +788,9 @@
                     <div><label class="text-sm text-slate-600"><b>1.</b> ชื่อ–นามสกุล / ชื่อทีม</label><input id="certName" class="ev-input" placeholder="เว้นว่างได้ถ้าออกให้หน่วยงาน"></div>
                     <div><label class="text-sm text-slate-600">หน่วยงาน / สังกัด</label><input id="certOrg" class="ev-input" placeholder="เช่น หอผู้ป่วยอายุรกรรมหญิง"></div>
                 </div>
-                <p class="text-sm font-semibold text-slate-600 mt-4 mb-1"><b>2.</b> ตรวจดูตัวอย่างใบเกียรติบัตร 👇</p>
-                <iframe id="certFrame" class="w-full rounded-xl border border-slate-200" style="height:62vh;background:#eef4fb"></iframe>
-                <p class="text-sm font-semibold text-slate-600 mt-4 mb-1"><b>3.</b> ถูกต้องแล้ว กดบันทึกลงเครื่อง</p>
-                <div class="flex flex-wrap gap-2.5">
-                    <button id="certJpgBtn" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold px-6 py-2.5 rounded-xl shadow"><i class="fa-solid fa-image"></i>ดาวน์โหลด JPG</button>
-                    <button id="certPdfBtn" class="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-display font-bold px-6 py-2.5 rounded-xl shadow"><i class="fa-solid fa-file-pdf"></i>ดาวน์โหลด PDF</button>
-                </div>
-                <p class="text-xs text-slate-400 mt-2">ไฟล์จะถูกบันทึกลงเครื่อง/อัลบั้มทันที (พื้นหลังติดไปด้วย) · ถ้าได้รางวัลจะได้ 2 ไฟล์</p>
+                <p class="text-sm font-semibold text-slate-600 mt-4 mb-1"><b>2.</b> ตรวจดูตัวอย่าง แล้วกดดาวน์โหลดใต้ใบที่ต้องการ 👇</p>
+                <div id="certPreviews" class="space-y-6"></div>
+                <p class="text-xs text-slate-400 mt-3">ไฟล์จะถูกบันทึกลงเครื่อง/อัลบั้มทันที (พื้นหลังติดไปด้วย) · ปุ่มดาวน์โหลดอยู่ใต้ใบประกาศแต่ละใบ</p>
                 <p id="certIosHint" class="text-xs text-amber-600 mt-1 hidden"><i class="fa-solid fa-circle-info mr-1"></i>บน iPhone/iPad: เมื่อกดปุ่มจะเด้งเมนูแชร์ ให้เลือก <b>"บันทึกรูปภาพ"</b> (JPG) หรือ <b>"บันทึกลงไฟล์"</b> (PDF)</p>
             </div>
         </div>
@@ -1559,19 +1554,43 @@
                 ".cert .cname-main{font-family:" + fontStack + ";font-weight:700;font-size:42px;color:#0b5394;line-height:1.1;text-shadow:0 2px 4px rgba(255,255,255,.85),0 0 2px rgba(255,255,255,.9)}" +
                 ".cert .cname .corg2{font-family:" + fontStack + ";font-size:28px;font-weight:600;color:#1d4ed8;margin-top:8px}" +
                 // ชื่อรางวัล (บล็อกแยก absolute) วางในช่องว่างใต้คำว่า "ได้รับรางวัล" บนพื้นหลัง · กันข้อความชนกัน
-                ".cert .caward{position:absolute;left:8%;right:8%;top:50%;height:5%;display:flex;align-items:center;justify-content:center;text-align:center;font-family:" + fontStack + ";font-size:22px;font-weight:800;color:#d4a017;text-shadow:0 1px 1px rgba(120,72,0,.35),0 2px 4px rgba(255,255,255,.75)}" +
+                ".cert .caward{position:absolute;left:8%;right:8%;top:52%;height:5%;display:flex;align-items:center;justify-content:center;text-align:center;font-family:" + fontStack + ";font-size:20px;font-weight:800;color:#d4a017;text-shadow:0 1px 1px rgba(120,72,0,.35),0 2px 4px rgba(255,255,255,.75)}" +
                 // ใบรางวัล: ชื่อผู้รับอยู่ช่องว่างใต้ 'ขอรับรองว่า' / ชื่อรางวัลอยู่ใต้ 'ได้รับรางวัล' (ไม่มีหน่วยงาน)
-                ".cert-award .cname{top:40%;height:8%}" +
+                ".cert-award .cname{top:36%;height:8%}" +
                 ".cert-award .cname-main{font-size:30px;color:#1d4ed8}";
         }
-        function certDoc() {
-            const P = certBuild();
-            const css = "@import url('" + CERT_GF_HREF + "');*{margin:0;box-sizing:border-box}body{font-family:Sarabun,Kanit,sans-serif;background:#eef4fb;padding:14px;display:flex;flex-direction:column;align-items:center;gap:20px}" +
-                certCoreCss() + ".cert{transform-origin:top center;box-shadow:0 8px 24px rgba(2,32,54,.12)}";
-            const fit = "(function(){function f(){var s=Math.min(document.body.clientWidth-28,1123)/1123;[].forEach.call(document.querySelectorAll('.cert'),function(c){if(s<1){c.style.transform='scale('+s+')';c.style.marginBottom=(794*(s-1))+'px';}else{c.style.transform='none';c.style.marginBottom='0';}});}f();window.addEventListener('resize',f);})();";
-            return '<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>' + css + '</style></head><body>' + P.certs + '<scr' + 'ipt>' + fit + '</scr' + 'ipt></body></html>';
+        // รายการใบประกาศ (1 หรือ 2 ใบ) แยกเป็นชิ้น เพื่อมีปุ่มดาวน์โหลดใต้แต่ละใบ
+        function certItems() {
+            const name = (document.getElementById('certName').value || '').trim();
+            const org = (document.getElementById('certOrg').value || '').trim();
+            let nameLine, orgLine;
+            if (name) { nameLine = escapeHtml(name); orgLine = org ? escapeHtml(org) : ''; }
+            else { nameLine = escapeHtml(org) || '...................................................'; orgLine = ''; }
+            const items = [{ html: certOneHtml(certBgUrl(), nameLine, orgLine, ''), bg: certBgUrl(), label: 'ใบเข้าร่วม', file: 'เข้าร่วม' }];
+            if (certPickedAward) items.push({ html: certOneHtml(certBgAwardUrl(), nameLine, '', escapeHtml(certPickedAward)), bg: certBgAwardUrl(), label: 'ใบรางวัล', file: 'รางวัล' });
+            return items;
         }
-        function renderCert() { document.getElementById('certFrame').srcdoc = certDoc(); }
+        // พรีวิวใบเดียว (iframe ย่อพอดีจอ)
+        function certOneDoc(html) {
+            const css = "@import url('" + CERT_GF_HREF + "');*{margin:0;box-sizing:border-box}body{font-family:Sarabun,Kanit,sans-serif;background:#eef4fb;padding:10px;display:flex;justify-content:center}" +
+                certCoreCss() + ".cert{transform-origin:top center;box-shadow:0 8px 24px rgba(2,32,54,.12)}";
+            const fit = "(function(){function f(){var c=document.querySelector('.cert');if(!c)return;var s=Math.min(document.body.clientWidth-20,1123)/1123;if(s<1){c.style.transform='scale('+s+')';document.body.style.height=(794*s+20)+'px';}else{c.style.transform='none';}}f();window.addEventListener('resize',f);})();";
+            return '<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>' + css + '</style></head><body>' + html + '<scr' + 'ipt>' + fit + '</scr' + 'ipt></body></html>';
+        }
+        function renderCert() {
+            const host = document.getElementById('certPreviews');
+            if (!host) return;
+            const items = certItems();
+            host.innerHTML = items.map((it, i) => `
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                    <div class="text-sm font-bold text-slate-600 mb-2"><i class="fa-solid fa-certificate text-amber-500 mr-1"></i>${it.label}${items.length > 1 ? ` (ใบที่ ${i + 1}/${items.length})` : ''}</div>
+                    <iframe class="w-full rounded-xl border border-slate-200 bg-slate-100" style="height:46vh" srcdoc="${certOneDoc(it.html).replace(/"/g, '&quot;')}"></iframe>
+                    <div class="flex flex-wrap gap-2.5 mt-3">
+                        <button type="button" data-cert="${i}" data-type="jpg" class="cert-dl inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold px-5 py-2.5 rounded-xl shadow"><i class="fa-solid fa-image"></i>ดาวน์โหลด JPG</button>
+                        <button type="button" data-cert="${i}" data-type="pdf" class="cert-dl inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-display font-bold px-5 py-2.5 rounded-xl shadow"><i class="fa-solid fa-file-pdf"></i>ดาวน์โหลด PDF</button>
+                    </div>
+                </div>`).join('');
+        }
 
         // ===== ดาวน์โหลดเกียรติบัตรเป็น JPG/PDF (เรนเดอร์เป็นรูป พื้นหลังติดไปด้วย) =====
         function certSafeName() {
@@ -1587,34 +1606,22 @@
                 return await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(blob); });
             } catch (e) { return null; }
         }
-        async function certCanvases() {
+        // เรนเดอร์ใบประกาศ 1 ใบ เป็น canvas (ฝังพื้นหลัง base64 กัน CORS)
+        async function certCanvasFor(item) {
             if (!window.html2canvas) { notify('warning', 'ไลบรารียังโหลดไม่เสร็จ ลองใหม่อีกครั้ง'); return null; }
-            const P = certBuild();
-            // ฝังฟอนต์ในหน้าหลักครั้งเดียว
             if (!document.getElementById('certGF')) {
                 const l = document.createElement('link'); l.id = 'certGF'; l.rel = 'stylesheet'; l.href = CERT_GF_HREF; document.head.appendChild(l);
             }
-            // ฝังพื้นหลังเป็น base64 data URI กัน html2canvas ดึงรูปข้ามโดเมนไม่ได้ (CORS)
-            let certsHtml = P.certs;
-            const uniq = P.bgs.filter((u, i) => P.bgs.indexOf(u) === i);
-            for (const u of uniq) {
-                const data = await toDataUrl(u);
-                if (data) certsHtml = certsHtml.split(u).join(data);
-            }
-            // โฮสต์ซ่อนสำหรับเรนเดอร์
+            let html = item.html;
+            const data = await toDataUrl(item.bg);
+            if (data) html = html.split(item.bg).join(data);
             let host = document.getElementById('certCapHost');
             if (!host) { host = document.createElement('div'); host.id = 'certCapHost'; host.style.cssText = 'position:fixed;left:-99999px;top:0;z-index:-1'; document.body.appendChild(host); }
-            host.innerHTML = '<style>' + certCoreCss() + '</style>' + certsHtml;
-            // โหลดฟอนต์ให้เสร็จก่อนจับภาพ
+            host.innerHTML = '<style>' + certCoreCss() + '</style>' + html;
             try { await document.fonts.ready; } catch (e) {}
             await new Promise(r => setTimeout(r, 300));
-            const certEls = [].slice.call(host.querySelectorAll('.cert'));
-            const canvases = [];
-            for (const el of certEls) {
-                const cv = await html2canvas(el, { useCORS: true, backgroundColor: '#ffffff', scale: 2, width: 1123, height: 794, logging: false });
-                canvases.push(cv);
-            }
-            return canvases;
+            const el = host.querySelector('.cert');
+            return await html2canvas(el, { useCORS: true, backgroundColor: '#ffffff', scale: 2, width: 1123, height: 794, logging: false });
         }
         const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (/Mac/.test(navigator.platform) && navigator.maxTouchPoints > 1);
         // ตรวจจับ in-app browser (LINE/Facebook/Messenger/Instagram) ที่มักบันทึกไฟล์ไม่ได้
@@ -1654,34 +1661,35 @@
             });
             notify('success', successMsg);
         }
-        async function downloadCertJPG() {
+        // ดาวน์โหลดใบประกาศเฉพาะใบ (idx) เป็น JPG หรือ PDF
+        async function downloadCertOne(idx, type) {
             try {
-                const cvs = await certCanvases(); if (!cvs) return;
-                const base = certSafeName();
-                const files = cvs.map((cv, i) => ({
-                    blob: dataUrlToBlob(cv.toDataURL('image/jpeg', 0.95)),
-                    name: base + (cvs.length > 1 ? ('_' + (i === 0 ? 'เข้าร่วม' : 'รางวัล')) : '') + '.jpg'
-                }));
-                await saveFiles(files, 'ดาวน์โหลด JPG แล้ว');
-            } catch (e) { certExportError(e); }
-        }
-        async function downloadCertPDF() {
-            try {
-                const cvs = await certCanvases(); if (!cvs) return;
-                const JS = (window.jspdf && window.jspdf.jsPDF); if (!JS) { notify('warning', 'ไลบรารี PDF ยังโหลดไม่เสร็จ'); return; }
-                const pdf = new JS({ orientation: 'landscape', unit: 'px', format: [1123, 794] });
-                cvs.forEach((cv, i) => { if (i) pdf.addPage([1123, 794], 'landscape'); pdf.addImage(cv.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 1123, 794); });
-                const name = certSafeName() + '.pdf';
-                if (isIOS) { await saveFiles([{ blob: pdf.output('blob'), name: name }], 'ดาวน์โหลด PDF แล้ว'); }
-                else { pdf.save(name); notify('success', 'ดาวน์โหลด PDF แล้ว'); }
+                const items = certItems();
+                const item = items[idx]; if (!item) return;
+                const cv = await certCanvasFor(item); if (!cv) return;
+                const base = certSafeName() + (items.length > 1 ? ('_' + item.file) : '');
+                if (type === 'pdf') {
+                    const JS = (window.jspdf && window.jspdf.jsPDF); if (!JS) { notify('warning', 'ไลบรารี PDF ยังโหลดไม่เสร็จ'); return; }
+                    const pdf = new JS({ orientation: 'landscape', unit: 'px', format: [1123, 794] });
+                    pdf.addImage(cv.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 1123, 794);
+                    const name = base + '.pdf';
+                    if (isIOS) { await saveFiles([{ blob: pdf.output('blob'), name: name }], 'ดาวน์โหลด PDF แล้ว'); }
+                    else { pdf.save(name); notify('success', 'ดาวน์โหลด PDF แล้ว'); }
+                } else {
+                    const blob = dataUrlToBlob(cv.toDataURL('image/jpeg', 0.95));
+                    await saveFiles([{ blob: blob, name: base + '.jpg' }], 'ดาวน์โหลด JPG แล้ว');
+                }
             } catch (e) { certExportError(e); }
         }
         function certExportError(e) {
             console.error(e);
             Swal.fire({ icon: 'error', title: 'บันทึกไฟล์ไม่สำเร็จ', html: 'อาจเกิดจากภาพพื้นหลังจาก Google Drive ไม่อนุญาตให้ดึงข้ามเว็บ (CORS)<br>แนะนำ: ส่งไฟล์พื้นหลังให้ฝังในเว็บโดยตรง จะบันทึกได้ชัวร์', confirmButtonColor: '#e11d48', customClass: { popup: 'swal-info', confirmButton: 'swal-confirm-btn' } });
         }
-        document.getElementById('certJpgBtn').addEventListener('click', downloadCertJPG);
-        document.getElementById('certPdfBtn').addEventListener('click', downloadCertPDF);
+        // ปุ่มดาวน์โหลดใต้ใบแต่ละใบ (event delegation)
+        document.getElementById('certPreviews').addEventListener('click', (e) => {
+            const btn = e.target.closest('.cert-dl'); if (!btn) return;
+            downloadCertOne(parseInt(btn.dataset.cert, 10), btn.dataset.type);
+        });
         ['certName', 'certOrg'].forEach(id => document.getElementById(id).addEventListener('input', renderCert));
 
         document.getElementById('evalClose').addEventListener('click', closeEvalModal);
