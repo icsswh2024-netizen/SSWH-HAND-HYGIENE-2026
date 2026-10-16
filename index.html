@@ -470,6 +470,9 @@
             <h3 class="font-display text-2xl md:text-3xl font-semibold text-gradient mb-7 text-center flex items-center justify-center gap-3">
                 <i class="fa-solid fa-trophy text-amber-400"></i>ประกาศผล "รางวัลการประกวด"
             </h3>
+            <div class="text-center -mt-3 mb-7">
+                <button id="sharePrizesBtn" class="inline-flex items-center gap-2 bg-cyan-500 hover:bg-cyan-600 text-white font-display font-bold text-sm px-6 py-2.5 rounded-full shadow-lg shadow-cyan-500/30 transition"><i class="fa-solid fa-share-nodes"></i> แชร์ผลรางวัล</button>
+            </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
                 <!-- ชนะเลิศ -->
@@ -1267,6 +1270,19 @@
                 card.addEventListener('click', () => openPrizeWinner(rank));
             });
         })();
+        // แชร์ผลรางวัล (ข้อความสรุปผู้ชนะ + ลิงก์เว็บ)
+        async function shareResults() {
+            const tops = rankedVids().slice(0, 4).filter(v => totalStars(v));
+            if (!tops.length) { notify('info', 'ยังไม่มีข้อมูลผลรางวัล'); return; }
+            const labels = ['🥇 ชนะเลิศ', '🥈 รองชนะเลิศอันดับ 1', '🥉 รองชนะเลิศอันดับ 2', '🏅 ชมเชย'];
+            const lines = tops.map((v, i) => `${labels[i] || ('อันดับ ' + (i + 1))}: ${v.title || ''}${v.organization ? (' — ' + v.organization) : ''} (⭐${totalStars(v)})`);
+            const text = '🏆 ประกาศผลรางวัลการประกวด วันล้างมือโลก\nโรงพยาบาลศรีสังวรสุโขทัย\n\n' + lines.join('\n') + '\n\n👉 ชมผลงานและรายละเอียด:';
+            const url = location.origin + location.pathname;
+            try { if (navigator.share) { await navigator.share({ title: 'ประกาศผลรางวัล วันล้างมือโลก', text: text, url: url }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+            try { await navigator.clipboard.writeText(text + '\n' + url); notify('success', 'คัดลอกข้อความแชร์แล้ว · นำไปวางในไลน์/เฟซได้เลย'); }
+            catch (e) { Swal.fire({ icon: 'info', title: 'แชร์ผลรางวัล', html: '<div style="text-align:left;white-space:pre-wrap;font-size:13px">' + escapeHtml(text + '\n' + url) + '</div>', confirmButtonColor: '#0ea5e9', confirmButtonText: 'ปิด' }); }
+        }
+        document.getElementById('sharePrizesBtn').addEventListener('click', shareResults);
         // แสดงคลิปผู้ได้รางวัล "เหนือ" การ์ดรางวัลแต่ละใบ (ในหัวข้อ รางวัลการประกวด)
         function renderPrizeClips() {
             document.querySelectorAll('.prize-winner').forEach(card => {
