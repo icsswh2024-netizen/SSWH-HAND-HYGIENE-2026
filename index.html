@@ -462,6 +462,7 @@
             <div class="flex flex-wrap gap-3 justify-center">
                 <button id="closedResultsBtn" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-display font-bold px-6 py-3 rounded-xl shadow-lg shadow-blue-500/30 transition"><i class="fa-solid fa-chart-column"></i>ดูผลโหวต</button>
                 <button id="closedEvalBtn" class="hidden inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold px-6 py-3 rounded-xl shadow-lg shadow-emerald-500/30 transition"><i class="fa-solid fa-clipboard-check"></i>แบบประเมินกิจกรรม</button>
+                <button id="closedCertBtn" class="hidden inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-display font-bold px-6 py-3 rounded-xl shadow-lg shadow-amber-500/30 transition"><i class="fa-solid fa-award"></i>ใบประกาศผู้ส่งคลิปประกวด</button>
             </div>
         </section>
 
@@ -943,8 +944,11 @@
             return String(siteSettings.showCert || 'FALSE').toUpperCase() === 'TRUE';
         }
         function applyCertShown() {
+            const show = isCertShown();
             const btn = document.getElementById('openCertBtn');
-            if (btn) btn.classList.toggle('hidden', !isCertShown());
+            if (btn) btn.classList.toggle('hidden', !show);
+            const cbtn = document.getElementById('closedCertBtn');
+            if (cbtn) cbtn.classList.toggle('hidden', !show);
         }
 
         // เปิดรับผลงานอยู่ไหม? (ค่าตั้งต้น = เปิด)
@@ -1561,6 +1565,7 @@
             if (url) { window.open(url, '_blank', 'noopener'); return; }
             openCertModal();
         });
+        document.getElementById('closedCertBtn').addEventListener('click', () => document.getElementById('openCertBtn').click());
 
         // ===== เกียรติบัตร (ฝังในเว็บ ผ่าน iframe) =====
         const certModal = document.getElementById('certModal');
