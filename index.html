@@ -2669,13 +2669,25 @@
             if (!el) return;
             const raw = (siteSettings.expenses || '').trim();
             if (!raw) { el.innerHTML = '<span class="text-slate-400">ยังไม่ได้ตั้งค่า (เพิ่มคีย์ expenses ในแท็บ Settings)</span>'; return; }
+            // แปลงจำนวนเงิน รองรับการคูณ/บวก เช่น 69*13 หรือ 500+200
+            function parseAmount(s) {
+                const expr = (s || '').replace(/[×xX]/g, '*').replace(/[^\d.*+]/g, '');
+                if (!expr) return 0;
+                try {
+                    const val = expr.split('+').reduce((sum, term) =>
+                        sum + term.split('*').reduce((p, n) => p * (parseFloat(n) || 0), 1), 0);
+                    return isFinite(val) ? val : 0;
+                } catch (e) { return parseFloat(expr) || 0; }
+            }
             let total = 0;
             const rows = raw.split(/\r?\n/).map(line => line.trim()).filter(Boolean).map(line => {
                 const parts = line.split(/[|,\t]/);
                 const name = (parts[0] || '').trim();
-                const amt = parseFloat((parts[1] || '').replace(/[^\d.]/g, '')) || 0;
+                const rawAmt = (parts[1] || '').trim();
+                const amt = parseAmount(rawAmt);
                 total += amt;
-                return `<tr><td style="padding:6px 8px;border-bottom:1px solid #d1fae5">${escapeHtml(name)}</td><td style="padding:6px 8px;border-bottom:1px solid #d1fae5;text-align:right;font-weight:700;color:#047857;white-space:nowrap">${amt.toLocaleString('th-TH')} บาท</td></tr>`;
+                const showExpr = /[*+×xX]/.test(rawAmt) ? `<span style="font-size:11px;color:#94a3b8">(${escapeHtml(rawAmt.replace(/[xX]/g, '×'))})</span> ` : '';
+                return `<tr><td style="padding:6px 8px;border-bottom:1px solid #d1fae5">${escapeHtml(name)}</td><td style="padding:6px 8px;border-bottom:1px solid #d1fae5;text-align:right;font-weight:700;color:#047857;white-space:nowrap">${showExpr}${amt.toLocaleString('th-TH')} บาท</td></tr>`;
             }).join('');
             el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:14px">${rows}
                 <tr><td style="padding:8px;font-weight:800;color:#065f46">รวมทั้งสิ้น</td><td style="padding:8px;text-align:right;font-weight:800;font-size:16px;color:#065f46;white-space:nowrap">${total.toLocaleString('th-TH')} บาท</td></tr></table>`;
