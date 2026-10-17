@@ -970,6 +970,16 @@
             applyCertShown();   // ซ่อน/แสดงปุ่มใบประกาศนียบัตร
             applyFeaturedClip(); // คลิปสาธิตจากผู้จัด (กรอบจอคอมพิวเตอร์)
         }
+        // คีย์เปรียบเทียบคลิป (ใช้ไอดี Drive/YouTube ถ้ามี) เพื่อจับว่าเป็นคลิปเดียวกัน
+        function videoKey(url) {
+            const v = detectVideo(url || '');
+            return (v.id || v.url || String(url || '')).trim().toLowerCase();
+        }
+        function isFeaturedUrl(url) {
+            const f = (siteSettings.featuredClip || '').trim();
+            if (!f || !url) return false;
+            return videoKey(url) === videoKey(f);
+        }
         // แสดงคลิปสาธิตการล้างมือจากผู้จัด (Settings: featuredClip = ลิงก์, featuredTitle = หัวข้อ)
         function applyFeaturedClip() {
             const sec = document.getElementById('featuredClipSection');
@@ -2316,7 +2326,8 @@
                         votes: d.votes,
                         avgScore: d.avgScore
                     }));
-                    upsertVideos(list);
+                    // คลิปสาธิต (featuredClip) ไม่นำมาแสดงในแกลเลอรี/ไม่ให้โหวต
+                    upsertVideos(list.filter(v => !isFeaturedUrl(v.url)));
                 } catch (err) {
                     console.error('ประมวลผลข้อมูลจาก Sheet ไม่สำเร็จ:', err);
                 }
