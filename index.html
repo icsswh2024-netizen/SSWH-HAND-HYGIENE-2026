@@ -688,6 +688,13 @@
                         </div>
                     </div>
 
+                    <!-- ค่าใช้จ่ายกิจกรรม (เฉพาะแอดมิน · ตั้งค่าที่ Settings คีย์ expenses) -->
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-xl px-5 py-4 mb-7">
+                        <div class="font-semibold text-slate-700 text-base md:text-lg mb-2"><i class="fa-solid fa-sack-dollar text-emerald-600 mr-1.5"></i>ค่าใช้จ่ายกิจกรรม</div>
+                        <div id="adminExpenses" class="text-sm text-slate-500">—</div>
+                        <div class="text-xs text-slate-400 mt-2">ตั้งค่าที่แท็บ Settings คีย์ <b>expenses</b> · 1 รายการต่อบรรทัด รูปแบบ <code>ชื่อรายการ | จำนวนเงิน</code> (เช่น <code>ถ้วยรางวัล | 1600</code>)</div>
+                    </div>
+
                     <!-- แดชบอร์ดสรุปผล -->
                     <h4 class="font-display text-2xl md:text-3xl font-semibold text-gradient mb-5 flex items-center gap-2">
                         <i class="fa-solid fa-chart-line text-sky-500"></i>แดชบอร์ดสรุปผล
@@ -2654,6 +2661,24 @@
             document.getElementById('adminSheetLink').href = SHEET_EDIT_URL;
             adminPanel.classList.remove('hidden'); adminPanel.classList.add('flex');
             loadPending();
+            renderExpenses();
+        }
+        // แสดงค่าใช้จ่ายกิจกรรม (อ่านจาก Settings คีย์ expenses · 1 บรรทัด = "ชื่อ | จำนวน")
+        function renderExpenses() {
+            const el = document.getElementById('adminExpenses');
+            if (!el) return;
+            const raw = (siteSettings.expenses || '').trim();
+            if (!raw) { el.innerHTML = '<span class="text-slate-400">ยังไม่ได้ตั้งค่า (เพิ่มคีย์ expenses ในแท็บ Settings)</span>'; return; }
+            let total = 0;
+            const rows = raw.split(/\r?\n/).map(line => line.trim()).filter(Boolean).map(line => {
+                const parts = line.split(/[|,\t]/);
+                const name = (parts[0] || '').trim();
+                const amt = parseFloat((parts[1] || '').replace(/[^\d.]/g, '')) || 0;
+                total += amt;
+                return `<tr><td style="padding:6px 8px;border-bottom:1px solid #d1fae5">${escapeHtml(name)}</td><td style="padding:6px 8px;border-bottom:1px solid #d1fae5;text-align:right;font-weight:700;color:#047857;white-space:nowrap">${amt.toLocaleString('th-TH')} บาท</td></tr>`;
+            }).join('');
+            el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:14px">${rows}
+                <tr><td style="padding:8px;font-weight:800;color:#065f46">รวมทั้งสิ้น</td><td style="padding:8px;text-align:right;font-weight:800;font-size:16px;color:#065f46;white-space:nowrap">${total.toLocaleString('th-TH')} บาท</td></tr></table>`;
         }
 
         // โหลดคลิปทั้งหมดมาจัดการ (ต้องมีรหัสแอดมินถูกต้อง)
