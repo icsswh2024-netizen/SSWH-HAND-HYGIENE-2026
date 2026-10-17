@@ -398,6 +398,31 @@
 
     <main class="w-full max-w-none px-6 md:px-12 mt-10">
 
+        <!-- คลิปสาธิตการล้างมือที่ถูกต้อง (จากผู้จัด) — แสดงเป็นกรอบจอคอมพิวเตอร์ · ตั้งลิงก์ที่ Settings คีย์ featuredClip -->
+        <section id="featuredClipSection" class="hidden mb-10">
+            <div class="max-w-3xl mx-auto">
+                <h3 class="font-display text-xl md:text-2xl font-semibold text-center text-slate-800 mb-4 flex items-center justify-center gap-2">
+                    <span class="text-2xl">🖐️</span><span id="featuredClipTitle">คลิปสาธิตการล้างมือ 7 ขั้นตอนที่ถูกต้อง</span>
+                </h3>
+                <!-- กรอบจอคอมพิวเตอร์ -->
+                <div class="mx-auto" style="max-width:640px">
+                    <div style="background:linear-gradient(180deg,#1f2937,#111827);border-radius:16px;padding:14px 14px 10px;box-shadow:0 22px 44px rgba(2,32,54,.3)">
+                        <div style="border-radius:8px;overflow:hidden;background:#000;aspect-ratio:16/9">
+                            <div id="featuredClipFrame" class="w-full h-full"></div>
+                        </div>
+                        <div class="flex items-center justify-center gap-1.5 mt-2.5">
+                            <span style="width:7px;height:7px;border-radius:50%;background:#64748b;display:inline-block"></span>
+                            <span style="width:40px;height:4px;border-radius:3px;background:#475569;display:inline-block"></span>
+                        </div>
+                    </div>
+                    <!-- ขาตั้งจอ -->
+                    <div class="mx-auto" style="width:90px;height:16px;background:linear-gradient(180deg,#374151,#1f2937);margin-top:-2px;border-radius:0 0 6px 6px"></div>
+                    <div class="mx-auto" style="width:150px;height:8px;background:#1f2937;border-radius:8px;margin-top:2px"></div>
+                </div>
+                <p class="text-center text-sm text-slate-500 mt-4">ชมคลิปสาธิตจากทีมผู้จัด เพื่อเป็นแนวทางการล้างมือ 7 ขั้นตอนอย่างถูกวิธี</p>
+            </div>
+        </section>
+
         <!-- Recommended / ก่อนส่งผลงาน -->
         <section id="recommendedSection" class="relative bg-white rounded-3xl shadow-xl shadow-amber-100/60 p-6 md:p-8 mb-8 border border-amber-100 overflow-hidden">
             <div class="absolute top-0 inset-x-0 h-1.5" style="background:linear-gradient(90deg,#fbbf24,#f59e0b,#38bdf8)"></div>
@@ -943,6 +968,31 @@
             applyPrizesShown(); // ซ่อน/แสดงการ์ดรางวัล
             applyEvalShown();   // ซ่อน/แสดงแบบประเมิน
             applyCertShown();   // ซ่อน/แสดงปุ่มใบประกาศนียบัตร
+            applyFeaturedClip(); // คลิปสาธิตจากผู้จัด (กรอบจอคอมพิวเตอร์)
+        }
+        // แสดงคลิปสาธิตการล้างมือจากผู้จัด (Settings: featuredClip = ลิงก์, featuredTitle = หัวข้อ)
+        function applyFeaturedClip() {
+            const sec = document.getElementById('featuredClipSection');
+            const frame = document.getElementById('featuredClipFrame');
+            if (!sec || !frame) return;
+            const url = (siteSettings.featuredClip || '').trim();
+            if (!url) { sec.classList.add('hidden'); return; }
+            const title = (siteSettings.featuredTitle || '').trim();
+            if (title) document.getElementById('featuredClipTitle').textContent = title;
+            if (frame.dataset.url !== url) {
+                frame.dataset.url = url;
+                const v = detectVideo(url);
+                let html;
+                if (v.type === 'drive') {
+                    html = `<iframe src="https://drive.google.com/file/d/${v.id}/preview" style="width:100%;height:100%;border:0" allow="autoplay" allowfullscreen></iframe>`;
+                } else if (v.type === 'youtube') {
+                    html = `<iframe src="https://www.youtube.com/embed/${v.id}?rel=0&playsinline=1" style="width:100%;height:100%;border:0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+                } else {
+                    html = `<video src="${escapeHtml(url)}" controls playsinline style="width:100%;height:100%;object-fit:contain;background:#000"></video>`;
+                }
+                frame.innerHTML = html;
+            }
+            sec.classList.remove('hidden');
         }
 
         // แสดงปุ่มใบประกาศนียบัตรหรือไม่ (ค่าเริ่มต้น = ซ่อน)
